@@ -29,17 +29,22 @@ services:
       - traefik_certs:/certs
     environment:
       - TZ=${TZ}
+      - ACME_EMAIL=${ACME_EMAIL}
+    mem_limit: 128m
+    cpus: 0.5
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.routers.traefik.middlewares=auth@file,secure-headers@file"
       - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_USER}:${TRAEFIK_DASHBOARD_PASS}"
 
   portainer:
-    image: portainer/portainer-ce:latest
+    # Pin to specific version - update manually after testing
+    # Check latest: https://github.com/portainer/portainer/releases
+    image: portainer/portainer-ce:2.21.0
     container_name: portainer
     restart: unless-stopped
     networks:
@@ -47,6 +52,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - portainer_data:/data
+    mem_limit: 256m
+    cpus: 0.5
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
