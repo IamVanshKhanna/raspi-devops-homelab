@@ -11,10 +11,10 @@ api:
 
 log:
   level: INFO
-  # filePath: /logs/traefik.log
+  filePath: /logs/traefik.log
 
 accessLog:
-  # filePath: /logs/access.log
+  filePath: /logs/access.log
   bufferingSize: 100
 
 entryPoints:
@@ -34,7 +34,8 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "your@email.com"
+      # Set ACME_EMAIL in your .env file
+      email: "${ACME_EMAIL}"
       storage: /certs/acme.json
       httpChallenge:
         entryPoint: web
@@ -53,8 +54,3 @@ metrics:
     entryPoint: metrics
     addEntryPointsLabels: true
     addServicesLabels: true
-    buckets:
-      - 0.1
-      - 0.3
-      - 1.2
-      - 5.0
