@@ -15,7 +15,8 @@ volumes:
 services:
 
   pihole:
-    image: pihole/pihole:latest
+    # Check latest: https://github.com/pi-hole/docker-pi-hole/releases
+    image: pihole/pihole:2024.07.0
     container_name: pihole
     restart: unless-stopped
     network_mode: host
@@ -31,9 +32,12 @@ services:
       - WEB_PORT=8053
     cap_add:
       - NET_ADMIN
+    mem_limit: 256m
+    cpus: 0.25
 
   wireguard:
-    image: linuxserver/wireguard:latest
+    # Check latest: https://github.com/linuxserver/docker-wireguard/releases
+    image: linuxserver/wireguard:1.0.20210914
     container_name: wireguard
     restart: unless-stopped
     networks:
@@ -52,10 +56,11 @@ services:
       - PEERS=${WG_PEERS}
       - PEERDNS=${WG_DEFAULT_DNS}
       - ALLOWEDIPS=${WG_ALLOWED_IPS}
-      - PERSISTENTKEEPALIVE_PEERS=all
+      - LOG_CONFS=false
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
-      - net.ipv4.ip_forward=1
+    mem_limit: 64m
+    cpus: 0.25
