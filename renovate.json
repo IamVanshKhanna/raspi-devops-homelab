@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "description": "Renovate config for pi4b-homelab - auto-updates Docker image versions in compose files",
+  "timezone": "Australia/Melbourne",
+  "schedule": ["every weekend"],
+  "prConcurrentLimit": 3,
+  "prCreation": "not-pending",
+  "labels": ["dependencies"],
+  "docker": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Group all Docker image updates into a single PR per stack",
+      "matchManagers": ["docker-compose"],
+      "matchPaths": ["stacks/**"],
+      "groupName": "Docker image updates",
+      "automerge": false
+    },
+    {
+      "description": "Disable major version updates - review manually",
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Pin Ollama updates - model weights may not be compatible across versions",
+      "matchPackageNames": ["ollama/ollama"],
+      "automerge": false,
+      "labels": ["dependencies", "ollama", "review-required"]
+    },
+    {
+      "description": "Pin Home Assistant - HA updates can break automations",
+      "matchPackageNames": ["homeassistant/home-assistant"],
+      "automerge": false,
+      "labels": ["dependencies", "homeassistant", "review-required"]
+    }
+  ]
+}
