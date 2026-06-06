@@ -1,0 +1,27 @@
+# STACK: SMARTHOME
+# Services: Home Assistant
+# Uses host network for mDNS, Zigbee USB dongle, device discovery.
+# Access directly at http://192.168.1.50:8123
+# NOT routed through Traefik due to host network mode.
+
+volumes:
+  homeassistant_config:
+
+services:
+
+  homeassistant:
+    image: homeassistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    volumes:
+      - homeassistant_config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    environment:
+      - TZ=${TZ}
+    # If using Zigbee USB dongle, uncomment:
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0
+    #   - /dev/ttyACM0:/dev/ttyACM0
