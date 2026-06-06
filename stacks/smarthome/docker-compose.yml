@@ -10,6 +10,8 @@ volumes:
 services:
 
   homeassistant:
+    # Use stable tag - HA releases frequently, :stable is safer than pinning
+    # Check releases: https://github.com/home-assistant/core/releases
     image: homeassistant/home-assistant:stable
     container_name: homeassistant
     restart: unless-stopped
@@ -21,6 +23,10 @@ services:
       - /run/dbus:/run/dbus:ro
     environment:
       - TZ=${TZ}
+    # Note: mem_limit not effective with network_mode: host on some kernels
+    # Monitor via Grafana/cAdvisor instead
+    mem_limit: 512m
+    cpus: 1.0
     # If using Zigbee USB dongle, uncomment:
     # devices:
     #   - /dev/ttyUSB0:/dev/ttyUSB0
