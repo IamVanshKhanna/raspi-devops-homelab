@@ -13,13 +13,15 @@ volumes:
 services:
 
   prometheus:
-    image: prom/prometheus:latest
+    # Check latest: https://hub.docker.com/r/prom/prometheus/tags
+    image: prom/prometheus:v2.53.0
     container_name: prometheus
     restart: unless-stopped
     networks:
       - proxy
+    # Bind to localhost only - access via Traefik
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ../../config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -28,9 +30,12 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=30d'
       - '--web.enable-lifecycle'
+    mem_limit: 512m
+    cpus: 0.5
 
   grafana:
-    image: grafana/grafana:latest
+    # Check latest: https://hub.docker.com/r/grafana/grafana/tags
+    image: grafana/grafana:11.1.0
     container_name: grafana
     restart: unless-stopped
     networks:
@@ -44,6 +49,8 @@ services:
       - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
       - GF_USERS_ALLOW_SIGN_UP=false
       - TZ=${TZ}
+    mem_limit: 256m
+    cpus: 0.5
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
@@ -52,34 +59,38 @@ services:
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   node-exporter:
-    image: prom/node-exporter:latest
+    # Check latest: https://hub.docker.com/r/prom/node-exporter/tags
+    image: prom/node-exporter:v1.8.1
     container_name: node-exporter
     restart: unless-stopped
     networks:
       - proxy
-    pid: host
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
       - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    mem_limit: 64m
+    cpus: 0.1
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    # Check latest: https://github.com/google/cadvisor/releases
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
     container_name: cadvisor
     restart: unless-stopped
     networks:
       - proxy
-    privileged: true
-    devices:
-      - /dev/kmsg
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
+      - /dev/disk:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    mem_limit: 128m
+    cpus: 0.25
