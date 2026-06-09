@@ -1,0 +1,55 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-non-root
+  labels:
+    app.kubernetes.io/name: kyverno
+    policy-type: pod-security
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: run-as-non-root
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+                - ReplicaSet
+      validate:
+        message: "Containers must run as non-root user (runAsUser != 0)"
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.securityContext.runAsUser }}"
+                    operator: Equals
+                    value: 0
+                  - key: "{{ element.securityContext.runAsNonRoot }}"
+                    operator: Equals
+                    value: false
+          - list: "request.object.spec.initContainers"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.securityContext.runAsUser }}"
+                    operator: Equals
+                    value: 0
+                  - key: "{{ element.securityContext.runAsNonRoot }}"
+                    operator: Equals
+                    value: false
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - cert-manager
+                - argocd
+                - longhorn-system

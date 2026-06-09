@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: core-services
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/IamVanshKhanna/homelab-prod.git
+        revision: HEAD
+        directories:
+          - path: config/argocd/services/core/*
+  template:
+    metadata:
+      name: 'core-{{path.basename}}'
+      labels:
+        homelab.io/tier: core
+    spec:
+      project: homelab
+      source:
+        repoURL: https://github.com/IamVanshKhanna/homelab-prod.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: '{{server}}'
+        namespace: '{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m

@@ -27,6 +27,20 @@ repositories:
     url: https://charts.vaultwarden.io
   - name: crowdsec
     url: https://charts.crowdsec.net
+  - name: kyverno
+    url: https://kyverno.github.io/kyverno/
+  - name: linkerd
+    url: https://helm.linkerd.io/stable
+  - name: litmus
+    url: https://litmuschaos.github.io/litmus-helm/
+  - name: thanos
+    url: https://charts.thanos.io
+  - name: loki
+    url: https://grafana.github.io/helm-charts
+  - name: argocd
+    url: https://argoproj.github.io/argo-helm
+  - name: velero
+    url: https://vmware-tanzu.github.io/helm-charts
   - name: nextcloud
     url: https://nextcloud.github.io/helm/
   - name: vaultwarden
@@ -155,3 +169,135 @@ releases:
     chart: zalando/postgres-operator
     version: "1.13.0"
     createNamespace: true
+
+  # Policy Engine
+  - name: kyverno
+    namespace: kyverno
+    chart: kyverno/kyverno
+    version: "3.2.0"
+    createNamespace: true
+    values:
+      - helmfile/values/kyverno.yaml
+
+  # Service Mesh
+  - name: linkerd-crds
+    namespace: linkerd
+    chart: linkerd/linkerd-crds
+    version: "1.10.0"
+    createNamespace: true
+
+  - name: linkerd-control-plane
+    namespace: linkerd
+    chart: linkerd/linkerd-control-plane
+    version: "1.16.0"
+    createNamespace: true
+    values:
+      - helmfile/values/linkerd.yaml
+
+  - name: linkerd-viz
+    namespace: linkerd-viz
+    chart: linkerd/linkerd-viz
+    version: "31.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/linkerd-viz.yaml
+
+  # Chaos Engineering
+  - name: litmus
+    namespace: litmus
+    chart: litmus/litmus
+    version: "3.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/litmus.yaml
+
+  # Thanos (Global Observability)
+  - name: thanos-sidecar
+    namespace: monitoring
+    chart: thanos/thanos-sidecar
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-sidecar.yaml
+
+  - name: thanos-query
+    namespace: monitoring
+    chart: thanos/thanos-query
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-query.yaml
+
+  - name: thanos-store-gateway
+    namespace: monitoring
+    chart: thanos/thanos-store-gateway
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-store-gateway.yaml
+
+  - name: thanos-compactor
+    namespace: monitoring
+    chart: thanos/thanos-compactor
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-compactor.yaml
+
+  - name: thanos-ruler
+    namespace: monitoring
+    chart: thanos/thanos-ruler
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-ruler.yaml
+
+  # Loki Multi-Tenancy (Federated Logging)
+  - name: loki
+    namespace: logging
+    chart: loki/loki-stack
+    version: "5.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/loki.yaml
+
+  - name: promtail-pi4
+    namespace: logging
+    chart: loki/promtail
+    version: "6.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/promtail-pi4.yaml
+
+  - name: promtail-pi5
+    namespace: logging
+    chart: loki/promtail
+    version: "6.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/promtail-pi5.yaml
+
+  # ArgoCD Multi-Cluster ApplicationSet
+  - name: argocd-applicationset
+    namespace: argocd
+    chart: argocd/applicationset
+    version: "0.7.0"
+    createNamespace: true
+
+  # Velero DR with Cross-Region Replication
+  - name: velero
+    namespace: velero
+    chart: velero/velero
+    version: "5.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/velero-dr.yaml
+
+  # Spot Node Group for DR Cluster (EKS)
+  - name: eks-spot-nodes
+    namespace: kube-system
+    chart: eksctl/eks-spot-nodes
+    version: "1.0.0"
+    createNamespace: false
+    values:
+      - helmfile/values/eks-spot-nodes.yaml

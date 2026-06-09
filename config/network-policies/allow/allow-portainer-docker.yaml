@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: portainer-allow-docker
+  namespace: portainer
+  labels:
+    app.kubernetes.io/name: portainer
+    policy-type: allow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: portainer
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090

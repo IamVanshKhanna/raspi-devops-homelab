@@ -1,0 +1,46 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-host-namespaces
+  labels:
+    app.kubernetes.io/name: kyverno
+    policy-type: pod-security
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: no-host-network
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+                - ReplicaSet
+      validate:
+        message: "hostNetwork, hostPID, and hostIPC are not allowed"
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.hostNetwork }}"
+                operator: Equals
+                value: true
+              - key: "{{ request.object.spec.hostPID }}"
+                operator: Equals
+                value: true
+              - key: "{{ request.object.spec.hostIPC }}"
+                operator: Equals
+                value: true
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - cert-manager
+                - argocd
+                - longhorn-system

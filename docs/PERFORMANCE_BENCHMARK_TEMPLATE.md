@@ -1,204 +1,585 @@
-# Performance Benchmark Report Template
+# Performance Benchmark Templates for Homelab
 
-> Template for documenting performance benchmarks
-> Run quarterly or after major changes
+## Overview
+Standardized benchmarks for measuring and tracking service performance across versions and deployments.
 
----
+## 1. Database Benchmarks (PostgreSQL)
 
-## Test Metadata
+### PgBench - OLTP Workload
+```bash
+# Initialize test database
+kubectl exec -n databases homelab-postgres-0 -- pgbench -i -s 50 homelab_db
 
-| Field | Value |
-|-------|-------|
-| **Test Date** | YYYY-MM-DD |
-| **Test ID** | PERF-YYYYMMDD-XXX |
-| **Tester** | Name/Handle |
-| **Environment** | Production / Staging |
-| **Hardware** | Pi 4B 4GB / Pi 5 8GB / K3s Cluster |
-| **Software** | homelab-prod vX.Y.Z |
-| **Kubernetes** | v1.XX.X / Docker Compose vX.Y.Z |
+# Run benchmark (read-write)
+kubectl exec -n databases homelab-postgres-0 -- pgbench -c 10 -j 2 -T 60 -S homelab_db
 
----
+# Run benchmark (read-only)
+kubectl exec -n databases homelab-postgres-0 -- pgbench -c 10 -j 2 -T 60 -S homelab_db
 
-## Test Environment
+# Custom workload (mixed)
+kubectl exec -n databases homelab-postgres-0 -- pgbench -c 20 -j 4 -T 300 \
+  -f /path/to/custom-workload.sql homelab_db
+```
 
-### Hardware
-| Node | CPU | RAM | Storage | Network |
-|------|-----|-----|---------|---------|
-| Node-1 | Pi 4B 4C | 8GB | 2TB SSD | 1Gbps |
-| Node-2 | Pi 4B 4C | 8GB | 2TB SSD | 1Gbps |
+#### Custom Workload SQL (`custom-workload.sql`)
+```sql
+-- Mixed OLTP workload: 70% reads, 30% writes
+\set aid random(1, 100000 * :scale)
+\set bid random(1, 1 * :scale)
+\set tid random(1, 10 * :scale)
+\set delta random(-5000, 5000)
 
-### Software Versions
-| Component | Version |
-|-----------|---------|
-| Kubernetes | v1.28.x |
-| Traefik | v3.0.x |
-| Prometheus | v2.54.x |
-| Grafana | v11.1.x |
-| Loki | v2.9.x |
-| Tempo | v2.4.x |
-| Ollama | v0.3.x |
+BEGIN;
+  -- 70% probability: Simple SELECT
+  \if random(1, 100) <= 70
+    SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
+  \else
+    -- 30% probability: UPDATE + SELECT
+    UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
+    SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
+  \end if
+END;
+```
 
----
-
-## Benchmark Categories
-
-### 1. API Latency Benchmarks
-
-| Endpoint | Method | Target p50 | Target p95 | Target p99 | Actual p50 | Actual p95 | Actual p99 | Pass/Fail |
-|----------|--------|------------|------------|------------|------------|------------|------------|-----------|
-| Traefik /health | GET | <10ms | <50ms | <100ms | | | | |
-| Nextcloud /status.php | GET | <100ms | <500ms | <1s | | | | |
-| Vaultwarden /alive | GET | <50ms | <200ms | <500ms | | | | |
-| Grafana /api/health | GET | <50ms | <200ms | <500ms | | | | |
-| Prometheus /-/ready | GET | <20ms | <100ms | <200ms | | | | |
-| Ollama /api/tags | GET | <200ms | <1s | <2s | | | | |
-| Home Assistant /api/ | GET | <100ms | <500ms | <1s | | | | |
-| Authelia /api/healthz | GET | <50ms | <200ms | <500ms | | | | |
-
-### 2. Ollama Inference Benchmarks
-
-| Model | Prompt Tokens | Max Tokens | Target Tokens/s | Actual Tokens/s | GPU Used | Pass/Fail |
-|-------|--------------|------------|-----------------|-----------------|----------|-----------|
-| gemma:2b | 100 | 200 | >15 | | | |
-| llama3:8b | 100 | 200 | >10 | | | |
-| codellama:7b | 200 | 500 | >8 | | | |
-| mixtral:8x7b | 200 | 500 | >5 | | | |
-
-**Test Prompt**: "Explain quantum computing in simple terms"
-
-### 3. Database Performance
-
-| Operation | Target | Actual | Pass/Fail |
-|-----------|--------|--------|-----------|
-| Nextcloud: SELECT 1000 files | <500ms | | |
-| Nextcloud: INSERT 100 files | <2s | | |
-| Vaultwarden: GET 100 items | <200ms | | |
-| Nextcloud DB: Connection pool | <10ms | | |
-| Redis: SET/GET 1000 ops | <50ms | | |
-
-### 4. Storage I/O
-
-| Operation | Target | Actual | Pass/Fail |
-|-----------|--------|--------|-----------|
-| Sequential Read (SSD) | >400 MB/s | | |
-| Sequential Write (SSD) | >300 MB/s | | |
-| Random Read 4K (SSD) | >50 MB/s | | |
-| Random Write 4K (SSD) | >40 MB/s | | |
-| Longhorn Replica Write | >50 MB/s | | |
-| Longhorn Replica Read | >100 MB/s | | |
-| Restic Backup (100GB) | <2 hours | | |
-| Restic Restore (100GB) | <4 hours | | |
-
-### 5. Network
-
-| Test | Target | Actual | Pass/Fail |
-|------|--------|--------|-----------|
-| Inter-node latency | <1ms | | |
-| Inter-node bandwidth | >900 Mbps | | |
-| External DNS resolution | <50ms | | |
-| TLS handshake | <100ms | | |
-| Tailscale connection | <5s | | |
-
-### 6. Resource Utilization (Under Load)
-
-| Resource | Target Max | Actual Peak | Pass/Fail |
-|----------|------------|-------------|----------|
-| CPU (per node) | <80% | | |
-| RAM (per node) | <85% | | |
-| Disk I/O wait | <10% | | |
-| Network saturation | <70% | | |
-| Temperature | <70°C | | |
-
-### 7. Ollama Cluster Scaling
-
-| Metric | 1 Replica | 2 Replicas | 3 Replicas | 6 Replicas |
-|--------|-----------|------------|------------|------------|
-| Concurrent Requests | 2 | 4 | 6 | 12 |
-| Avg Latency (p95) | | | | |
-| Error Rate | | | | |
-| Scale-up Time | N/A | | | |
-| Scale-down Time | N/A | | | |
+#### Metrics to Collect
+| Metric | Target | Alert Threshold |
+|--------|--------|-----------------|
+| TPS (transactions/sec) | > 1000 | < 500 |
+| Latency p50 | < 5ms | > 20ms |
+| Latency p95 | < 20ms | > 50ms |
+| Latency p99 | < 50ms | > 100ms |
+| Connection pool usage | < 80% | > 90% |
 
 ---
 
-## Test Results Summary
+## 2. Redis Benchmarks
 
-| Category | Tests Run | Passed | Failed | Pass Rate |
-|----------|-----------|--------|--------|-----------|
-| API Latency | 8 | | | |
-| Ollama Inference | 4 | | | |
-| Database | 5 | | | |
-| Storage I/O | 6 | | | |
-| Network | 5 | | | |
-| Resource Utilization | 5 | | | |
-| **Total** | **33** | | | |
+### Redis-Benchmark
+```bash
+# Run from a pod in the cluster
+kubectl run redis-benchmark --rm -i --tty --image=redis:7-alpine -- \
+  redis-benchmark -h homelab-redis.databases.svc.cluster.local \
+  -p 6379 -a $REDIS_PASSWORD \
+  -c 50 -n 100000 \
+  -t set,get,mset,mget,lpush,lpop,lrange,rpush,rpop \
+  --csv > redis-benchmark-$(date +%Y%m%d).csv
+```
 
----
+#### Key Tests
+```bash
+# Pipeline test (max throughput)
+redis-benchmark -h $HOST -p 6379 -c 100 -n 1000000 -P 50 -t set,get
 
-## Issues Found
+# Large values test
+redis-benchmark -h $HOST -p 6379 -d 10240 -c 50 -n 10000 -t set,get
 
-| Issue | Severity | Component | Impact | Recommendation |
-|-------|----------|-----------|--------|----------------|
-| | | | | |
+# Lua script test
+redis-benchmark -h $HOST -p 6379 -c 50 -n 100000 \
+  --lua-script 'return redis.call("set", KEYS[1], ARGV[1])' \
+  -t eval
+```
 
----
-
-## Recommendations
-
-| Recommendation | Priority | Effort | Expected Improvement |
-|----------------|----------|--------|---------------------|
-| | | | |
-
----
-
-## Test Artifacts
-
-| Artifact | Location |
-|----------|----------|
-| Raw Benchmark Data | `/mnt/benchmark-results/YYYYMMDD/` |
-| Grafana Dashboard Snapshot | `/mnt/benchmark-results/YYYYMMDD/grafana-snapshot.json` |
-| Prometheus Query Export | `/mnt/benchmark-results/YYYYMMDD/prometheus-export.json` |
-| Ollama Benchmark Logs | `/mnt/benchmark-results/YYYYMMDD/ollama-benchmark.log` |
+#### Metrics to Collect
+| Metric | Target | Alert Threshold |
+|--------|--------|-----------------|
+| SET ops/sec | > 50000 | < 20000 |
+| GET ops/sec | > 80000 | < 30000 |
+| Latency p99 | < 2ms | > 10ms |
+| Memory fragmentation | < 1.5 | > 2.0 |
+| Replication lag | < 10ms | > 100ms |
 
 ---
 
-## Tools Used
+## 3. HTTP Service Benchmarks
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| `hey` / `wrk` / `ab` | Latest | HTTP load testing |
-| `ollama` CLI | 0.3.x | LLM inference testing |
-| `sysbench` | Latest | CPU/Memory/IO benchmarks |
-| `iperf3` | Latest | Network bandwidth |
-| `fio` | Latest | Storage I/O |
-| `promtool` | 2.54.x | Prometheus query testing |
-| `hey` / `wrk` | Latest | HTTP benchmarking |
+### k6 Load Testing
+```javascript
+// k6-script.js
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+import { Rate } from 'k6/metrics';
+
+const errorRate = new Rate('errors');
+
+export const options = {
+  stages: [
+    { duration: '30s', target: 10 },   // Ramp up
+    { duration: '1m', target: 50 },    // Sustained load
+    { duration: '30s', target: 100 },  // Peak load
+    { duration: '30s', target: 0 },    // Ramp down
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<500', 'p(99)<2000'],
+    http_req_failed: ['rate<0.01'],
+    errors: ['rate<0.01'],
+  },
+};
+
+const BASE_URL = __ENV.BASE_URL || 'https://nextcloud.homelab.local';
+
+export default function() {
+  const endpoints = [
+    '/status.php',
+    '/index.php/login',
+    '/ocs/v2.php/apps/notifications/api/v2/notifications',
+    '/remote.php/dav/files/user/',
+  ];
+  
+  const url = BASE_URL + endpoints[Math.floor(Math.random() * endpoints.length)];
+  
+  const res = http.get(url, {
+    headers: {
+      'Accept-Encoding': 'br, gzip, deflate',
+      'User-Agent': 'k6-load-test/1.0',
+    },
+  });
+  
+  const success = check(res, {
+    'status is 200': (r) => r.status === 200,
+    'response time < 2s': (r) => r.timings.duration < 2000,
+    'has content': (r) => r.body.length > 0,
+  });
+  
+  errorRate.add(!success);
+  sleep(Math.random() * 2);
+}
+```
+
+```bash
+# Run k6 test
+kubectl run k6-test --rm -i --image=grafana/k6:latest -- \
+  run -e BASE_URL=https://nextcloud.homelab.local /scripts/k6-script.js
+```
+
+### Vegeta HTTP Benchmark
+```bash
+# Install vegeta
+# Test sustained rate
+echo "GET https://nextcloud.homelab.local/status.php" | \
+  vegeta attack -rate=100 -duration=60s | \
+  vegeta report
+
+# Test with multiple endpoints
+cat > targets.txt <<EOF
+GET https://nextcloud.homelab.local/status.php
+GET https://nextcloud.homelab.local/index.php/login
+GET https://vaultwarden.homelab.local/alive
+GET https://grafana.homelab.local/api/health
+EOF
+
+vegeta attack -targets=targets.txt -rate=50 -duration=120s | vegeta report
+vegeta attack -targets=targets.txt -rate=50 -duration=120s | vegeta plot > plot.html
+```
+
+#### Metrics to Collect
+| Metric | Target | Alert Threshold |
+|--------|--------|-----------------|
+| Success rate | > 99.9% | < 99.5% |
+| Latency p50 | < 100ms | > 500ms |
+| Latency p95 | < 500ms | > 2000ms |
+| Latency p99 | < 1000ms | > 5000ms |
+| Throughput (req/s) | > 100 | < 50 |
+| Error rate | < 0.1% | > 1% |
 
 ---
 
-## Historical Comparison
+## 4. Network Benchmarks
 
-| Metric | Previous (v1.6) | Current (v1.7) | Change |
-|--------|-----------------|----------------|--------|
-| Avg API Latency (p95) | | | |
-| Ollama Tokens/s (gemma:2b) | | | |
-| Backup Time (100GB) | | | |
-| Restore Time (100GB) | | | |
-| CPU Idle % | | | |
-| RAM Usage % | | | |
+### iperf3 (Pod-to-Pod)
+```bash
+# Server (run on one node)
+kubectl run iperf3-server --rm -i --image=networkstatic/iperf3 -- -s
+
+# Client (run on another node)
+kubectl run iperf3-client --rm -i --image=networkstatic/iperf3 \
+  -c iperf3-server.default.svc.cluster.local -t 60 -P 10 -J > iperf3-results.json
+
+# Bidirectional
+kubectl run iperf3-client --rm -i --image=networkstatic/iperf3 \
+  -c iperf3-server.default.svc.cluster.local -t 60 -P 10 -R -J
+```
+
+### Metrics to Collect
+| Metric | Target (1GbE) | Target (10GbE) |
+|--------|---------------|----------------|
+| Throughput (single stream) | > 900 Mbps | > 9 Gbps |
+| Throughput (10 streams) | > 950 Mbps | > 9.5 Gbps |
+| Latency (ping) | < 0.5ms | < 0.2ms |
+| Jitter | < 0.1ms | < 0.05ms |
+| Retransmits | < 0.1% | < 0.01% |
 
 ---
 
-## Sign-off
+## 5. Storage Benchmarks
 
-| Role | Name | Signature | Date |
-|------|------|-----------|------|
-| Tester | | | |
-| Reviewer | | | |
-| Approver | | | |
+### fio (Flexible I/O Tester)
+```bash
+# Create test PVC
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fio-test-pvc
+  namespace: databases
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 50Gi
+EOF
+
+# Run fio via pod
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fio-test
+  namespace: databases
+spec:
+  containers:
+  - name: fio
+    image: nixery.dev/shell/fio
+    command: ["fio", "--name=randrw", "--ioengine=libaio", "--iodepth=16",
+              "--rw=randrw", "--bs=4k", "--direct=1", "--size=10G",
+              "--numjobs=4", "--runtime=300", "--time_based",
+              "--group_reporting", "--output-format=json",
+              "--filename=/data/testfile"]
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: fio-test-pvc
+  restartPolicy: Never
+EOF
+
+# Get results
+kubectl logs fio-test -n databases
+```
+
+#### Tests to Run
+```bash
+# Sequential read
+--rw=read --bs=128k --iodepth=32
+
+# Sequential write
+--rw=write --bs=128k --iodepth=32
+
+# Random read (4K)
+--rw=randread --bs=4k --iodepth=16
+
+# Random write (4K)
+--rw=randwrite --bs=4k --iodepth=16
+
+# Mixed (70/30)
+--rw=randrw --rwmixread=70 --bs=4k --iodepth=16
+```
+
+#### Metrics to Collect
+| Metric | Target (SSD) | Target (NVMe) |
+|--------|--------------|---------------|
+| Seq Read | > 500 MB/s | > 3000 MB/s |
+| Seq Write | > 450 MB/s | > 2500 MB/s |
+| Rand Read 4K | > 80K IOPS | > 400K IOPS |
+| Rand Write 4K | > 70K IOPS | > 350K IOPS |
+| Latency p99 (read) | < 1ms | < 0.2ms |
+| Latency p99 (write) | < 2ms | < 0.5ms |
 
 ---
 
-*Template Version: 1.0 | homelab-prod Performance Benchmark*
-*Frequency: Quarterly or after major changes*
-*Next Review: Quarterly*
+## 6. Kubernetes Benchmarks
+
+### k8s Resource Utilization
+```bash
+# Cluster-wide resource usage
+kubectl top nodes --no-headers
+
+# Per-pod resource usage
+kubectl top pods -A --no-headers --sort-by=memory
+
+# HPA metrics
+kubectl get hpa -A
+
+# API server latency
+kubectl get --raw="/metrics" | grep apiserver_request_duration_seconds
+```
+
+### Cluster Autoscaler Metrics
+```promql
+# Node scale-up time
+histogram_quantile(0.95, rate(cluster_autoscaler_scale_up_duration_seconds_bucket[5m]))
+
+# Pending pods
+sum(kube_pod_status_phase{phase="Pending"})
+
+# Node utilization
+sum(rate(container_cpu_usage_seconds_total[5m])) by (node) / sum(kube_node_status_capacity_cpu_cores) by (node)
+```
+
+---
+
+## 7. CI/CD Integration
+
+### GitHub Actions Benchmark Workflow
+
+```yaml
+# .github/workflows/benchmark.yml
+name: Performance Benchmarks
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly Sunday 2 AM
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to benchmark'
+        required: true
+        type: choice
+        options: [postgresql, redis, nextcloud, vaultwarden, all]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+      
+      - name: Run PostgreSQL benchmark
+        if: inputs.service == 'postgresql' || inputs.service == 'all'
+        run: |
+          kubectl exec -n databases homelab-postgres-0 -- \
+            pgbench -c 20 -j 4 -T 300 homelab_db \
+            > pgbench-results.txt
+          # Extract metrics and compare with baseline
+      
+      - name: Run Redis benchmark
+        if: inputs.service == 'redis' || inputs.service == 'all'
+        run: |
+          kubectl run redis-benchmark --rm -i --image=redis:7-alpine -- \
+            redis-benchmark -h homelab-redis.databases -c 50 -n 100000 \
+            > redis-benchmark-results.txt
+      
+      - name: Run k6 HTTP benchmark
+        if: inputs.service == 'nextcloud' || inputs.service == 'all'
+        uses: grafana/k6-action@v0.2.0
+        with:
+          script: scripts/k6-benchmark.js
+          env: BASE_URL=https://nextcloud.homelab.local
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: *-results.txt
+          retention-days: 30
+      
+      - name: Compare with baseline
+        run: |
+          python3 scripts/compare-benchmarks.py \
+            --current pgbench-results.txt \
+            --baseline benchmarks/baselines/pgbench-baseline.txt \
+            --threshold 0.10  # 10% regression threshold
+```
+
+---
+
+## 8. Baseline Storage
+
+```bash
+# Directory structure
+benchmarks/
+├── baselines/
+│   ├── pgbench-baseline.txt
+│   ├── redis-baseline.txt
+│   ├── k6-nextcloud-baseline.json
+│   ├── iperf3-baseline.json
+│   └── fio-baseline.json
+├── results/
+│   ├── 2026-01-15/
+│   └── ...
+└── scripts/
+    ├── compare-benchmarks.py
+    └── generate-report.py
+```
+
+### Python Comparison Script
+```python
+# scripts/compare-benchmarks.py
+import json
+import argparse
+import sys
+
+def compare(current, baseline, threshold=0.10):
+    """Compare current metrics with baseline, alert on regression > threshold"""
+    regressions = []
+    improvements = []
+    
+    for metric, cur_val in current.items():
+        if metric in baseline:
+            base_val = baseline[metric]
+            change = (cur_val - base_val) / base_val
+            
+            if change < -threshold:
+                regressions.append(f"{metric}: {base_val} -> {cur_val} ({change:.1%})")
+            elif change > threshold:
+                improvements.append(f"{metric}: {base_val} -> {cur_val} ({change:.1%})")
+    
+    if regressions:
+        print("⚠️ REGRESSIONS DETECTED:")
+        for r in regressions:
+            print(f"  {r}")
+        return 1
+    
+    if improvements:
+        print("✅ IMPROVEMENTS:")
+        for i in improvements:
+            print(f"  {i}")
+    
+    return 0
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--current", required=True)
+    parser.add_argument("--baseline", required=True)
+    parser.add_argument("--threshold", type=float, default=0.10)
+    args = parser.parse_args()
+    
+    with open(args.current) as f:
+        current = json.load(f)
+    with open(args.baseline) as f:
+        baseline = json.load(f)
+    
+    sys.exit(compare(current, baseline, args.threshold))
+```
+
+---
+
+## 9. Grafana Dashboard for Benchmarks
+
+```json
+{
+  "title": "Performance Benchmarks",
+  "panels": [
+    {
+      "title": "PostgreSQL TPS Trend",
+      "type": "graph",
+      "targets": [
+        {"expr": "pgbench_tps", "legendFormat": "TPS"}
+      ]
+    },
+    {
+      "title": "Redis OPS/sec",
+      "type": "graph",
+      "targets": [
+        {"expr": "redis_ops_per_sec", "legendFormat": "OPS"}
+      ]
+    },
+    {
+      "title": "HTTP Latency p50/p95/p99",
+      "type": "graph",
+      "targets": [
+        {"expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "p50"},
+        {"expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "p95"},
+        {"expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "p99"}
+      ]
+    },
+    {
+      "title": "Benchmark Regression Alert",
+      "type": "stat",
+      "targets": [
+        {"expr": "benchmark_regression", "legendFormat": "Regressions"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 10. Runbook Integration
+
+Each benchmark should have a corresponding runbook section:
+
+```markdown
+# Benchmark Runbook: PostgreSQL
+
+## When to Run
+- Weekly (automated)
+- After PostgreSQL version upgrade
+- After configuration changes
+- Before/after major deployments
+
+## How to Run
+1. `kubectl exec -n databases homelab-postgres-0 -- pgbench -c 20 -j 4 -T 300 homelab_db`
+2. Record TPS, latency percentiles
+3. Compare with baseline in `benchmarks/baselines/pgbench-baseline.txt`
+
+## Expected Results
+- TPS: > 1000
+- Latency p50: < 5ms
+- Latency p95: < 20ms
+- Latency p99: < 50ms
+
+## Troubleshooting
+- Low TPS: Check autovacuum, indexes, connection pooling
+- High latency: Check I/O, locks, long-running queries
+- Run EXPLAIN ANALYZE on slow queries
+```
+
+---
+
+## 11. Automation Schedule
+
+| Benchmark | Frequency | Automation |
+|-----------|-----------|------------|
+| PostgreSQL (pgbench) | Weekly | GitHub Actions |
+| Redis (redis-benchmark) | Weekly | GitHub Actions |
+| HTTP Services (k6) | Weekly | GitHub Actions |
+| Network (iperf3) | Monthly | CronJob |
+| Storage (fio) | Monthly | CronJob |
+| Kubernetes (kube-bench) | Weekly | GitHub Actions |
+
+---
+
+## 12. Alerting Rules
+
+```yaml
+# config/prometheus/rules/benchmark-alerts.yaml
+groups:
+- name: benchmark
+  rules:
+  - alert: BenchmarkRegression
+    expr: benchmark_regression > 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Performance regression detected"
+      description: "Benchmark {{ $labels.benchmark }} regressed by {{ $value }}%"
+      
+  - alert: BenchmarkOverdue
+    expr: time() - benchmark_last_run_timestamp > 604800  # 7 days
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Benchmark overdue"
+      description: "{{ $labels.benchmark }} hasn't run in over 7 days"
+```
