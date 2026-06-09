@@ -4,6 +4,32 @@
 
 ---
 
+## [v1.5.0] — In Progress (Supply Chain Hardening)
+### Added (v1.5.0-rc1)
+- **Supply Chain Security workflow** (`.github/workflows/supply-chain.yml`)
+  - Syft SBOM generation for all images
+  - Cosign keyless signing (OIDC) for images
+  - Trivy gate: fails build on CRITICAL vulnerabilities
+  - Dependency Policy check (unpinned images, digest pinning check)
+  - Daily quick Trivy scan (HIGH+CRITICAL)
+- **DEPENDENCY_POLICY.md** — Comprehensive supply chain policy
+- **Dependency Policy Check** in CI (unpinned images, digest check)
+
+### Changed
+- Trivy workflow split: daily quick scan + weekly full supply chain
+- CI pipeline now enforces supply chain security
+
+### Security
+- CI fails on CRITICAL vulnerabilities
+- Unpinned images (`:latest`) blocked in CI
+- SBOMs generated for all images (SPDX-JSON)
+- Images signed with Cosign (keyless OIDC)
+
+### Documentation
+- **DEPENDENCY_POLICY.md** — Complete supply chain policy
+
+---
+
 ## [v1.4.0] — 2026-06-09
 ### Added
 - **Authelia SSO + 2FA** stack (Redis 7 + Authelia 4.38)
@@ -31,7 +57,7 @@
 
 ### Documentation
 - **ADR-006**: Threat Model (STRIDE)
-- **Runbooks**: Service Down, Backup Failure, Security Incident, Runbooks Index
+- **Runbooks**: Service Down, Backup Failure, Security Incident
 - **SETUP_GUIDE.md**: Updated for v1.4 (Authelia, CrowdSec, DNS-01 setup)
 - **CHANGELOG.md**: v1.4 released
 - **VERSION_ROADMAP.md**: v1.4 marked complete
@@ -166,16 +192,6 @@
 - README with quick start
 - HERMES_ON_PI.md install guide
 - V1_CHECKLIST.md acceptance criteria
-
----
-
-## [v1.5.0] — Planned (Supply Chain Hardening)
-### Added
-- Syft SBOM on every image build
-- Cosign keyless signing (OIDC)
-- Trivy gate in CI: fail on CRITICAL
-- Renovate: auto-merge only after Trivy pass
-- Dependency policy doc
 
 ---
 
