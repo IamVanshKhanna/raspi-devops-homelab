@@ -13,6 +13,11 @@
 - **Tempo** stack (config/tempo, stacks/tracing)
 - **OpenTelemetry Collector** (otel-collector) with OTLP receivers
 - **make verify-tracing** target for tracing verification
+- **Daily health summary** systemd timer (`scripts/daily-health-summary.sh`, `homelab-daily-summary.{service,timer}`)
+- **Supply chain verification** in deploy pipeline (`scripts/verify-supply-chain.sh`)
+- **Image digest pinning** helper (`scripts/pin-images-to-digest.sh`)
+- **Infisical migration** helper (`scripts/migrate-to-infisical.sh`)
+- **Secret rotation documentation** (`docs/SECRET_ROTATION.md`)
 
 ### Changed
 - **Makefile**: Added tracing stack (phase 9), up-tracing, verify-tracing
@@ -22,15 +27,25 @@
 - **tts-alerts skill**: edge-tts/espeak for critical alerts
 
 ### Automation
-- **cronjob-ops**: Daily health summaries via Telegram, weekly backup verification
+- **cronjob-ops**: Daily health summaries via Telegram, weekly reports
 - **tts-alerts**: edge-tts/espeak for critical alerts (optional)
 - **Hermes skills**: Now 7 auto-loaded (homelab-ops, gitops-helper, backup-ops, security-audit, capacity-plan, cronjob-ops, tts-alerts)
+
+### Scripts & Tools
+- `scripts/daily-health-summary.sh` - Daily health summary generator
+- `scripts/homelab-daily-summary.{service,timer}` - Systemd timer for daily summary
+- `scripts/verify-supply-chain.sh` - Supply chain verification in deploy
+- `scripts/pin-images-to-digest.sh` - Image digest pinning helper
+- `scripts/migrate-to-infisical.sh` - Infisical migration helper
+- `scripts/daily-health-summary.sh` - Daily health summary generator
+- `scripts/homelab-daily-summary.{service,timer}` - Systemd timer
+- `docs/SECRET_ROTATION.md` - Secret rotation procedures
 
 ### Security
 - Skills follow ADR-005 trust model (read-only by default, confirmation required)
 
 ### Documentation
-- **HERMES_ON_PI.md**: Updated with cronjob-ops and tts-alerts
+- **HERMES_ON_PI.md**: Added cronjob-ops and tts-alerts skills
 - **VERSION_ROADMAP.md**: v1.6 marked complete
 - **CHANGELOG.md**: v1.6 released
 
@@ -57,6 +72,11 @@
 - SBOMs generated for all images (SPDX-JSON)
 - Images signed with Cosign (keyless OIDC)
 
+### Scripts & Tools
+- `scripts/pin-images-to-digest.sh` - Migrate tags to digest pinning
+- `scripts/verify-supply-chain.sh` - Supply chain verification in deploy
+- `scripts/migrate-to-infisical.sh` - Infisical migration helper
+
 ### Documentation
 - **DEPENDENCY_POLICY.md** — Complete supply chain policy
 
@@ -70,6 +90,7 @@
 - **CrowdSec** stack for intrusion detection (PostgreSQL + CrowdSec)
 - **Runbooks**: Service Down, Backup Failure, Security Incident
 - **ADR-006**: Threat Model (STRIDE) documentation
+- **Syft + Cosign** in CI for SBOM + signing (workflow)
 - **Makefile**: auth, crowdsec stacks and verify targets
 
 ### Changed
@@ -107,6 +128,7 @@
 ### Changed
 - **HERMES_ON_PI.md**: Updated with all 5 skills (2 existing + 3 new), auto-loaded
 - **Profile config**: All 5 skills now auto-loaded
+- **Hermes health check** includes skill metadata
 
 ### Security
 - All new skills follow ADR-005 trust model:

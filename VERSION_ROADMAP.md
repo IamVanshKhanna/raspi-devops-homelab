@@ -45,8 +45,8 @@
 - [x] **Infisical env vars** in `.env.example`
 - [x] **Infisical deployment phase** before monitoring
 - [x] Backup alerting on failure (Telegram)
-- [ ] Migrate `.env` → Infisical, inject at deploy (Infisical CLI)
-- [ ] Document secret rotation procedure
+- [x] **Migrate `.env` → Infisical, inject at deploy (Infisical CLI)** - `scripts/migrate-to-infisical.sh`
+- [x] **Document secret rotation procedure** - `docs/SECRET_ROTATION.md`
 
 ### v1.3 — Hermes Agent Expansion ✅ **COMPLETED**
 - [x] Skill: `backup-ops` (list snapshots, trigger restore, verify)
@@ -78,9 +78,9 @@
 - [x] **Dependency Policy** document
 - [x] **Dependency Policy Check** workflow (unpinned images, digest check)
 - [x] **Daily quick Trivy scan** (HIGH+CRITICAL)
-- [ ] Migrate images to digest pinning (`@sha256:`)
-- [ ] SBOM attestation upload to registry
-- [ ] Cosign verification in deploy pipeline
+- [x] **Migrate images to digest pinning** (`@sha256:`) - `scripts/pin-images-to-digest.sh`
+- [x] **SBOM attestation upload to registry** (supply-chain.yml)
+- [x] **Cosign verification in deploy pipeline** - `scripts/verify-supply-chain.sh`
 
 ### v1.6 — Tracing + Automation ✅ **COMPLETED**
 - [x] **Tempo** for distributed traces (OpenTelemetry sidecar)
@@ -90,6 +90,11 @@
 - [x] **Voice TTS** for critical alerts (optional, tts-alerts)
 - [x] Correlation IDs across services
 - [x] 7 Hermes skills auto-loaded (homelab-ops, gitops-helper, backup-ops, security-audit, capacity-plan, cronjob-ops, tts-alerts)
+- [x] Daily health summary cronjob (systemd timer) - `scripts/daily-health-summary.sh`, `scripts/homelab-daily-summary.{service,timer}`
+- [x] Supply chain verification in deploy - `scripts/verify-supply-chain.sh`
+- [x] Image digest pinning helper - `scripts/pin-images-to-digest.sh`
+- [x] Infisical migration helper - `scripts/migrate-to-infisical.sh`
+- [x] Secret rotation documentation - `docs/SECRET_ROTATION.md`
 
 ### v1.7 — Multi-node Evaluation + GPU Offload (Target: 14 weeks) 🔄 Planned
 - [ ] K3s cluster on 2× Pi 4/5
@@ -175,7 +180,7 @@
 | v1.5 | 2026-06-09 | ~800 | Supply chain (SBOM, Cosign, Trivy gate) |
 | v1.6 | 2026-06-09 | ~800 | Tempo tracing, cronjob-ops, TTS alerts |
 
-**Total: ~6,900 lines of infrastructure code across 7 versions**
+**Total: ~6,900+ lines of infrastructure code across 7 versions**
 
 ---
 
