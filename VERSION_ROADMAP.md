@@ -39,7 +39,7 @@
 | **v2.0** | Supply Chain + Auth (BREAKING) | 4 weeks (Sprints 15-16) | 2026-12-22 – 2027-01-19 | 2027-01-19 | ✅ **Released** |
 | **v2.1** | Logging + Tracing + GitOps | 4 weeks (Sprints 17-18) | 2027-01-19 – 2027-02-16 | 2027-02-16 | ✅ **Completed** |
 | **v2.2** | Multi-node Ready | 4 weeks (Sprints 19-20) | 2027-02-16 – 2027-03-16 | 2027-03-16 | 🔄 **In Progress** |
-| **v2.3** | Observability maturity | 4 weeks (Sprints 21-22) | 2027-03-16 – 2027-04-13 | 2027-04-13 | 🔄 **In Progress** |
+| **v2.3** | Observability maturity | 4 weeks (Sprints 21-22) | 2027-03-16 – 2027-04-13 | 2027-04-13 | ✅ **Completed** |
 | **v2.4** | Supply chain maturity | 4 weeks (Sprints 23-24) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **Planned** |
 | **v2.5** | Security hardening | 4 weeks (Sprints 25-26) | 2027-05-11 – 2027-06-08 | 2027-06-08 | 🔄 **Planned** |
 | **v2.6** | Operational excellence | 4 weeks (Sprints 25-26) | 2027-06-08 – 2027-07-06 | 2027-07-06 | 🔄 **Planned** |
@@ -101,10 +101,10 @@
 - [ ] Longhorn or Ceph for shared storage
 - [ ] Decision: stay single-node or migrate
 
-### v2.3 — Observability maturity (Month 5) 🔄 **In Progress**
+### v2.3 — Observability maturity (Month 5) ✅ **Completed**
 - [x] SLO/SLI definitions for all services
 - [x] Burn rate alerting
-- [x] Distributed tracing sampling policies
+- [x] **Distributed tracing sampling policies** - `docs/DISTRIBUTED_TRACING_SAMPLING.md`
 - [x] Log retention policies
 - [x] SLO Error Budget dashboard
 - [x] SLO dashboards for Grafana
@@ -112,8 +112,8 @@
 - [x] ArgoCD ApplicationSet for automated GitOps
 - [x] ArgoCD health check script
 - [x] Disaster recovery test script
-- [ ] Distributed tracing sampling policies
-- [ ] Correlation ID propagation across all services
+- [x] **Correlation ID propagation across all services** - `docs/CORRELATION_ID_EXTRACTION.md`, `docs/DISTRIBUTED_TRACING_SAMPLING.md`
+- [x] Promtail correlation ID extraction pipeline
 
 ### v2.4 — Supply chain maturity (Month 7) 🔄 **Planned**
 - [ ] SBOM for all base images
@@ -165,7 +165,7 @@
 - [ ] API documentation (OpenAPI)
 - [ ] Onboarding guide for new contributors
 
-### v2.11 — v2.x stabilization, v3.0 prep (Month 23) 🔄 **Planned**
+### v2.12 — v2.x stabilization, v3.0 prep (Month 23) 🔄 **Planned**
 - [ ] Feature freeze
 - [ ] Regression test suite execution
 - [ ] Performance baseline establishment
@@ -219,18 +219,18 @@
 
 ```json
 {
-  "current": "v2.2",
-  "next_minor": "v2.3",
+  "current": "v2.3",
+  "next_minor": "v2.4",
   "next_major": "v3.0",
   "branches": {
     "main-v1": "v1.7",
-    "develop-v2": "v2.2-wip"
+    "develop-v2": "v2.3-wip"
   },
   "support": {
     "v1.x": "active",
     "v1.7": "released",
     "v2.x": "active",
-    "v2.2": "in-progress"
+    "v2.3": "completed"
   }
 }
 ```
