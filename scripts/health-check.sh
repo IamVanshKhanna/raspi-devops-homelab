@@ -28,6 +28,7 @@ EXPECTED_CONTAINERS=(
   infisical infisical-db infisical-redis
   authelia authelia-redis
   crowdsec crowdsec-db
+  tempo otel-collector
 )
 
 CHECK_LOKI=true
@@ -35,6 +36,8 @@ CHECK_ALERTMANAGER=true
 CHECK_INFISICAL=true
 CHECK_AUTHELIA=true
 CHECK_CROWDSEC=true
+CHECK_TEMPO=true
+CHECK_OTEL=true
 
 FAILED=0
 WARNINGS=0
@@ -127,6 +130,30 @@ if $CHECK_CROWDSEC; then
     printf "${GREEN}CrowdSec reachable${NC}\n"
   else
     printf "${RED}CrowdSec not reachable${NC}\n"
+    FAILED=$((FAILED + 1))
+  fi
+fi
+
+# Check Tempo
+if $CHECK_TEMPO; then
+  log ""
+  log "--- Tempo Tracing Check ---"
+  if curl -sf http://localhost:3200/ready >/dev/null 2>&1; then
+    printf "${GREEN}Tempo reachable${NC}\n"
+  else
+    printf "${RED}Tempo not reachable${NC}\n"
+    FAILED=$((FAILED + 1))
+  fi
+fi
+
+# Check OTEL Collector
+if $CHECK_OTEL; then
+  log ""
+  log "--- OTEL Collector Check ---"
+  if curl -sf http://localhost:8888/metrics >/dev/null 2>&1; then
+    printf "${GREEN}OTEL Collector reachable${NC}\n"
+  else
+    printf "${RED}OTEL Collector not reachable${NC}\n"
     FAILED=$((FAILED + 1))
   fi
 fi

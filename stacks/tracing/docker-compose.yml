@@ -1,0 +1,60 @@
+# STACK: TRACING — Tempo + OpenTelemetry Collector
+# Distributed tracing for homelab services
+# Access via Grafana at tempo.DOMAIN
+
+version: "3.8"
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  tempo_data:
+  otel_config:
+
+services:
+  tempo:
+    # Check latest: https://github.com/grafana/tempo/releases
+    image: grafana/tempo:2.4.0
+    container_name: tempo
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "127.0.0.1:3200:3200"
+      - "127.0.0.1:4317:4317"  # OTLP gRPC
+      - "127.0.0.1:4318:4318"  # OTLP HTTP
+      - "127.0.0.1:9411:9411"  # Zipkin
+    volumes:
+      - tempo_data:/var/tempo
+      - ../../config/tempo/tempo.yml:/etc/tempo.yaml:ro
+    command:
+      - '-config.file=/etc/tempo.yaml'
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tempo.rule=Host(`tempo.${DOMAIN}`)"
+      - "traefik.http.routers.tempo.entrypoints=websecure"
+      - "traefik.http.routers.tempo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.tempo.loadbalancer.server.port=3200"
+
+  otel-collector:
+    # Check latest: https://github.com/open-telemetry/opentelemetry-collector-releases
+    image: otel/opentelemetry-collector-contrib:0.106.0
+    container_name: otel-collector
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "127.0.0.1:4317:4317"  # OTLP gRPC
+      - "127.0.0.1:4318:4318"  # OTLP HTTP
+      - "127.0.0.1:8888:8888"  # Prometheus metrics
+    volumes:
+      - ../../config/otel/otel-config.yaml:/etc/otel-config.yaml:ro
+    command:
+      - '--config=/etc/otel-config.yaml'
+    mem_limit: 256m
+    cpus: 0.25
+    depends_on:
+      - tempo

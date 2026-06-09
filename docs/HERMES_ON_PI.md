@@ -21,7 +21,7 @@ pip install textual rich pyyaml python-dotenv
 
 ---
 
-## 2. Create Homelab Profile (v1.3)
+## 2. Create Homelab Profile (v1.6)
 
 ```bash
 mkdir -p ~/.hermes/profiles/homelab/skills
@@ -70,6 +70,8 @@ skills:
     - backup-ops
     - security-audit
     - capacity-plan
+    - cronjob-ops
+    - tts-alerts
   available:
     - github-code-review
     - github-pr-workflow
@@ -79,10 +81,10 @@ EOF
 
 ---
 
-## 3. Install Skills (v1.3: 5 skills)
+## 3. Install Skills (v1.6: 7 skills)
 
 ```bash
-# homelab-ops (existing)
+# homelab-ops (v1.1)
 mkdir -p ~/.hermes/profiles/homelab/skills/homelab-ops
 cat > ~/.hermes/profiles/homelab/skills/homelab-ops/SKILL.md << 'EOF'
 ---
@@ -116,7 +118,7 @@ version: 1.1.0
 - Any `sudo` or file writes
 EOF
 
-# gitops-helper (existing)
+# gitops-helper (v1.1)
 mkdir -p ~/.hermes/profiles/homelab/skills/gitops-helper
 cat > ~/.hermes/profiles/homelab/skills/gitops-helper/SKILL.md << 'EOF'
 ---
@@ -139,7 +141,7 @@ version: 1.1.0
 - **Never** `git commit`/`push`/`pr create` — outputs diff + instructions
 EOF
 
-# backup-ops (NEW v1.3)
+# backup-ops (v1.3)
 mkdir -p ~/.hermes/profiles/homelab/skills/backup-ops
 cat > ~/.hermes/profiles/homelab/skills/backup-ops/SKILL.md << 'EOF'
 ---
@@ -187,7 +189,7 @@ category: homelab
 > "What's the size of the last backup?"
 EOF
 
-# security-audit (NEW v1.3)
+# security-audit (v1.3)
 mkdir -p ~/.hermes/profiles/homelab/skills/security-audit
 cat > ~/.hermes/profiles/homelab/skills/security-audit/SKILL.md << 'EOF'
 ---
@@ -231,7 +233,7 @@ category: homelab
 > "Check if any deployed images have unfixed high-severity CVEs"
 EOF
 
-# capacity-plan (NEW v1.3)
+# capacity-plan (v1.3)
 mkdir -p ~/.hermes/profiles/homelab/skills/capacity-plan
 cat > ~/.hermes/profiles/homelab/skills/capacity-plan/SKILL.md << 'EOF'
 ---
@@ -301,6 +303,155 @@ rate(container_memory_usage_bytes[30d])
 > "Generate capacity planning report"
 > "What's the disk growth rate per day?"
 EOF
+
+# cronjob-ops (NEW v1.6)
+mkdir -p ~/.hermes/profiles/homelab/skills/cronjob-ops
+cat > ~/.hermes/profiles/homelab/skills/cronjob-ops/SKILL.md << 'EOF'
+---
+name: cronjob-ops
+description: Scheduled operations and automated health summaries
+version: 1.0.0
+category: homelab
+---
+
+## Triggers
+- "daily health summary"
+- "schedule health check"
+- "weekly report"
+- "run cron job"
+
+## Allowed Commands (read-only, no confirmation)
+- `make verify-v1`
+- `make verify-health`
+- `make verify-backup`
+- `./scripts/health-check.sh --quiet`
+- `restic -r $RESTIC_REPOSITORY snapshots --latest 5`
+- `free -h && df -h /mnt/data /mnt/backup`
+- `vcgencmd measure_temp`
+
+## Allowed Actions (require confirmation)
+- **Send daily summary via Telegram**: Send formatted health summary to TELEGRAM_CHAT_ID
+- **Run weekly backup verify**: `./scripts/restore-test.sh`
+- **Generate weekly report**: Compile metrics, alerts, and capacity trends
+
+## Forbidden
+- Any `docker stop/rm/kill`
+- Any `docker compose down`
+- Any `sudo` or file writes
+- Modifying cron jobs
+
+## Context Variables
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `RESTIC_REPOSITORY`
+- `RESTIC_PASSWORD`
+- `B2_ACCOUNT_ID`
+- `B2_ACCOUNT_KEY`
+
+## Example Usage
+> "Send me a daily health summary"
+> "Run the weekly backup verification"
+> "Generate a weekly system report"
+
+## Cron Schedule (systemd timer recommended)
+```ini
+# /etc/systemd/system/homelab-daily-summary.timer
+[Unit]
+Description=Daily Homelab Health Summary
+Requires=homelab-daily-summary.service
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+```ini
+# /etc/systemd/system/homelab-daily-summary.service
+[Unit]
+Description=Generate and send daily homelab health summary
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=vansh
+Environment=HOME=/home/vansh
+WorkingDirectory=/home/vansh/homelab-prod
+ExecStart=/home/vansh/hermes-agent/.venv/bin/hermes --profile homelab "send daily health summary via Telegram"
+```
+EOF
+
+# tts-alerts (NEW v1.6)
+mkdir -p ~/.hermes/profiles/homelab/skills/tts-alerts
+cat > ~/.hermes/profiles/homelab/skills/tts-alerts/SKILL.md << 'EOF'
+---
+name: tts-alerts
+description: Text-to-speech for critical alerts and notifications
+version: 1.0.0
+category: homelab
+---
+
+## Triggers
+- "speak alert"
+- "read alert"
+- "announce"
+- "tts"
+
+## Allowed Commands (require confirmation)
+- **Speak text via edge-tts**: `edge-tts --voice en-US-AriaNeural --text "<text>" --write-media /tmp/alert.mp3 && mpv /tmp/alert.mp3`
+- **Speak text via espeak**: `espeak -v en+f3 -s 150 "<text>"`
+- **Send TTS to Telegram**: Use Telegram bot API to send voice message
+
+## Allowed Actions (require confirmation)
+- **Speak critical alert**: Read alert summary aloud
+- **Speak daily summary**: Read daily health summary aloud
+
+## Forbidden
+- Any unbounded TTS loops
+- Speaking sensitive data (passwords, tokens, keys)
+- Volume above 80%
+
+## Context Variables
+- `TTS_ENGINE` (edge-tts, espeak, pico2wave)
+- `TTS_VOICE` (e.g., en-US-AriaNeural, en+f3)
+- `ALERT_VOLUME` (0-100)
+
+## Example Usage
+> "Speak the critical alert: Nextcloud is down"
+> "Read the daily health summary aloud"
+> "Announce: Backup completed successfully"
+
+## Systemd Service for TTS Alerts
+```ini
+# /etc/systemd/system/homelab-tts-alert.service
+[Unit]
+Description=Homelab TTS Alert
+After=network.target
+
+[Service]
+Type=oneshot
+User=vansh
+Environment=HOME=/home/vansh
+ExecStart=/usr/bin/edge-tts --voice en-US-AriaNeural --text "%i" --write-media /tmp/alert.mp3 && /usr/bin/mpv /tmp/alert.mp3
+
+# /etc/systemd/system/homelab-tts-alert.timer
+[Unit]
+Description=Trigger TTS alert
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+Persistent=false
+```
+
+## Edge-TTS Installation
+```bash
+pip install edge-tts
+# or
+pip install --user edge-tts
+```
+EOF
 ```
 
 ---
@@ -364,7 +515,7 @@ ssh vansh@pi4b-homelab "hermes --profile homelab 'health check'"
 
 ---
 
-## 6. Usage Examples (v1.3)
+## 6. Usage Examples (v1.6)
 
 ```bash
 # Health summary
@@ -382,30 +533,55 @@ hermes --profile homelab "add trivy scan job to .github/workflows/ci.yml"
 # Check backup status
 hermes --profile homelab "when was last restic snapshot and verify it"
 
-# NEW v1.3: Backup operations
+# Backup operations
 hermes --profile homelab "list restic snapshots"
 hermes --profile homelab "verify backup repository"
 hermes --profile homelab "restore latest snapshot to /mnt/restore-test"
 
-# NEW v1.3: Security audit
+# Security audit
 hermes --profile homelab "scan nextcloud image for critical vulnerabilities"
 hermes --profile homelab "generate CVE report for all images"
 
-# NEW v1.3: Capacity planning
+# Capacity planning
 hermes --profile homelab "when will /mnt/data run out of space"
 hermes --profile homelab "generate capacity planning report"
+
+# NEW v1.6: Cronjob operations
+hermes --profile homelab "send daily health summary"
+hermes --profile homelab "run weekly backup verification"
+hermes --profile homelab "generate weekly system report"
+
+# NEW v1.6: TTS alerts
+hermes --profile homelab "speak the critical alert: Nextcloud is down"
+hermes --profile homelab "read the daily health summary aloud"
+hermes --profile homelab "announce: Backup completed successfully"
 ```
 
 ---
 
-## 7. Skills Summary (v1.3)
+## Skills Summary (v1.6)
 
-| Skill | Category | Trust | Auto-load |
-|-------|----------|-------|-----------|
-| `homelab-ops` | homelab | Medium | ✅ |
-| `gitops-helper` | gitops | Medium | ✅ |
-| `backup-ops` | backup | High | ✅ |
-| `security-audit` | security | Medium | ✅ |
-| `capacity-plan` | capacity | Low | ✅ |
+| Skill | Category | Trust | Auto-load | Version |
+|-------|----------|-------|-----------|---------|
+| `homelab-ops` | homelab | Medium | ✅ | 1.1.0 |
+| `gitops-helper` | gitops | Medium | ✅ | 1.1.0 |
+| `backup-ops` | backup | High | ✅ | 1.0.0 |
+| `security-audit` | security | Medium | ✅ | 1.0.0 |
+| `capacity-plan` | capacity | Low | ✅ | 1.0.0 |
+| `cronjob-ops` | homelab | Medium | ✅ | 1.0.0 |
+| `tts-alerts` | homelab | Medium | ✅ | 1.0.0 |
 
-All 5 skills auto-loaded for maximum utility.
+All 7 skills auto-loaded for maximum utility.
+
+---
+
+## 8. Edge-TTS Installation (for TTS alerts)
+
+```bash
+pip install edge-tts
+# or
+pip install --user edge-tts
+
+# Test
+edge-tts --voice en-US-AriaNeural --text "Homelab alert test" --write-media /tmp/test.mp3 && mpv /tmp/test.mp3
+```
