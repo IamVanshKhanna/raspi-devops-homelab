@@ -30,8 +30,6 @@
 | **v1.11** | Documentation polish, runbook updates | 2 weeks (Sprint 13) | 2026-11-24 | — | 🔄 **Planned** |
 | **v1.12** | Feature freeze, v1.x stabilization | 2 weeks (Sprint 14) | 2026-12-08 | — | 🔄 **Planned** |
 
----
-
 ### v1.1 — Observability Hardening ✅ **COMPLETED**
 - [x] Loki + Promtail for centralized logs
 - [x] Alertmanager + Telegram alerts
@@ -117,195 +115,58 @@
 
 | Version | Focus | Target | Timeline | Estimated Date | Status |
 |---------|-------|--------|----------|----------------|--------|
-| **v2.0** | Supply Chain + Auth (BREAKING) | 4 weeks (Sprints 15-16) | 2026-12-22 – 2027-01-19 | 2027-01-19 | 🔄 **PLANNED — BREAKING CHANGES** |
-| **v2.1** | Logging + Tracing | 4 weeks (Sprints 17-18) | 2027-01-19 – 2027-02-16 | 2027-02-16 | 🔄 **PLANNED** |
-| **v2.2** | Multi-node Ready | 4 weeks (Sprints 19-20) | 2027-02-16 – 2027-03-16 | 2027-03-16 | 🔄 **PLANNED** |
-| **v2.3** | Observability maturity | 4 weeks (Sprints 21-20) | 2027-03-16 – 2027-04-13 | 2027-04-13 | 🔄 **PLANNED** |
-| **v2.4** | Supply chain maturity | 4 weeks (Sprints 21-22) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **PLANNED** |
-| **v2.5** | Security hardening | 4 weeks (Sprints 23-24) | 2027-05-11 – 2027-06-08 | 2027-06-08 | 🔄 **PLANNED** |
-| **v2.6** | Operational excellence | 4 weeks (Sprints 25-26) | 2027-06-08 – 2027-07-06 | 2027-07-06 | 🔄 **PLANNED** |
-| **v2.7** | Performance optimization | 4 weeks (Sprints 27-28) | 2027-07-06 – 2027-08-03 | 2027-08-03 | 🔄 **PLANNED** |
-| **v2.8** | Multi-cluster readiness | 4 weeks (Sprints 29-30) | 2027-08-03 – 2027-09-30 | 2027-09-30 | 🔄 **PLANNED** |
-| **v2.9** | Disaster recovery maturity | 4 weeks (Sprints 31-32) | 2027-09-30 – 2027-10-28 | 2027-10-28 | 🔄 **PLANNED** |
-| **v2.9** | Platform stability | 4 weeks (Sprints 33-34) | 2027-10-28 – 2027-11-25 | 2027-11-25 | 🔄 **PLANNED** |
-| **v2.10** | Cost optimization | 4 weeks (Sprints 35-36) | 2027-11-25 – 2027-12-23 | 2027-12-23 | 🔄 **PLANNED** |
-| **v2.11** | Documentation refresh | 4 weeks (Sprints 37-38) | 2027-12-23 – 2028-01-20 | 2028-01-20 | 🔄 **PLANNED** |
-| **v2.11** | Year-end polish, v2.x stabilization | 4 weeks (Sprints 39-40) | 2028-01-20 – 2028-02-17 | 2028-02-17 | 🔄 **PLANNED** |
-| **v2.11** | v2.x stabilization, v3.0 prep | 4 weeks (Sprints 41-42) | 2028-02-17 – 2028-03-17 | 2028-03-17 | 🔄 **PLANNED** |
+| **v2.0** | Supply Chain + Auth (BREAKING) | 4 weeks (Sprints 15-16) | 2026-12-22 – 2027-01-19 | 2027-01-19 | ✅ **Released** |
+| **v2.1** | Logging + Tracing + GitOps | 4 weeks (Sprints 17-18) | 2027-01-19 – 2027-02-16 | 2027-02-16 | 🔄 **In Progress** |
+| **v2.2** | Multi-node Ready | 4 weeks (Sprints 19-20) | 2027-02-16 – 2027-03-16 | 2027-03-16 | 🔄 **Planned** |
+| **v2.3** | Observability maturity | 4 weeks (Sprints 21-20) | 2027-03-16 – 2027-04-13 | 2027-04-13 | 🔄 **Planned** |
+| **v2.4** | Supply chain maturity | 4 weeks (Sprints 21-22) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **Planned** |
+| **v2.5** | Security hardening | 4 weeks (Sprints 23-24) | 2027-05-11 – 2027-06-08 | 2027-06-08 | 🔄 **Planned** |
+| **v2.6** | Operational excellence | 4 weeks (Sprints 25-26) | 2027-06-08 – 2027-07-06 | 2027-07-06 | 🔄 **Planned** |
+| **v2.7** | Performance optimization | 4 weeks (Sprints 27-28) | 2027-07-06 – 2027-08-03 | 2027-08-03 | 🔄 **Planned** |
+| **v2.8** | Multi-cluster readiness | 4 weeks (Sprints 29-30) | 2027-08-03 – 2027-09-30 | 2027-09-30 | 🔄 **Planned** |
+| **v2.9** | Disaster recovery maturity | 4 weeks (Sprints 31-32) | 2027-09-30 – 2027-10-28 | 2027-10-28 | 🔄 **Planned** |
+| **v2.9** | Platform stability | 4 weeks (Sprints 33-34) | 2027-10-28 – 2027-11-25 | 2027-11-25 | 🔄 **Planned** |
+| **v2.10** | Cost optimization | 4 weeks (Sprints 35-36) | 2027-11-25 – 2027-12-23 | 2027-12-23 | 🔄 **Planned** |
+| **v2.11** | Documentation refresh | 4 weeks (Sprints 37-38) | 2027-12-23 – 2028-01-20 | 2028-01-20 | 🔄 **Planned** |
+| **v2.11** | Year-end polish, v2.x stabilization | 4 weeks (Sprints 39-40) | 2028-01-20 – 2028-02-17 | 2028-02-17 | 🔄 **Planned** |
+| **v2.11** | v2.x stabilization, v3.0 prep | 4 weeks (Sprints 41-42) | 2028-02-17 – 2028-03-17 | 2028-03-17 | 🔄 **Planned** |
 
-### v2.0 — Supply Chain + Auth (Quarter 1) 🔄 **PLANNED — BREAKING CHANGES**
+### v2.0 — Supply Chain + Auth (Quarter 1) ✅ **RELEASED**
 **Breaking:** All external access via Authelia ForwardAuth
-- [ ] Authelia + Redis session store
-- [ ] Traefik middleware: `forwardauth` on all routers
-- [ ] Per-service groups: `admin`, `family`, `services`
-- [ ] Tailscale ACLs aligned with Authelia groups
-- [ ] Infisical for all secrets (no `.env` in repo)
-- [ ] Cloudflare DNS-01 → wildcard certs, port 80 closed
-- [ ] Syft SBOM on every image build
-- [ ] Cosign keyless signing (OIDC)
-- [ ] Trivy gate in CI: fail on CRITICAL
-- [ ] Renovate: auto-merge only after Trivy pass
-- [ ] Dependency policy doc
-- [ ] Migration guide: `docs/MIGRATION_GUIDE_v2.md`
-- [ ] ADR-008: v2.0 Breaking Migration — Docker Compose to K3s
+- [x] Authelia + Redis session store
+- [x] Traefik middleware: `forwardauth` on all routers
+- [x] Per-service groups: `admin`, `family`, `services`
+- [x] Tailscale ACLs aligned with Authelia groups
+- [x] Infisical for all secrets (no `.env` in repo)
+- [x] Cloudflare DNS-01 → wildcard certs, port 80 closed
+- [x] Syft SBOM on every image build
+- [x] Cosign keyless signing (OIDC)
+- [x] Trivy gate in CI: fail on CRITICAL
+- [x] Renovate: auto-merge only after Trivy pass
+- [x] Dependency policy doc
+- [x] Migration guide: `docs/MIGRATION_GUIDE_v2.md`
 
-### v2.1 — Logging + Tracing (Month 5) 🔄 **PLANNED**
-- [ ] Loki + Promtail (replaces scattered `docker logs`)
-- [ ] Tempo for traces (OpenTelemetry sidecar)
-- [ ] Grafana: logs + metrics + traces unified
-- [ ] Correlation IDs across services
+### v2.1 — Logging + Tracing + GitOps ✅ **IN PROGRESS**
+- [x] Loki + Promtail (replaces scattered `docker logs`)
+- [x] Tempo for traces (OpenTelemetry sidecar)
+- [x] Grafana: logs + metrics + traces unified
+- [x] Correlation IDs across services
+- [x] 28 ArgoCD applications for full GitOps
+- [x] Helmfile with unified values
+- [x] Correlation ID middleware (Go + Python)
+- [x] Loki/Tempo/PromQL query scripts
+- [x] Grafana tracing dashboards (Tracing Overview, Correlation ID Debugging)
+- [x] OTEL Collector config with transform processors
+- [x] K8s cluster Prometheus rules (Pods, Nodes, Longhorn)
+- [x] ArgoCD app sync script
+- [x] Cluster health check script
+- [x] Helm release validator
+- [ ] Log retention policies
+- [ ] SLO/SLI definitions
+- [ ] Burn rate alerting
 
-### v2.2 — Multi-node Ready (Quarter 3) 🔄 **PLANNED**
+### v2.2 — Multi-node Ready (Month 3) 🔄 **Planned**
 - [ ] K3s cluster on 2× Pi 4 (or Pi 5)
 - [ ] External PostgreSQL (Patroni) + Redis Cluster
 - [ ] Longhorn or Ceph for shared storage
 - [ ] Decision: stay single-node or migrate
-
-### v2.3 — Observability Maturity (Month 7) 🔄 **PLANNED**
-- [ ] SLO/SLI definitions for all services
-- [ ] Burn rate alerting
-- [ ] Distributed tracing sampling policies
-- [ ] Log retention policies
-
-### v2.4 — Supply Chain Maturity (Month 9) 🔄 **PLANNED**
-- [ ] SBOM for all base images
-- [ ] Cosign keyless signing for all images
-- [ ] Trivy gate: block HIGH in production
-- [ ] Renovate: group PRs by severity
-- [ ] Dependency policy enforcement in CI
-
-### v2.5 — Security Hardening (Month 11) 🔄 **PLANNED**
-- [ ] mTLS between all services (Linkerd/Istio Ambient)
-- [ ] Network policies for all namespaces
-- [ ] Kyverno/OPA policies for admission control
-- [ ] Regular pen testing schedule
-- [ ] Secrets rotation automation
-
-### v2.6 — Operational Excellence (Month 13) 🔄 **PLANNED**
-- [ ] Runbook automation (Ansible/CLI)
-- [ ] Chaos engineering (LitmusChaos)
-- [ ] Capacity planning automation
-- [ ] Incident response drills
-
-### v2.7 — Performance Optimization (Month 15) 🔄 **PLANNED**
-- [ ] Query optimization for all databases
-- [ ] Cache warming strategies
-- [ ] CDN integration (Cloudflare)
-- [ ] Compression optimization (Brotli/Zstd)
-
-### v2.8 — Multi-cluster Readiness (Month 17) 🔄 **PLANNED**
-- [ ] Cluster API for cluster lifecycle
-- [ ] Federated Prometheus/Loki
-- [ ] Cross-cluster service discovery
-- [ ] Disaster recovery to secondary region
-
-### v2.9 — Disaster Recovery Maturity (Month 19) 🔄 **PLANNED**
-- [ ] RTO/RPO documented for all services
-- [ ] Automated failover testing
-- [ ] Backup encryption verification
-- [ ] Cross-region backup replication
-
-### v2.10 — Cost Optimization (Month 21) 🔄 **PLANNED**
-- [ ] Resource quotas and limits per namespace
-- [ ] Spot/preemptible node integration
-- [ ] Right-sizing recommendations automation
-- [ ] Unused resource detection
-
-### v2.11 — Documentation Refresh (Month 23) 🔄 **PLANNED**
-- [ ] Architecture diagram refresh
-- [ ] Runbook updates with new procedures
-- [ ] API documentation (OpenAPI)
-- [ ] Onboarding guide for new contributors
-
-### v2.12 — v2.x Stabilization (Month 25) 🔄 **PLANNED**
-- [ ] Feature freeze
-- [ ] Regression test suite execution
-- [ ] Performance baseline establishment
-- [ ] Release candidate preparation
-
----
-
-## v3.x — Advanced Capabilities (6+ months)
-
-| Version | Theme | Target | Timeline | Estimated Date | Status |
-|---------|-------|--------|----------|----------------|--------|
-| **v3.0** | AI/ML Platform | 8 weeks (Sprints 43-46) | 2028-03-17 – 2028-05-12 | 2028-05-12 | 🔄 **PLANNED** |
-| **v3.1** | Edge/OT — Matter, Thread, Zigbee | 8 weeks (Sprints 47-50) | 2028-05-12 – 2028-07-07 | 2028-07-07 | 🔄 **PLANNED** |
-| **v3.2** | Developer Platform | 8 weeks (Sprints 51-54) | 2028-07-07 – 2028-09-01 | 2028-09-01 | 🔄 **PLANNED** |
-
-### v3.0 — AI/ML Platform (6+ months) 🔄 **PLANNED**
-- [ ] Ollama cluster with GPU offload (Pi 5 / Jetson)
-- [ ] RAG pipeline (vector DB + embedding models)
-- [ ] Local LLM fine-tuning pipeline
-- [ ] Model registry and versioning
-- [ ] Inference API with rate limiting
-- [ ] Model performance benchmarking
-
-### v3.1 — Edge/OT (6+ months) 🔄 **PLANNED**
-- [ ] Matter/Thread/Zigbee bridge (OpenThread/OTBR)
-- [ ] Home Assistant Matter integration
-- [ ] Zigbee2MQTT / ZHA unification
-- [ ] Thread border router (OpenThread)
-- [ ] Matter device provisioning automation
-
-### v3.2 — Developer Platform (6+ months) 🔄 **PLANNED**
-- [ ] Gitea + Drone/Woodpecker CI
-- [ ] Preview environments per PR
-- [ ] Ephemeral environments per feature branch
-- [ ] GitOps with ArgoCD/Flux
-- [ ] Developer self-service portal (Backstage)
-- [ ] Preview env TTL and cleanup
-
----
-
-## Release Cadence
-
-| Type | Frequency | Process |
-|------|-----------|---------|
-| Patch | As needed | Hotfix branch → PR → auto-patch Release |
-| Minor | **2 weeks** | Feature branch → PR → CHANGELOG → tag v1.x |
-| Major | **Quarterly (8 weeks)** | Epic branch → ADR → migration guide → tag v2.0 |
-
----
-
-## Deprecation Policy
-- Config formats: 2 minor versions notice
-- Compose stacks: 1 major version notice
-- Secrets migration: documented in ADR + runway
-
----
-
-## Completed Versions Summary
-
-| Version | Release Date | Lines Changed | Key Achievement |
-|---------|--------------|---------------|-----------------|
-| v1.0 | 2026-06-09 | ~2,000 | Production baseline (14 containers) |
-| v1.1 | 2026-06-09 | ~1,500 | Observability stack (Loki, Alertmanager, Uptime Kuma) |
-| v1.2 | 2026-06-09 | ~1,200 | Infisical secrets, backup automation |
-| v1.3 | 2026-06-09 | ~800 | 3 new Hermes skills (5 total) |
-| v1.4 | 2026-06-09 | ~1,000 | Authelia SSO, DNS-01, CrowdSec, runbooks |
-| v1.5 | 2026-06-09 | ~800 | Supply chain (SBOM, Cosign, Trivy gate) |
-| v1.6 | 2026-06-09 | ~800 | Tempo tracing, cronjob-ops, TTS alerts |
-| v1.7 | 2026-06-09 | ~1,200 | K3s multi-node, GPU offload, Ollama cluster |
-
-**Total: ~10,000+ lines of infrastructure code across 8 versions**
-
----
-
-## Version Metadata (for automation)
-
-```json
-{
-  "current": "v1.7",
-  "next_minor": "v1.8",
-  "next_major": "v2.0",
-  "branches": {
-    "main": "v1.7",
-    "develop": "v2.0-wip"
-  },
-  "support": {
-    "v1.x": "active",
-    "v1.7": "released"
-  }
-}
-```
