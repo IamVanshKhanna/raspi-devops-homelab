@@ -4,6 +4,78 @@
 
 ---
 
+## [v1.7.0] — 2026-06-09
+### Added
+- **K3s Multi-node Cluster** bootstrap (`scripts/k3s-cluster-setup.sh`)
+  - Automated 2+ node K3s cluster with Longhorn, Cert-Manager, Prometheus Stack, Loki, Tempo, External-DNS
+  - Postgres Operator (Patroni) 3-replica HA cluster
+  - Redis Operator 3-replica cluster
+  - Longhorn distributed storage with B2 backups
+  - Cert-Manager with Cloudflare DNS-01
+  - Prometheus/Grafana/Loki/Tempo/External-DNS via Helm
+
+- **Ollama Cluster** (`stacks/ollama-cluster/`)
+  - K8s manifests: Namespace, PVC, Deployment (3 replicas), Service, ConfigMap, HPA, Ingress
+  - Helm values with HPA, PrometheusRules, PDB, security contexts
+  - Model pre-pulling via initContainer (gemma:2b, llama3:8b, codellama:7b, mixtral:8x7b)
+  - Anti-affinity scheduling, client IP session affinity
+  - Prometheus metrics + alerts (down, memory, CPU, no models)
+
+- **K3s Cluster Docs** (`stacks/k3s-cluster/README.md`)
+  - Complete installation guide for 2+ node clusters
+  - Helm charts for Longhorn, Cert-Manager, Prometheus, Loki, Tempo, External-DNS
+  - Postgres Operator (Patroni) 3-replica HA cluster
+  - Redis Operator 3-replica cluster
+  - Longhorn backup to B2
+
+### GPU Offload Support
+- Documentation for GPU offload (NVIDIA CUDA, VideoCore VI, Vulkan)
+- Node labeling for GPU scheduling (nvidia.com/gpu, accelerator=videocore-gpu)
+- Resource limits/requests for GPU workloads
+- Ollama Vulkan/CUDA backend configuration
+
+### Kubernetes Manifests (Ollama Cluster)
+- `stacks/ollama-cluster/k8s/00-namespace.yaml` - AI namespace
+- `stacks/ollama-cluster/k8s/01-pvc.yaml` - 50Gi Longhorn PVC for models
+- `stacks/ollama-cluster/k8s/02-deployment.yaml` - 3-replica deployment with anti-affinity, initContainer for model pre-pulling
+- `stacks/ollama-cluster/k8s/03-service.yaml` - ClusterIP with ClientIP affinity
+- `stacks/ollama-cluster/k8s/04-configmap.yaml` - Ollama configuration
+- `stacks/ollama-cluster/k8s/05-hpa.yaml` - HPA with CPU/Memory metrics
+- `stacks/ollama-cluster/k8s/06-ingress.yaml` - Traefik ingress with Authelia ForwardAuth
+- `stacks/ollama-cluster/values.yaml` - Complete Helm values with PrometheusRules, PDB, security contexts
+
+### GPU Offload Support
+- Documentation for GPU offload (NVIDIA CUDA, VideoCore VI, Vulkan)
+- Node labeling for GPU scheduling (nvidia.com/gpu, accelerator=videocore-gpu)
+- Resource limits/requests for GPU workloads
+- Ollama Vulkan/CUDA backend configuration
+
+### Setup Automation
+- `scripts/k3s-cluster-setup.sh` - Complete automated bootstrap for multi-node K3s
+- Longhorn, Cert-Manager, Prometheus Stack, Loki, Tempo, External-DNS
+- Postgres Operator (Patroni) 3-replica HA cluster
+- Redis Operator 3-replica cluster
+- Longhorn backup to B2
+
+### Documentation
+- `stacks/k3s-cluster/README.md` - Complete K3s installation guide
+- `stacks/ollama-cluster/README.md` - Ollama cluster architecture
+- `stacks/ollama-cluster/values.yaml` - Complete Helm values with PrometheusRules, PDB, security contexts
+
+### Setup Automation
+- `scripts/k3s-cluster-setup.sh` - Complete automated bootstrap for multi-node K3s
+- Longhorn, Cert-Manager, Prometheus Stack, Loki, Tempo, External-DNS
+- Postgres Operator (Patroni) 3-replica HA cluster
+- Redis Operator 3-replica cluster
+- Longhorn backup to B2
+
+### Documentation
+- `stacks/k3s-cluster/README.md` - Complete K3s installation guide
+- `stacks/ollama-cluster/README.md` - Ollama cluster architecture
+- `stacks/ollama-cluster/values.yaml` - Complete Helm values with PrometheusRules, PDB, security contexts
+
+---
+
 ## [v1.6.0] — 2026-06-09
 ### Added
 - **Tempo + OpenTelemetry Collector** stack for distributed tracing
@@ -23,29 +95,16 @@
 - **Makefile**: Added tracing stack (phase 9), up-tracing, verify-tracing
 - **Health check**: Added Tempo + OTEL Collector checks
 - **HERMES_ON_PI.md**: Added cronjob-ops and tts-alerts skills (now 7 total)
-- **cronjob-ops skill**: Daily health summaries, weekly reports via Telegram
-- **tts-alerts skill**: edge-tts/espeak for critical alerts
 
 ### Automation
 - **cronjob-ops**: Daily health summaries via Telegram, weekly reports
 - **tts-alerts**: edge-tts/espeak for critical alerts (optional)
-- **Hermes skills**: Now 7 auto-loaded (homelab-ops, gitops-helper, backup-ops, security-audit, capacity-plan, cronjob-ops, tts-alerts)
-
-### Scripts & Tools
-- `scripts/daily-health-summary.sh` - Daily health summary generator
-- `scripts/homelab-daily-summary.{service,timer}` - Systemd timer for daily summary
-- `scripts/verify-supply-chain.sh` - Supply chain verification in deploy
-- `scripts/pin-images-to-digest.sh` - Image digest pinning helper
-- `scripts/migrate-to-infisical.sh` - Infisical migration helper
-- `scripts/daily-health-summary.sh` - Daily health summary generator
-- `scripts/homelab-daily-summary.{service,timer}` - Systemd timer
-- `docs/SECRET_ROTATION.md` - Secret rotation procedures
 
 ### Security
 - Skills follow ADR-005 trust model (read-only by default, confirmation required)
 
 ### Documentation
-- **HERMES_ON_PI.md**: Added cronjob-ops and tts-alerts skills
+- **HERMES_ON_PI.md**: Added cronjob-ops and tts-alerts skills (now 7 total)
 - **VERSION_ROADMAP.md**: v1.6 marked complete
 - **CHANGELOG.md**: v1.6 released
 
@@ -71,11 +130,6 @@
 - Unpinned images (`:latest`) blocked in CI
 - SBOMs generated for all images (SPDX-JSON)
 - Images signed with Cosign (keyless OIDC)
-
-### Scripts & Tools
-- `scripts/pin-images-to-digest.sh` - Migrate tags to digest pinning
-- `scripts/verify-supply-chain.sh` - Supply chain verification in deploy
-- `scripts/migrate-to-infisical.sh` - Infisical migration helper
 
 ### Documentation
 - **DEPENDENCY_POLICY.md** — Complete supply chain policy
@@ -110,7 +164,7 @@
 ### Documentation
 - **ADR-006**: Threat Model (STRIDE)
 - **Runbooks**: Service Down, Backup Failure, Security Incident
-- **SETUP_GUIDE.md**: Updated for v1.4 (Authelia, CrowdSec, DNS-01 setup)
+- **SETUP_GUIDE.md**: Updated for v1.4 (Authelia setup)
 - **CHANGELOG.md**: v1.4 released
 - **VERSION_ROADMAP.md**: v1.4 marked complete
 
@@ -247,22 +301,13 @@
 
 ---
 
-## [v1.7.0] — Planned (Multi-node + GPU Offload)
-### Added
-- K3s cluster on 2× Pi 4/5
-- External PostgreSQL (Patroni) + Redis Cluster
-- Longhorn or Ceph for shared storage
-- GPU offload for Ollama (if Pi 5 with GPU)
-- Ollama cluster for LLM inference scaling
-
----
-
 ## [v2.0.0] — Planned (Platform Evolution: Supply Chain + Auth)
 ### Breaking
 - All external access via Authelia ForwardAuth
 - Infisical for all secrets (no `.env`)
 - DNS-01 only (port 80 closed)
 - Tailscale ACLs aligned with Authelia groups
+- Migration from Docker Compose to K3s (Kubernetes)
 
 ### Added
 - Per-service RBAC groups (`admin`, `family`, `services`)
@@ -271,6 +316,9 @@
 - Cosign keyless signing (OIDC)
 - Trivy gate in CI: fail on CRITICAL
 - Renovate: auto-merge only after Trivy pass
+- Dependency policy doc
+- Migration guide: `docs/MIGRATION_GUIDE_v2.md`
+- ADR-008: v2.0 Breaking Migration — Docker Compose to K3s
 
 ---
 

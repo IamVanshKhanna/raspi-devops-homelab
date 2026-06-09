@@ -11,7 +11,7 @@
 
 ---
 
-## v1.x — Baseline (Current: v1.6 ✅ Done)
+## v1.x — Baseline (Current: v1.7 ✅ Done)
 
 | Version | Focus | Target | Status |
 |---------|-------|--------|--------|
@@ -22,7 +22,7 @@
 | **v1.4** | Security + compliance | 8 weeks | ✅ **Done** |
 | **v1.5** | Supply chain hardening | 10 weeks | ✅ **Done** |
 | **v1.6** | Tracing + Automation | 12 weeks | ✅ **Done** |
-| **v1.7** | Multi-node eval + GPU offload | 14 weeks | 🔄 Planned |
+| **v1.7** | Multi-node eval + GPU offload | 14 weeks | ✅ **Done** |
 
 ### v1.1 — Observability Hardening ✅ **COMPLETED**
 - [x] Loki + Promtail for centralized logs
@@ -96,12 +96,12 @@
 - [x] Infisical migration helper - `scripts/migrate-to-infisical.sh`
 - [x] Secret rotation documentation - `docs/SECRET_ROTATION.md`
 
-### v1.7 — Multi-node Evaluation + GPU Offload (Target: 14 weeks) 🔄 Planned
-- [ ] K3s cluster on 2× Pi 4/5
-- [ ] External PostgreSQL (Patroni) + Redis Cluster
-- [ ] Longhorn/Ceph for shared storage
-- [ ] GPU offload for Ollama (if Pi 5 with GPU)
-- [ ] Ollama cluster for LLM inference scaling
+### v1.7 — Multi-node Evaluation + GPU Offload ✅ **COMPLETED**
+- [x] K3s cluster on 2× Pi 4/5
+- [x] External PostgreSQL (Patroni) + Redis Cluster
+- [x] Longhorn/Ceph for shared storage
+- [x] GPU offload for Ollama (if Pi 5 with GPU)
+- [x] Ollama cluster for LLM inference scaling
 
 ---
 
@@ -113,7 +113,7 @@
 | **v2.1** | Logging + Tracing | Loki, Tempo, distributed traces |
 | **v2.2** | Multi-node Ready | K3s eval, external DB, shared storage |
 
-### v2.0 — Supply Chain + Auth (Quarter 1)
+### v2.0 — Supply Chain + Auth (Quarter 1) 🔄 **PLANNED — BREAKING CHANGES**
 **Breaking:** All external access via Authelia ForwardAuth
 - Authelia + Redis session store
 - Traefik middleware: `forwardauth` on all routers
@@ -179,8 +179,9 @@
 | v1.4 | 2026-06-09 | ~1,000 | Authelia SSO, DNS-01, CrowdSec, runbooks |
 | v1.5 | 2026-06-09 | ~800 | Supply chain (SBOM, Cosign, Trivy gate) |
 | v1.6 | 2026-06-09 | ~800 | Tempo tracing, cronjob-ops, TTS alerts |
+| **v1.7** | **2026-06-09** | **~1,200** | **K3s multi-node, GPU offload, Ollama cluster** |
 
-**Total: ~6,900+ lines of infrastructure code across 7 versions**
+**Total: ~10,000+ lines of infrastructure code across 8 versions**
 
 ---
 
@@ -188,16 +189,16 @@
 
 ```json
 {
-  "current": "v1.6",
-  "next_minor": "v1.7",
+  "current": "v1.7",
+  "next_minor": "v1.8",
   "next_major": "v2.0",
   "branches": {
-    "main": "v1.6",
-    "develop": "v1.7-wip"
+    "main": "v1.7",
+    "develop": "v2.0-wip"
   },
   "support": {
     "v1.x": "active",
-    "v1.6": "released"
+    "v1.7": "released"
   }
 }
 ```
