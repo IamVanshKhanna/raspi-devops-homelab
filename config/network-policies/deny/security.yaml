@@ -1,0 +1,10 @@
+# Default Deny Ingress - security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: security
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

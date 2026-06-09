@@ -1,0 +1,22 @@
+# Allow External-DNS to update Cloudflare
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-dns-egress
+  namespace: external-dns
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: cert-manager
+      ports:
+        - protocol: TCP
+          port: 443
+    - to: []  # External (Cloudflare API)
+      ports:
+        - protocol: TCP
+          port: 443
