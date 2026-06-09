@@ -4,16 +4,22 @@ on:
   push:
     branches: [main]
     paths:
-      - 'compose/**'
+      - 'stacks/**'
       - '.github/workflows/compose-validate.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'compose/**'
+      - 'stacks/**'
+
+permissions:
+  contents: read
 
 jobs:
   validate:
+    name: Validate Compose Files
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -23,7 +29,7 @@ jobs:
 
       - name: Validate all compose files
         run: |
-          for f in compose/*.yml; do
+          for f in stacks/**/docker-compose.yml; do
             echo "Validating $f..."
             docker compose -f "$f" config >/dev/null
           done

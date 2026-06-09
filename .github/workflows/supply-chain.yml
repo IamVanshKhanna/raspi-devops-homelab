@@ -13,6 +13,11 @@ on:
       - 'stacks/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
 jobs:
   sbom:
     name: Generate SBOMs
@@ -21,7 +26,6 @@ jobs:
       contents: read
       id-token: write
       attestations: write
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Install Syft
@@ -122,6 +126,8 @@ jobs:
   dependency-policy:
     name: Check Dependency Policy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Check for unpinned images
