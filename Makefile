@@ -1,7 +1,7 @@
 # Homelab Makefile
 # Usage: make <target>
 
-.PHONY: help up-core up-network up-secrets up-auth up-monitoring up-apps up-smarthome up-uptime up-crowdsec up-all down-core down-network down-secrets down-auth down-monitoring down-apps down-smarthome down-uptime down-crowdsec down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec backup restore restore-test config
+.PHONY: help up-core up-network up-secrets up-auth up-monitoring up-apps up-smarthome up-uptime up-crowdsec up-tracing up-all down-core down-network down-secrets down-auth down-monitoring down-apps down-smarthome down-uptime down-crowdsec down-tracing down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec verify-tracing verify-backup backup restore restore-test config
 
 # Core stack dependencies
 up-core:
@@ -31,7 +31,10 @@ up-uptime:
 up-crowdsec:
 	docker compose -f stacks/crowdsec/docker-compose.yml up -d
 
-# Phased deploy per verification plan (v1.4: auth before monitoring, crowdsec last)
+up-tracing:
+	docker compose -f stacks/tracing/docker-compose.yml up -d
+
+# Phased deploy per verification plan (v1.6: tracing last)
 up-phase1: up-core up-network
 	@echo "Phase 1 done: core + network"
 
@@ -56,7 +59,10 @@ up-phase7: up-uptime
 up-phase8: up-crowdsec
 	@echo "Phase 8 done: crowdsec"
 
-up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5 up-phase6 up-phase7 up-phase8
+up-phase9: up-tracing
+	@echo "Phase 9 done: tracing (Tempo + OTEL)"
+
+up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5 up-phase6 up-phase7 up-phase8 up-phase9
 	@echo "All stacks deployed"
 
 # Down commands
@@ -87,7 +93,10 @@ down-uptime:
 down-crowdsec:
 	docker compose -f stacks/crowdsec/docker-compose.yml down
 
-down-all: down-crowdsec down-uptime down-smarthome down-apps down-auth down-monitoring down-secrets down-network down-core
+down-tracing:
+	docker compose -f stacks/tracing/docker-compose.yml down
+
+down-all: down-tracing down-crowdsec down-uptime down-smarthome down-apps down-auth down-monitoring down-secrets down-network down-core
 
 # Status & logs
 ps:
@@ -98,12 +107,12 @@ logs:
 		-f stacks/secrets/docker-compose.yml -f stacks/auth/docker-compose.yml \
 		-f stacks/monitoring/docker-compose.yml -f stacks/apps/docker-compose.yml \
 		-f stacks/smarthome/docker-compose.yml -f stacks/uptime-kuma/docker-compose.yml \
-		-f stacks/crowdsec/docker-compose.yml \
+		-f stacks/crowdsec/docker-compose.yml -f stacks/tracing/docker-compose.yml \
 		logs -f --tail=100
 
-# Verification (v1.4)
-verify-v1: verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec verify-backup
-	@echo "All v1.4 verification checks passed"
+# Verification (v1.6)
+verify-v1: verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec verify-tracing verify-backup
+	@echo "All v1.6 verification checks passed"
 
 verify-health:
 	./scripts/health-check.sh --strict
@@ -137,6 +146,14 @@ verify-crowdsec:
 	@curl -sf http://localhost:8080/health >/dev/null 2>&1 || (echo "CrowdSec not ready"; exit 1)
 	@echo "CrowdSec reachable"
 
+verify-tracing:
+	@echo "Checking Tempo tracing..."
+	@curl -sf http://localhost:3200/ready >/dev/null 2>&1 || (echo "Tempo not ready"; exit 1)
+	@echo "Tempo reachable"
+	@echo "Checking OTEL Collector..."
+	@curl -sf http://localhost:8888/metrics >/dev/null 2>&1 || (echo "OTEL Collector not ready"; exit 1)
+	@echo "OTEL Collector reachable"
+
 verify-backup:
 	@echo "Checking backup repository..."
 	@source .env && export RESTIC_REPOSITORY RESTIC_PASSWORD B2_ACCOUNT_ID B2_ACCOUNT_KEY && \
@@ -165,16 +182,17 @@ config:
 	docker compose -f stacks/smarthome/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/uptime-kuma/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/crowdsec/docker-compose.yml config >/dev/null && \
+	docker compose -f stacks/tracing/docker-compose.yml config >/dev/null && \
 	echo "All compose files valid"
 
 help:
 	@echo "Available targets:"
-	@echo "  up-core, up-network, up-secrets, up-auth, up-monitoring, up-apps, up-smarthome, up-uptime, up-crowdsec"
-	@echo "  up-phase1, up-phase2, up-phase3, up-phase4, up-phase5, up-phase6, up-phase7, up-phase8"
+	@echo "  up-core, up-network, up-secrets, up-auth, up-monitoring, up-apps, up-smarthome, up-uptime, up-crowdsec, up-tracing"
+	@echo "  up-phase1, up-phase2, up-phase3, up-phase4, up-phase5, up-phase6, up-phase7, up-phase8, up-phase9"
 	@echo "  up-all"
 	@echo "  down-core, down-network, down-secrets, down-auth, ... down-all"
 	@echo "  ps, logs"
-	@echo "  verify-v1, verify-health, verify-loki, verify-alertmanager, verify-uptime, verify-secrets, verify-auth, verify-crowdsec, verify-backup"
+	@echo "  verify-v1, verify-health, verify-loki, verify-alertmanager, verify-uptime, verify-secrets, verify-auth, verify-crowdsec, verify-tracing, verify-backup"
 	@echo "  backup, restore, restore-test"
 	@echo "  config, help"
 
