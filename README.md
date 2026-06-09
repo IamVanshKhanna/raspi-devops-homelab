@@ -1,252 +1,151 @@
-# pi4b-homelab
+# homelab-prod
 
-> 24/7 self-hosted homelab on Raspberry Pi 4B 4GB + DeskPi3 case + 2TB SSD.
-> Full Docker stack: reverse proxy, monitoring, private cloud, password manager, AI inference, VPN, DNS ad-blocking, and smart home — all on ~7 watts.
+> **24/7 Raspberry Pi 4B (4 GB RAM, 2 TB SSD) homelab** — Docker Compose, Tailscale, Traefik, Prometheus/Grafana, Nextcloud, Vaultwarden, Ollama, Home Assistant, and a headless Hermes AI agent. All versioned, reproducible, and documented.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%204B-red)](https://www.raspberrypi.com/)
-[![Docker](https://img.shields.io/badge/docker-compose-blue)](https://docs.docker.com/compose/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-
----
-
-## Table of Contents
-
-- [Hardware](#hardware)
-- [Architecture](#architecture)
-- [Services](#services)
-- [Repository Structure](#repository-structure)
-- [Quick Start](#quick-start)
-- [Deployment Order](#deployment-order)
-- [Port Reference](#port-reference)
-- [Backup Strategy](#backup-strategy)
-- [Skills You Will Learn](#skills-you-will-learn)
-- [Contributing](#contributing)
-- [License](#license)
+[![v1.0](https://img.shields.io/badge/version-v1.0-blue)](https://github.com/IamVanshKhanna/homelab-prod/releases/tag/v1.0)
+[![CI](https://github.com/IamVanshKhanna/homelab-prod/actions/workflows/compose-validate.yml/badge.svg)](https://github.com/IamVanshKhanna/homelab-prod/actions/workflows/compose-validate.yml)
+[![Trivy](https://github.com/IamVanshKhanna/homelab-prod/actions/workflows/trivy-scan.yml/badge.svg)](https://github.com/IamVanshKhanna/homelab-prod/actions/workflows/trivy-scan.yml)
 
 ---
 
 ## Hardware
 
 | Component | Spec |
-|---|---|
-| SBC | Raspberry Pi 4B 4GB RAM |
-| Case | DeskPi3 (full-size 2.5" SATA bay, USB 3.0) |
-| Storage | 2TB 2.5" SATA SSD (USB 3.0 boot, no SD card) |
+|-----------|------|
+| SBC | Raspberry Pi 4B 4 GB RAM |
+| Case | DeskPi 3B Pro (fan auto, SATA bay) |
+| Storage | 2 TB 2.5" SATA SSD (USB 3.0 boot, no SD card) |
 | Power | Official Pi 4 USB-C PSU (5V/3A) |
 | OS | Raspberry Pi OS Lite 64-bit (Bookworm) |
-| Network | Gigabit Ethernet (recommended over Wi-Fi) |
-| Idle Power | ~5-10W |
+| Network | Gigabit Ethernet + Tailscale mesh |
+| Idle Power | ~5–10 W |
 
 ---
 
-## Architecture
+## Services (v1)
 
-```
-Internet
-    |
-[Router - Port Forward 80, 443, 51820]
-    |
-[Raspberry Pi 4B - Static LAN IP: 192.168.1.50]
-    |
-[Docker Engine]
-    |
-    +-- [Traefik]          <- Reverse proxy + auto TLS (Let's Encrypt)
-    |       +-- Routes by hostname to each container
-    |
-    +-- [Portainer]        <- Docker management web UI
-    +-- [Nextcloud]        <- Private cloud storage + calendar + contacts
-    +-- [MariaDB]          <- Nextcloud database
-    +-- [Redis]            <- Nextcloud memory cache
-    +-- [Vaultwarden]      <- Password manager (Bitwarden-compatible)
-    +-- [Ollama]           <- Local AI/LLM inference (Llama, Gemma, Mistral)
-    +-- [Home Assistant]   <- Smart home (host network for mDNS/Zigbee)
-    +-- [Pi-hole]          <- Network-wide DNS ad-blocking (port 53)
-    +-- [WireGuard]        <- VPN server for remote access (port 51820)
-    +-- [Prometheus]       <- Metrics time-series database
-    +-- [Grafana]          <- Dashboards for all metrics
-    +-- [Node Exporter]    <- Pi CPU/RAM/disk/temp metrics
-    +-- [cAdvisor]         <- Per-container resource metrics
-```
+| Stack | Service | Access | RAM Limit |
+|-------|---------|--------|-----------|
+| **Core** | Traefik v3.0 | `traefik.domain` (TLS) | 128 MB |
+| | Portainer 2.21 | `portainer.domain` | 256 MB |
+| | Pi-hole 2024.07 | LAN `:8053` (DNS `:53`) | 256 MB |
+| | Tailscale v1.68 | MagicDNS / Exit node | 64 MB |
+| **Monitoring** | Prometheus 2.54 | `127.0.0.1:9090` | 512 MB |
+| | Grafana 11.1 | `grafana.domain` | 256 MB |
+| | Node Exporter 1.8 | `:9100` | 64 MB |
+| | cAdvisor 0.49 | `:8080` | 128 MB |
+| **Apps** | Nextcloud 29.0 | `cloud.domain` | 1 GB |
+| | MariaDB 11.4 | internal | 512 MB |
+| | Redis 7.2 | internal | 128 MB |
+| | Vaultwarden 1.32 | `vault.domain` | 256 MB |
+| | Ollama 0.3 + gemma:2b | `127.0.0.1:11434` | 2 GB |
+| **Smarthome** | Home Assistant 2024.7 | LAN `:8123` (host net) | 512 MB |
 
-All services share Docker bridge network `proxy`.
-Home Assistant uses `network_mode: host` for device discovery.
-Pi-hole binds port 53 directly on the host.
+**Total RAM budget:** ~3.8 GB / 4 GB (with 2 GB ZRAM swap)
 
 ---
 
-## Services
-
-| Service | Purpose | Access URL |
-|---|---|---|
-| Traefik | Reverse proxy + HTTPS | https://traefik.yourdomain.com |
-| Portainer | Docker management UI | https://portainer.yourdomain.com |
-| Nextcloud | Private cloud storage | https://cloud.yourdomain.com |
-| Vaultwarden | Password manager | https://vault.yourdomain.com |
-| Home Assistant | Smart home automation | http://192.168.1.50:8123 |
-| Ollama | Local LLM inference | http://192.168.1.50:11434 |
-| Pi-hole | DNS ad-blocking | http://192.168.1.50:8053/admin |
-| WireGuard | VPN server | UDP 51820 |
-| Prometheus | Metrics scraping + storage | http://192.168.1.50:9090 |
-| Grafana | Metrics dashboards | https://grafana.yourdomain.com |
-| Node Exporter | Host metrics | Internal only |
-| cAdvisor | Container metrics | Internal only |
-| MariaDB | Nextcloud database | Internal only |
-| Redis | Nextcloud cache | Internal only |
-
----
-
-## Repository Structure
-
-```
-pi4b-homelab/
-+-- README.md
-+-- .env.example
-+-- .gitignore
-+-- LICENSE
-+-- CONTRIBUTING.md
-+-- docs/
-|   +-- SETUP_GUIDE.md
-|   +-- ARCHITECTURE.md
-|   +-- SKILLS.md
-|   +-- TROUBLESHOOTING.md
-+-- stacks/
-|   +-- core/docker-compose.yml          # Traefik + Portainer
-|   +-- monitoring/docker-compose.yml    # Prometheus + Grafana + exporters
-|   +-- apps/docker-compose.yml          # Nextcloud + Vaultwarden + Ollama
-|   +-- network/docker-compose.yml       # Pi-hole + WireGuard
-|   +-- smarthome/docker-compose.yml     # Home Assistant
-+-- config/
-|   +-- traefik/traefik.yml
-|   +-- traefik/dynamic.yml
-|   +-- prometheus/prometheus.yml
-|   +-- grafana/provisioning/datasources/prometheus.yml
-|   +-- grafana/provisioning/dashboards/dashboard.yml
-|   +-- pihole/custom.list
-|   +-- wireguard/wg0.conf.example
-+-- scripts/
-    +-- setup.sh
-    +-- backup.sh
-    +-- update.sh
-    +-- health-check.sh
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-- Raspberry Pi 4B with Raspberry Pi OS Lite 64-bit on 2TB SSD
-- SSD set as boot device via `raspi-config > Advanced > Boot Order > USB Boot`
-- Static LAN IP set via router DHCP reservation
-- (Optional) Free domain: [DuckDNS](https://www.duckdns.org)
-
-### 1. Clone
+## Quick Start (on Pi)
 
 ```bash
-git clone https://github.com/VK7160/pi4b-homelab.git
-cd pi4b-homelab
-```
+# 1. Clone
+git clone https://github.com/IamVanshKhanna/homelab-prod.git
+cd homelab-prod
 
-### 2. Run setup script
-
-```bash
-chmod +x scripts/setup.sh
-sudo bash scripts/setup.sh
-```
-
-### 3. Configure environment
-
-```bash
+# 2. Configure
 cp .env.example .env
-nano .env
+# Edit .env with your domain, emails, tokens, B2 keys
+
+# 3. Deploy (phased)
+make up-core
+make up-monitoring
+make up-apps
+make up-smarthome
+
+# 4. Pull LLM model
+docker exec ollama ollama pull gemma:2b
+
+# 5. Verify
+make verify-v1
 ```
 
-### 4. Deploy stacks in order
+---
+
+## Remote Access
+
+- **SSH from anywhere:** `ssh vansh@pi4b-homelab` (via Tailscale MagicDNS)
+- **Services:** All HTTPS via Traefik (`*.yourdomain.com`)
+- **Exit node:** Route phone/laptop traffic through Pi via Tailscale
+
+---
+
+## Verification
 
 ```bash
-docker compose -f stacks/core/docker-compose.yml up -d
-docker compose -f stacks/monitoring/docker-compose.yml up -d
-docker compose -f stacks/apps/docker-compose.yml up -d
-docker compose -f stacks/network/docker-compose.yml up -d
-docker compose -f stacks/smarthome/docker-compose.yml up -d
-```
-
-### 5. Verify all containers running
-
-```bash
-bash scripts/health-check.sh
+make verify-v1
+# Runs: health check, RAM < 3.9 GB, backup readability, Hermes responsiveness
 ```
 
 ---
 
-## Deployment Order
+## Backup
 
-| Step | Stack | Why |
-|---|---|---|
-| 1 | core | Traefik must exist before other services route through it |
-| 2 | monitoring | Watch everything from the very start |
-| 3 | apps | Nextcloud, Vaultwarden, Ollama |
-| 4 | network | Pi-hole needs port 53, WireGuard needs 51820 |
-| 5 | smarthome | Home Assistant uses host network - deploy last |
+- **Tool:** Restic → Backblaze B2 (encrypted, deduplicated)
+- **Schedule:** Daily incremental (cron), weekly verify
+- **Retention:** 7 daily, 4 weekly, 6 monthly
+- **Test:** `make verify-backup` passes
 
 ---
 
-## Port Reference
+## Hermes AI Agent
 
-| Port | Protocol | Service | Expose externally? |
-|---|---|---|---|
-| 80 | TCP | Traefik HTTP | Yes (redirects to HTTPS) |
-| 443 | TCP | Traefik HTTPS | Yes |
-| 51820 | UDP | WireGuard VPN | Yes |
-| 8123 | TCP | Home Assistant | LAN only |
-| 11434 | TCP | Ollama | LAN only |
-| 8053 | TCP | Pi-hole UI | LAN only |
-| 53 | UDP/TCP | Pi-hole DNS | LAN only |
-| 9090 | TCP | Prometheus | LAN only |
-| 9000/9443 | TCP | Portainer | Via Traefik |
+- **Model:** `gemma:2b` (1.6 GB, ~15 tok/s on Pi 4)
+- **Profile:** `homelab` with skills `homelab-ops`, `gitops-helper`
+- **Access:** `hermes --profile homelab "health check"`
+- **Capabilities:** Health summary, log inspection, safe restarts, CI proposals
 
 ---
 
-## Backup Strategy
+## Documentation
 
-```bash
-# Add to crontab -e
-0 3 * * * /home/pi/pi4b-homelab/scripts/backup.sh >> /var/log/homelab-backup.log 2>&1
-```
-
-Backs up all named Docker volumes to `/mnt/backup/YYYY-MM-DD/`, retains 7 days.
-See [scripts/backup.sh](scripts/backup.sh) for full details.
-
----
-
-## Skills You Will Learn
-
-See [docs/SKILLS.md](docs/SKILLS.md) for full breakdown with resume bullet points.
-
-| Area | Technologies |
-|---|---|
-| Linux sysadmin | Raspberry Pi OS, systemd, SSH, ufw, fail2ban |
-| Containerisation | Docker, Docker Compose, multi-stack architecture |
-| Reverse proxy + TLS | Traefik v3, Let's Encrypt ACME |
-| Monitoring | Prometheus, Grafana, Node Exporter, cAdvisor |
-| Networking | WireGuard VPN, Pi-hole DNS, firewall rules |
-| Self-hosted cloud | Nextcloud, MariaDB, Redis |
-| Security | Vaultwarden, TLS hardening, rate limiting |
-| AI/ML inference | Ollama, local LLM deployment |
-| Smart home | Home Assistant, MQTT, automations |
-| Scripting | Bash, backup, health monitoring, cron |
-| IaC | Docker Compose as declarative infrastructure |
-| Version control | Git, GitHub, structured repo management |
+| File | Description |
+|------|-------------|
+| `docs/ADR-001-orchestration.md` | Why Docker Compose over K3s |
+| `docs/ADR-002-network-access.md` | Why Tailscale over WireGuard |
+| `docs/ADR-003-memory.md` | ZRAM + limits + model choice |
+| `docs/HERMES_ON_PI.md` | Install, profile, skills, systemd |
+| `docs/V1_CHECKLIST.md` | v1 acceptance criteria |
+| `docs/demo-transcript.md` | Recorded bring-up session |
+| `docs/architecture.svg` | System diagram |
 
 ---
 
-## Contributing
+## GitHub Actions
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `compose-validate.yml` | Push/PR to compose/ | Validate all compose files |
+| `trivy-scan.yml` | Weekly + push | Scan images for CRITICAL/HIGH CVEs |
+| `backup-test.yml` | Weekly | Verify backup config exists |
+
+---
+
+## Renovate
+
+Automated Docker image updates via `renovate.json` — grouped PRs, auto-merge on patch.
+
+---
+
+## Options Lab
+
+See [homelab-options-lab](https://github.com/IamVanshKhanna/homelab-options-lab) for tool comparisons:
+- Reverse proxies (Traefik vs NPM vs Caddy)
+- VPNs (Tailscale vs WireGuard vs Headscale)
+- Orchestration (Compose vs K3s vs Nomad)
+- Auth (Authelia vs OAuth2-Proxy vs Keycloak)
 
 ---
 
 ## License
 
-MIT - see [LICENSE](LICENSE) for details.
+MIT — see `LICENSE`
