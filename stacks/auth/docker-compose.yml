@@ -1,0 +1,50 @@
+# STACK: AUTH — Authelia SSO + 2FA
+# Single Sign-On with 2FA for all external services
+# Uses Traefik ForwardAuth middleware
+# Access via Traefik at auth.DOMAIN
+
+version: "3.8"
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  authelia_data:
+  authelia_redis:
+
+services:
+  authelia:
+    # Check latest: https://github.com/authelia/authelia/releases
+    image: authelia/authelia:4.38.0
+    container_name: authelia
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - authelia_data:/config
+      - ../../config/authelia:/config:ro
+    environment:
+      - TZ=${TZ}
+    mem_limit: 256m
+    cpus: 0.5
+    depends_on:
+      - authelia-redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
+      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+
+  authelia-redis:
+    image: redis:7-alpine
+    container_name: authelia-redis
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - authelia_redis:/data
+    command: redis-server --requirepass ${AUTHELIA_REDIS_PASSWORD} --maxmemory 64mb --maxmemory-policy allkeys-lru
+    mem_limit: 64m
+    cpus: 0.1

@@ -1,7 +1,7 @@
 # Homelab Makefile
 # Usage: make <target>
 
-.PHONY: help up-core up-network up-secrets up-monitoring up-apps up-smarthome up-uptime up-all down-core down-network down-secrets down-monitoring down-apps down-smarthome down-uptime down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime verify-secrets backup restore restore-test config
+.PHONY: help up-core up-network up-secrets up-auth up-monitoring up-apps up-smarthome up-uptime up-crowdsec up-all down-core down-network down-secrets down-auth down-monitoring down-apps down-smarthome down-uptime down-crowdsec down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec backup restore restore-test config
 
 # Core stack dependencies
 up-core:
@@ -12,6 +12,9 @@ up-network:
 
 up-secrets:
 	docker compose -f stacks/secrets/docker-compose.yml up -d
+
+up-auth:
+	docker compose -f stacks/auth/docker-compose.yml up -d
 
 up-monitoring:
 	docker compose -f stacks/monitoring/docker-compose.yml up -d
@@ -25,26 +28,35 @@ up-smarthome:
 up-uptime:
 	docker compose -f stacks/uptime-kuma/docker-compose.yml up -d
 
-# Phased deploy per verification plan (v1.2: add secrets before monitoring)
+up-crowdsec:
+	docker compose -f stacks/crowdsec/docker-compose.yml up -d
+
+# Phased deploy per verification plan (v1.4: auth before monitoring, crowdsec last)
 up-phase1: up-core up-network
 	@echo "Phase 1 done: core + network"
 
 up-phase2: up-secrets
 	@echo "Phase 2 done: secrets (Infisical)"
 
-up-phase3: up-monitoring
-	@echo "Phase 3 done: monitoring"
+up-phase3: up-auth
+	@echo "Phase 3 done: auth (Authelia)"
 
-up-phase4: up-apps
-	@echo "Phase 4 done: apps"
+up-phase4: up-monitoring
+	@echo "Phase 4 done: monitoring"
 
-up-phase5: up-smarthome
-	@echo "Phase 5 done: smarthome"
+up-phase5: up-apps
+	@echo "Phase 5 done: apps"
 
-up-phase6: up-uptime
-	@echo "Phase 6 done: uptime-kuma"
+up-phase6: up-smarthome
+	@echo "Phase 6 done: smarthome"
 
-up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5 up-phase6
+up-phase7: up-uptime
+	@echo "Phase 7 done: uptime-kuma"
+
+up-phase8: up-crowdsec
+	@echo "Phase 8 done: crowdsec"
+
+up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5 up-phase6 up-phase7 up-phase8
 	@echo "All stacks deployed"
 
 # Down commands
@@ -56,6 +68,9 @@ down-network:
 
 down-secrets:
 	docker compose -f stacks/secrets/docker-compose.yml down
+
+down-auth:
+	docker compose -f stacks/auth/docker-compose.yml down
 
 down-monitoring:
 	docker compose -f stacks/monitoring/docker-compose.yml down
@@ -69,7 +84,10 @@ down-smarthome:
 down-uptime:
 	docker compose -f stacks/uptime-kuma/docker-compose.yml down
 
-down-all: down-uptime down-smarthome down-apps down-secrets down-monitoring down-network down-core
+down-crowdsec:
+	docker compose -f stacks/crowdsec/docker-compose.yml down
+
+down-all: down-crowdsec down-uptime down-smarthome down-apps down-auth down-monitoring down-secrets down-network down-core
 
 # Status & logs
 ps:
@@ -77,14 +95,15 @@ ps:
 
 logs:
 	docker compose -f stacks/core/docker-compose.yml -f stacks/network/docker-compose.yml \
-		-f stacks/secrets/docker-compose.yml -f stacks/monitoring/docker-compose.yml \
-		-f stacks/apps/docker-compose.yml -f stacks/smarthome/docker-compose.yml \
-		-f stacks/uptime-kuma/docker-compose.yml \
+		-f stacks/secrets/docker-compose.yml -f stacks/auth/docker-compose.yml \
+		-f stacks/monitoring/docker-compose.yml -f stacks/apps/docker-compose.yml \
+		-f stacks/smarthome/docker-compose.yml -f stacks/uptime-kuma/docker-compose.yml \
+		-f stacks/crowdsec/docker-compose.yml \
 		logs -f --tail=100
 
-# Verification (v1.2)
-verify-v1: verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-backup
-	@echo "All v1.2 verification checks passed"
+# Verification (v1.4)
+verify-v1: verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec verify-backup
+	@echo "All v1.4 verification checks passed"
 
 verify-health:
 	./scripts/health-check.sh --strict
@@ -108,6 +127,16 @@ verify-secrets:
 	@curl -sf http://localhost:8080/api/status >/dev/null 2>&1 || (echo "Infisical not ready"; exit 1)
 	@echo "Infisical reachable"
 
+verify-auth:
+	@echo "Checking Authelia..."
+	@curl -sf http://localhost:9091/api/healthz >/dev/null 2>&1 || (echo "Authelia not ready"; exit 1)
+	@echo "Authelia reachable"
+
+verify-crowdsec:
+	@echo "Checking CrowdSec..."
+	@curl -sf http://localhost:8080/health >/dev/null 2>&1 || (echo "CrowdSec not ready"; exit 1)
+	@echo "CrowdSec reachable"
+
 verify-backup:
 	@echo "Checking backup repository..."
 	@source .env && export RESTIC_REPOSITORY RESTIC_PASSWORD B2_ACCOUNT_ID B2_ACCOUNT_KEY && \
@@ -130,20 +159,22 @@ config:
 	docker compose -f stacks/core/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/network/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/secrets/docker-compose.yml config >/dev/null && \
+	docker compose -f stacks/auth/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/monitoring/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/apps/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/smarthome/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/uptime-kuma/docker-compose.yml config >/dev/null && \
+	docker compose -f stacks/crowdsec/docker-compose.yml config >/dev/null && \
 	echo "All compose files valid"
 
 help:
 	@echo "Available targets:"
-	@echo "  up-core, up-network, up-secrets, up-monitoring, up-apps, up-smarthome, up-uptime"
-	@echo "  up-phase1, up-phase2, up-phase3, up-phase4, up-phase5, up-phase6"
+	@echo "  up-core, up-network, up-secrets, up-auth, up-monitoring, up-apps, up-smarthome, up-uptime, up-crowdsec"
+	@echo "  up-phase1, up-phase2, up-phase3, up-phase4, up-phase5, up-phase6, up-phase7, up-phase8"
 	@echo "  up-all"
-	@echo "  down-core, down-network, down-secrets, ... down-all"
+	@echo "  down-core, down-network, down-secrets, down-auth, ... down-all"
 	@echo "  ps, logs"
-	@echo "  verify-v1, verify-health, verify-loki, verify-alertmanager, verify-uptime, verify-secrets, verify-backup"
+	@echo "  verify-v1, verify-health, verify-loki, verify-alertmanager, verify-uptime, verify-secrets, verify-auth, verify-crowdsec, verify-backup"
 	@echo "  backup, restore, restore-test"
 	@echo "  config, help"
 

@@ -4,6 +4,43 @@
 
 ---
 
+## [v1.3.0] — 2026-06-09
+### Added
+- **3 new Hermes skills** for homelab operations:
+  - **backup-ops**: Restic/B2 snapshot management (list, verify, dry-run restore)
+  - **security-audit**: Trivy/Grype CVE scanning and triage
+  - **capacity-plan**: Disk/RAM forecasting with PromQL projections
+- **ADR-005**: Hermes Skills Architecture — trust model, skill structure, security
+- **dotfiles/hermes/skills/** — 3 new skill definitions with allowlists
+
+### Changed
+- **HERMES_ON_PI.md**: Updated with all 5 skills (2 existing + 3 new), auto-loaded
+- **Profile config**: All 5 skills now auto-loaded
+- **Hermes health check** includes skill metadata
+
+### Security
+- All new skills follow ADR-005 trust model:
+  - Read-only by default
+  - Confirmation required for any destructive actions
+  - Explicit allowlists, explicit forbidden lists
+  - Least privilege (no sudo, no docker stop/kill/rm)
+
+### Skills Summary
+| Skill | Category | Trust | Auto-load | Key Commands |
+|-------|----------|-------|-----------|--------------|
+| homelab-ops | homelab | Medium | ✅ | health, logs, safe restarts |
+| gitops-helper | gitops | Medium | ✅ | propose CI/docs/compose changes |
+| **backup-ops** | backup | High | ✅ | snapshots, verify, dry-run restore |
+| **security-audit** | security | Medium | ✅ | trivy scan, CVE report |
+| **capacity-plan** | capacity | Low | ✅ | disk/RAM forecasting, PromQL |
+
+### Documentation
+- **ADR-005**: Hermes Skills Architecture
+- **HERMES_ON_PI.md**: Updated with all 5 skills, usage examples
+- **dotfiles/hermes/skills/**: 3 new skill definitions
+
+---
+
 ## [v1.2.0] — 2026-06-09
 ### Added
 - **Infisical secret manager** stack (PostgreSQL 16 + Redis 7 + Infisical 1.7.1)
@@ -98,44 +135,48 @@
 
 ---
 
-## [v1.3.0] — In Progress (Hermes Agent Expansion)
-### Added (v1.3.0-rc1)
-- Skill: `backup-ops` (list snapshots, trigger restore, verify)
-- Skill: `security-audit` (Trivy summary, CVE triage)
-- Skill: `capacity-plan` (RAM/disk trend, forecast)
-- Cronjob: daily health summary via Telegram
-- Skill: `homelab-ops` enhancements (log search, metrics query)
-- ADR-005: Hermes Skills Architecture
+## [v1.4.0] — In Progress (Security + Compliance)
+### Added (v1.4.0-rc1)
+- **Authelia SSO + 2FA** stack (Redis + Authelia)
+- **Traefik ForwardAuth** middleware configuration
+- **Cloudflare DNS-01** ACME configuration
+- **CrowdSec** stack for intrusion detection
+- **Syft + Cosign** in CI for SBOM + signing
+- **ADR-006**: Threat Model (STRIDE)
+- **Incident runbooks** directory
 
 ### Changed
-- Hermes health check includes skill metadata
-- Updated HERMES_ON_PI.md with new skills
+- Traefik middleware: `forwardauth` on all external routers
+- ACME challenge: HTTP-01 → DNS-01 (Cloudflare)
+- Port 80 closed (no HTTP challenge needed)
 
 ### Security
-- Skills run with least privilege (read-only by default)
-
----
-
-## [v1.4.0] — Planned (Security + Compliance)
-### Added
-- Authelia SSO + 2FA (ForwardAuth on all external)
-- Cloudflare DNS-01 ACME → wildcard certs, port 80 closed
-- CrowdSec / fail2ban hardening
-- SBOM generation (Syft) + signing (Cosign) in CI
-- Threat model doc (STRIDE) + incident runbooks
-
----
-
-## [v2.0.0] — Planned (Platform Evolution: Auth)
-### Breaking
-- All external access via Authelia ForwardAuth
-- Infisical for all secrets (no `.env`)
+- All external access via Authelia ForwardAuth + 2FA
 - DNS-01 only (port 80 closed)
-- Tailscale ACLs aligned with Authelia groups
+- CrowdSec parsing logs for suspicious patterns
+- SBOM (Syft) + signing (Cosign) in CI
+- Threat model (STRIDE) documented
+
+---
+
+## [v1.5.0] — Planned (Supply Chain Hardening)
+### Added
+- Syft SBOM on every image build
+- Cosign keyless signing (OIDC)
+- Trivy gate in CI: fail on CRITICAL
+- Renovate: auto-merge only after Trivy pass
+- Dependency policy doc
+
+---
+
+## [v2.0.0] — Planned (Platform Evolution: Multi-node)
+### Breaking
+- K3s cluster on 2× Pi 4/5
+- External PostgreSQL (Patroni) + Redis Cluster
+- Longhorn or Ceph for shared storage
 
 ### Added
-- Per-service RBAC groups (`admin`, `family`, `services`)
-- Automated cert renewal monitoring
+- Decision: stay single-node or migrate to multi-node
 
 ---
 

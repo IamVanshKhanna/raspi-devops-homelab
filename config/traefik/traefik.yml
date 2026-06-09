@@ -37,6 +37,15 @@ certificatesResolvers:
       # Set ACME_EMAIL in your .env file
       email: "${ACME_EMAIL}"
       storage: /certs/acme.json
+      # DNS-01 challenge with Cloudflare (v1.4+)
+      # Uncomment and configure for DNS-01 (closes port 80):
+      # dnsChallenge:
+      #   provider: cloudflare
+      #   delayBeforeCheck: 30
+      #   resolvers:
+      #     - "1.1.1.1:53"
+      #     - "8.8.8.8:53"
+      # Fallback to HTTP-01 (requires port 80 open):
       httpChallenge:
         entryPoint: web
 

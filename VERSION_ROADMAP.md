@@ -11,15 +11,15 @@
 
 ---
 
-## v1.x — Baseline (Current: v1.2 → v1.3 in progress)
+## v1.x — Baseline (Current: v1.3 → v1.4 in progress)
 
 | Version | Focus | Target | Status |
 |---------|-------|--------|--------|
 | **v1.0** | Production baseline | Day 1 | ✅ Released |
 | **v1.1** | Observability hardening | 2 weeks | ✅ **Done** |
 | **v1.2** | Secrets + backup automation | 4 weeks | ✅ **Done** |
-| **v1.3** | Hermes agent expansion | 6 weeks | 🔄 **In Progress** |
-| **v1.4** | Security + compliance | 8 weeks | 🔄 Planned |
+| **v1.3** | Hermes agent expansion | 6 weeks | ✅ **Done** |
+| **v1.4** | Security + compliance | 8 weeks | 🔄 **In Progress** |
 
 ### v1.1 — Observability Hardening ✅ **COMPLETED**
 - [x] Loki + Promtail for centralized logs
@@ -45,14 +45,18 @@
 - [ ] Migrate `.env` → Infisical, inject at deploy (Infisical CLI)
 - [ ] Document secret rotation procedure
 
-### v1.3 — Hermes Agent Expansion (Target: 6 weeks) 🔄 **In Progress**
-- [ ] Skill: `backup-ops` (list snapshots, trigger restore, verify)
-- [ ] Skill: `security-audit` (Trivy summary, CVE triage)
-- [ ] Skill: `capacity-plan` (RAM/disk trend, forecast)
+### v1.3 — Hermes Agent Expansion ✅ **COMPLETED**
+- [x] Skill: `backup-ops` (list snapshots, trigger restore, verify)
+- [x] Skill: `security-audit` (Trivy summary, CVE triage)
+- [x] Skill: `capacity-plan` (RAM/disk trend, forecast)
+- [x] Skill: `homelab-ops` enhancements (v1.1)
+- [x] Skill: `gitops-helper` enhancements (v1.1)
+- [x] ADR-005: Hermes Skills Architecture
+- [x] HERMES_ON_PI.md updated with all 5 skills
 - [ ] Cronjob: daily health summary via Telegram
 - [ ] Voice TTS for critical alerts (optional)
 
-### v1.4 — Security + Compliance (Target: 8 weeks)
+### v1.4 — Security + Compliance (Target: 8 weeks) 🔄 **In Progress**
 - [ ] Authelia SSO + 2FA in front of all external services
 - [ ] DNS-01 ACME (Cloudflare) → close port 80
 - [ ] CrowdSec or fail2ban hardening
@@ -127,19 +131,21 @@
 
 ---
 
-## Current Sprint (v1.3 — Hermes Agent Expansion)
+## Current Sprint (v1.4 — Security + Compliance)
 
 ```bash
 # Branch
-git checkout -b v1.3-hermes-expansion
+git checkout -b v1.4-security-compliance
 
-# Tasks for v1.3
-# 1. Skill: backup-ops (list snapshots, trigger restore, verify)
-# 2. Skill: security-audit (Trivy summary, CVE triage)
-# 3. Skill: capacity-plan (RAM/disk trend, forecast)
-# 4. Cronjob: daily health summary via Telegram
-# 5. ADR-005: Hermes skills architecture
-# 6. PR → merge → tag v1.3
+# Tasks for v1.4
+# 1. Add Authelia stack (Redis + Authelia)
+# 2. Configure Traefik ForwardAuth middleware
+# 3. DNS-01 ACME with Cloudflare
+# 4. Add CrowdSec stack
+# 5. Add Syft + Cosign to CI
+# 6. Create STRIDE threat model
+# 7. Write incident runbooks
+# 8. PR → merge → tag v1.4
 ```
 
 ---
@@ -148,16 +154,16 @@ git checkout -b v1.3-hermes-expansion
 
 ```json
 {
-  "current": "v1.2",
-  "next_minor": "v1.3",
+  "current": "v1.3",
+  "next_minor": "v1.4",
   "next_major": "v2.0",
   "branches": {
-    "main": "v1.2",
-    "develop": "v1.3-wip"
+    "main": "v1.3",
+    "develop": "v1.4-wip"
   },
   "support": {
     "v1.x": "active",
-    "v1.2": "released"
+    "v1.3": "released"
   }
 }
 ```
