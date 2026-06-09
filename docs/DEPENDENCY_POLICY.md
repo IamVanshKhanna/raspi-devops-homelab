@@ -71,8 +71,10 @@ image: traefik:latest
 
 ### Trivy Gate (supply-chain.yml)
 - Fail on CRITICAL
+- **Fail on HIGH for production images**
 - SARIF upload for all severities
 - Weekly full scan + daily quick scan
+- **Scans all image sources: Docker Compose, K8s manifests, Helmfile, ArgoCD Applications**
 
 ### Response SLAs
 | Severity | Response Time |
@@ -95,6 +97,7 @@ image: traefik:latest
 ### SBOM Generation (Syft)
 - Format: SPDX-JSON
 - Generated per image in supply-chain.yml
+- **Covers all sources: Docker Compose, K8s manifests, Helmfile, ArgoCD Applications**
 - Uploaded as artifact (30-day retention)
 - Available for compliance
 

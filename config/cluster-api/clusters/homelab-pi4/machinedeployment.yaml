@@ -1,0 +1,24 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: homelab-pi4-md-0
+  namespace: homelab-clusters
+spec:
+  clusterName: homelab-pi4
+  replicas: 2
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: homelab-pi4
+  template:
+    spec:
+      clusterName: homelab-pi4
+      version: v1.28.5
+      bootstrap:
+        configRef:
+          kind: KubeadmConfigTemplate
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          name: homelab-pi4-md-0
+      infrastructureRef:
+        kind: DockerMachineTemplate
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        name: homelab-pi4-md-0
