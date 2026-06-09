@@ -1,16 +1,17 @@
-name: Trivy Scan
+name: Trivy Quick Scan
 
 on:
   schedule:
-    - cron: '0 4 * * 0'  # Weekly Sunday 4 AM
+    - cron: '0 4 * * *'  # Daily 4 AM
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
-      - 'compose/**'
+      - 'stacks/**'
   workflow_dispatch:
 
 jobs:
-  trivy:
+  trivy-quick:
+    name: Quick Trivy Scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,19 +26,25 @@ jobs:
       - name: Extract images from compose files
         id: images
         run: |
-          IMAGES=$(grep -h "image:" compose/*.yml | sed 's/.*image: *//' | sort -u)
+          IMAGES=$(grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | sed 's/.*image: *//' | sort -u)
           echo "images=$IMAGES" >> $GITHUB_OUTPUT
 
-      - name: Scan images
+      - name: Quick scan (HIGH+CRITICAL only, fast)
         run: |
           for img in ${{ steps.images.outputs.images }}; do
-            echo "Scanning $img..."
-            trivy image --severity CRITICAL,HIGH --exit-code 0 --format sarif --output "trivy-$img.sarif" "$img" || true
+            echo "Quick scanning $img..."
+            trivy image --severity HIGH,CRITICAL --no-progress --format table "$img" || true
+          done
+
+      - name: Upload SARIF for HIGH+CRITICAL
+        run: |
+          for img in ${{ steps.images.outputs.images }}; do
+            safe_name=$(echo "$img" | sed 's|[/:]|-|g')
+            trivy image --severity HIGH,CRITICAL --format sarif --output "trivy-quick-${safe_name}.sarif" "$img" || true
           done
 
       - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
         with:
-          sarif_file: 'trivy-*.sarif'
-          category: trivy
+          sarif_file: 'trivy-quick-*.sarif'
+          category: trivy-quick
