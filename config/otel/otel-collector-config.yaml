@@ -1,0 +1,83 @@
+file_format: "1.0"
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  zipkin:
+    endpoint: 0.0.0.0:9411
+  jaeger:
+    protocols:
+      thrift_compact:
+        endpoint: 0.0.0.0:6831
+      thrift_binary:
+        endpoint: 0.0.0.0:6832
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1000
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 500
+    spike_limit_mib: 100
+  resource:
+    attributes:
+      - key: service.namespace
+        value: homelab-prod
+        action: upsert
+      - key: deployment.environment
+        value: production
+        action: upsert
+      - key: cluster.name
+        value: homelab-k3s
+        action: upsert
+  transform:
+    trace_state:
+      set:
+        - key: "correlation_id"
+          from_context: "correlation_id"
+        - key: "span_id"
+          from_context: "span_id"
+    span_name:
+      format: "{{.ServiceName}}.{{.Method}}"
+
+exporters:
+  tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8888
+  logging:
+    loglevel: debug
+    sampling_initial: 1
+    sampling_thereafter: 100
+
+extensions:
+  health_check: {}
+  pprof:
+    endpoint: 0.0.0.0:1777
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    traces:
+      receivers: [otlp, zipkin, jaeger]
+      processors: [memory_limiter, batch, resource, transform]
+      exporters: [tempo, logging]
+    metrics:
+      receivers: [prometheus]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loki]
