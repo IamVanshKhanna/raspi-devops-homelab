@@ -116,7 +116,7 @@
 | Version | Focus | Target | Timeline | Estimated Date | Status |
 |---------|-------|--------|----------|----------------|--------|
 | **v2.0** | Supply Chain + Auth (BREAKING) | 4 weeks (Sprints 15-16) | 2026-12-22 – 2027-01-19 | 2027-01-19 | ✅ **Released** |
-| **v2.1** | Logging + Tracing + GitOps | 4 weeks (Sprints 17-18) | 2027-01-19 – 2027-02-16 | 2027-02-16 | 🔄 **In Progress** |
+| **v2.1** | Logging + Tracing + GitOps | 4 weeks (Sprints 17-18) | 2027-01-19 – 2027-02-16 | 2027-02-16 | ✅ **Completed** |
 | **v2.2** | Multi-node Ready | 4 weeks (Sprints 19-20) | 2027-02-16 – 2027-03-16 | 2027-03-16 | 🔄 **Planned** |
 | **v2.3** | Observability maturity | 4 weeks (Sprints 21-20) | 2027-03-16 – 2027-04-13 | 2027-04-13 | 🔄 **Planned** |
 | **v2.4** | Supply chain maturity | 4 weeks (Sprints 21-22) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **Planned** |
@@ -146,7 +146,7 @@
 - [x] Dependency policy doc
 - [x] Migration guide: `docs/MIGRATION_GUIDE_v2.md`
 
-### v2.1 — Logging + Tracing + GitOps ✅ **IN PROGRESS**
+### v2.1 — Logging + Tracing + GitOps ✅ **COMPLETED**
 - [x] Loki + Promtail (replaces scattered `docker logs`)
 - [x] Tempo for traces (OpenTelemetry sidecar)
 - [x] Grafana: logs + metrics + traces unified
@@ -161,9 +161,10 @@
 - [x] ArgoCD app sync script
 - [x] Cluster health check script
 - [x] Helm release validator
-- [ ] Log retention policies
-- [ ] SLO/SLI definitions
-- [ ] Burn rate alerting
+- [x] **Log retention policies** - `config/loki/retention-policy.yaml`
+- [x] **SLO/SLI definitions** - `config/prometheus/rules/slo-definitions.yaml`
+- [x] **Burn rate alerting** - `config/prometheus/rules/burn-rate-alerts.yaml`
+- [x] Cost optimizer script - `scripts/cost_optimizer.py`
 
 ### v2.2 — Multi-node Ready (Month 3) 🔄 **Planned**
 - [ ] K3s cluster on 2× Pi 4 (or Pi 5)
