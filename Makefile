@@ -1,7 +1,7 @@
 # Homelab Makefile
 # Usage: make <target>
 
-.PHONY: help up-core up-network up-monitoring up-apps up-smarthome up-uptime up-all down-core down-network down-monitoring down-apps down-smarthome down-uptime down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime backup restore
+.PHONY: help up-core up-network up-secrets up-monitoring up-apps up-smarthome up-uptime up-all down-core down-network down-secrets down-monitoring down-apps down-smarthome down-uptime down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime verify-secrets backup restore restore-test config
 
 # Core stack dependencies
 up-core:
@@ -9,6 +9,9 @@ up-core:
 
 up-network:
 	docker compose -f stacks/network/docker-compose.yml up -d
+
+up-secrets:
+	docker compose -f stacks/secrets/docker-compose.yml up -d
 
 up-monitoring:
 	docker compose -f stacks/monitoring/docker-compose.yml up -d
@@ -22,23 +25,26 @@ up-smarthome:
 up-uptime:
 	docker compose -f stacks/uptime-kuma/docker-compose.yml up -d
 
-# Phased deploy per verification plan
+# Phased deploy per verification plan (v1.2: add secrets before monitoring)
 up-phase1: up-core up-network
 	@echo "Phase 1 done: core + network"
 
-up-phase2: up-monitoring
-	@echo "Phase 2 done: monitoring"
+up-phase2: up-secrets
+	@echo "Phase 2 done: secrets (Infisical)"
 
-up-phase3: up-apps
-	@echo "Phase 3 done: apps"
+up-phase3: up-monitoring
+	@echo "Phase 3 done: monitoring"
 
-up-phase4: up-smarthome
-	@echo "Phase 4 done: smarthome"
+up-phase4: up-apps
+	@echo "Phase 4 done: apps"
 
-up-phase5: up-uptime
-	@echo "Phase 5 done: uptime-kuma"
+up-phase5: up-smarthome
+	@echo "Phase 5 done: smarthome"
 
-up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5
+up-phase6: up-uptime
+	@echo "Phase 6 done: uptime-kuma"
+
+up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5 up-phase6
 	@echo "All stacks deployed"
 
 # Down commands
@@ -47,6 +53,9 @@ down-core:
 
 down-network:
 	docker compose -f stacks/network/docker-compose.yml down
+
+down-secrets:
+	docker compose -f stacks/secrets/docker-compose.yml down
 
 down-monitoring:
 	docker compose -f stacks/monitoring/docker-compose.yml down
@@ -60,7 +69,7 @@ down-smarthome:
 down-uptime:
 	docker compose -f stacks/uptime-kuma/docker-compose.yml down
 
-down-all: down-uptime down-smarthome down-apps down-monitoring down-network down-core
+down-all: down-uptime down-smarthome down-apps down-secrets down-monitoring down-network down-core
 
 # Status & logs
 ps:
@@ -68,13 +77,14 @@ ps:
 
 logs:
 	docker compose -f stacks/core/docker-compose.yml -f stacks/network/docker-compose.yml \
-		-f stacks/monitoring/docker-compose.yml -f stacks/apps/docker-compose.yml \
-		-f stacks/smarthome/docker-compose.yml -f stacks/uptime-kuma/docker-compose.yml \
+		-f stacks/secrets/docker-compose.yml -f stacks/monitoring/docker-compose.yml \
+		-f stacks/apps/docker-compose.yml -f stacks/smarthome/docker-compose.yml \
+		-f stacks/uptime-kuma/docker-compose.yml \
 		logs -f --tail=100
 
-# Verification
-verify-v1: verify-health verify-loki verify-alertmanager verify-uptime
-	@echo "All v1.1 verification checks passed"
+# Verification (v1.2)
+verify-v1: verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-backup
+	@echo "All v1.2 verification checks passed"
 
 verify-health:
 	./scripts/health-check.sh --strict
@@ -93,6 +103,17 @@ verify-uptime:
 	@echo "Checking Uptime Kuma..."
 	@curl -sf http://localhost:3001 >/dev/null || (echo "Uptime Kuma not responsive"; exit 1)
 
+verify-secrets:
+	@echo "Checking Infisical secret manager..."
+	@curl -sf http://localhost:8080/api/status >/dev/null 2>&1 || (echo "Infisical not ready"; exit 1)
+	@echo "Infisical reachable"
+
+verify-backup:
+	@echo "Checking backup repository..."
+	@source .env && export RESTIC_REPOSITORY RESTIC_PASSWORD B2_ACCOUNT_ID B2_ACCOUNT_KEY && \
+	restic -r "$$RESTIC_REPOSITORY" snapshots --latest 1 | grep -q "snapshot" || (echo "No recent snapshot"; exit 1)
+	@echo "Recent snapshot exists"
+
 # Backup & restore
 backup:
 	./scripts/backup.sh
@@ -101,10 +122,14 @@ restore:
 	@echo "Usage: make restore SNAPSHOT=<snapshot-id>"
 	@restic -r $$RESTIC_REPOSITORY restore $$SNAPSHOT --target /mnt/restore-test
 
+restore-test:
+	./scripts/restore-test.sh
+
 # Config validation
 config:
 	docker compose -f stacks/core/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/network/docker-compose.yml config >/dev/null && \
+	docker compose -f stacks/secrets/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/monitoring/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/apps/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/smarthome/docker-compose.yml config >/dev/null && \
@@ -113,13 +138,13 @@ config:
 
 help:
 	@echo "Available targets:"
-	@echo "  up-core, up-network, up-monitoring, up-apps, up-smarthome, up-uptime"
-	@echo "  up-phase1, up-phase2, up-phase3, up-phase4, up-phase5"
+	@echo "  up-core, up-network, up-secrets, up-monitoring, up-apps, up-smarthome, up-uptime"
+	@echo "  up-phase1, up-phase2, up-phase3, up-phase4, up-phase5, up-phase6"
 	@echo "  up-all"
-	@echo "  down-core, down-network, ... down-all"
+	@echo "  down-core, down-network, down-secrets, ... down-all"
 	@echo "  ps, logs"
-	@echo "  verify-v1, verify-health, verify-loki, verify-alertmanager, verify-uptime"
-	@echo "  backup, restore"
+	@echo "  verify-v1, verify-health, verify-loki, verify-alertmanager, verify-uptime, verify-secrets, verify-backup"
+	@echo "  backup, restore, restore-test"
 	@echo "  config, help"
 
 .DEFAULT_GOAL := help

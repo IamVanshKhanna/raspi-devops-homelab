@@ -4,6 +4,37 @@
 
 ---
 
+## [v1.2.0] — In Progress (Secrets + Backup Automation)
+
+### Added (v1.2.0-rc1)
+- **Infisical secret manager** stack (PostgreSQL + Redis + Infisical)
+- **Infisical environment variables** in `.env.example` (AUTH_SECRET, ENCRYPTION_KEY, REDIS_PASSWORD)
+- **Infisical health check** in `scripts/health-check.sh` and `make verify-secrets`
+- **Infisical phase** in deployment (`up-phase2`, `up-secrets`)
+- **Backup restore test script** (`scripts/restore-test.sh`) for CI/CD
+- **Backup wrapper with alerting** (`scripts/backup-wrapper.sh`, `scripts/backup-alert.sh`)
+- **Backup verification target** (`make verify-backup`)
+- **Restore test Makefile target** (`make restore-test`)
+- **Enhanced backup-test GitHub Action** with actual restore verification
+- **Infisical environment variables** in `.env.example`
+
+### Changed
+- **Deployment order**: Secrets (Infisical) now deploys before Monitoring (phase 2)
+- **Makefile**: Added `up-secrets`, `verify-secrets`, `verify-backup`, `restore-test` targets
+- **Health check**: Added Infisical container checks
+- **Backup test workflow**: Now runs actual restore test with restic
+
+### Security
+- **Infisical** for centralized secret management (PostgreSQL + Redis backend)
+- **Backup alerting** via Telegram on failure
+- **Restore test** validates backup integrity weekly in CI
+
+### Documentation
+- Updated `.env.example` with Infisical variables
+- Added Infisical to `SETUP_GUIDE.md` (pending)
+
+---
+
 ## [v1.1.0] — 2026-06-09
 ### Added
 - Loki + Promtail for centralized log aggregation
@@ -60,20 +91,6 @@
 - README with quick start
 - HERMES_ON_PI.md install guide
 - V1_CHECKLIST.md acceptance criteria
-
----
-
-## [v1.2.0] — Planned (Secrets + Backup Automation)
-### Added
-- Infisical secret manager (self-hosted)
-- `.env` migration to Infisical + inject at deploy
-- Automated weekly restore test in CI
-- Backup failure alerting
-- Secret rotation runbook
-
-### Security
-- No plaintext secrets in repo or container env
-- Audit log for secret access
 
 ---
 
