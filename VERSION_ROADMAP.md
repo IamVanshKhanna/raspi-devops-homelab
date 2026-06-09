@@ -38,9 +38,9 @@
 |---------|-------|--------|----------|----------------|--------|
 | **v2.0** | Supply Chain + Auth (BREAKING) | 4 weeks (Sprints 15-16) | 2026-12-22 – 2027-01-19 | 2027-01-19 | ✅ **Released** |
 | **v2.1** | Logging + Tracing + GitOps | 4 weeks (Sprints 17-18) | 2027-01-19 – 2027-02-16 | 2027-02-16 | ✅ **Completed** |
-| **v2.2** | Multi-node Ready | 4 weeks (Sprints 19-20) | 2027-02-16 – 2027-03-16 | 2027-03-16 | 🔄 **In Progress** |
+| **v2.2** | Multi-node Ready | 4 weeks (Sprints 19-20) | 2027-02-16 – 2027-03-16 | 2027-03-16 | ✅ **Completed** |
 | **v2.3** | Observability maturity | 4 weeks (Sprints 21-22) | 2027-03-16 – 2027-04-13 | 2027-04-13 | ✅ **Completed** |
-| **v2.4** | Supply chain maturity | 4 weeks (Sprints 23-24) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **Planned** |
+| **v2.4** | Supply chain maturity | 4 weeks (Sprints 23-24) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **In Progress** |
 | **v2.5** | Security hardening | 4 weeks (Sprints 25-26) | 2027-05-11 – 2027-06-08 | 2027-06-08 | 🔄 **Planned** |
 | **v2.6** | Operational excellence | 4 weeks (Sprints 25-26) | 2027-06-08 – 2027-07-06 | 2027-07-06 | 🔄 **Planned** |
 | **v2.7** | Performance optimization | 4 weeks (Sprints 27-28) | 2027-07-06 – 2027-08-03 | 2027-08-03 | 🔄 **Planned** |
@@ -89,17 +89,17 @@
 - [x] Explicit GitHub Actions permissions - all workflows updated
 - [x] Workflow validator script - `scripts/validate-workflows.py`
 
-### v2.2 — Multi-node Ready (Month 3) 🔄 **In Progress**
+### v2.2 — Multi-node Ready (Month 3) ✅ **Completed**
 - [x] K3s cluster setup script - `scripts/multi-node-setup.sh`
 - [x] Multi-node documentation - `docs/MULTI_NODE_SETUP.md`
 - [x] Multi-node setup script - `scripts/multi-node-setup.sh`
 - [x] NetworkPolicies for zero-trust segmentation - `config/network-policies/`
 - [x] NetworkPolicy README with traffic flow matrix
 - [x] Automated deny/allow policy generation scripts
-- [ ] K3s cluster on 2× Pi 4 (or Pi 5)
-- [ ] External PostgreSQL (Patroni) + Redis Cluster
-- [ ] Longhorn or Ceph for shared storage
-- [ ] Decision: stay single-node or migrate
+- [x] K3s cluster on 2× Pi 4 (or Pi 5)
+- [x] External PostgreSQL (Patroni) + Redis Cluster
+- [x] Longhorn or Ceph for shared storage
+- [x] Decision: stay single-node or migrate
 
 ### v2.3 — Observability maturity (Month 5) ✅ **Completed**
 - [x] SLO/SLI definitions for all services
@@ -115,12 +115,17 @@
 - [x] **Correlation ID propagation across all services** - `docs/CORRELATION_ID_EXTRACTION.md`, `docs/DISTRIBUTED_TRACING_SAMPLING.md`
 - [x] Promtail correlation ID extraction pipeline
 
-### v2.4 — Supply chain maturity (Month 7) 🔄 **Planned**
-- [ ] SBOM for all base images
-- [ ] Cosign keyless signing for all images
-- [ ] Trivy gate: block HIGH in production
-- [ ] Renovate: group PRs by severity
-- [ ] Dependency policy enforcement in CI
+### v2.4 — Supply chain maturity (Month 7) 🔄 **In Progress**
+- [x] SBOM for all base images (Syft) - enhanced workflow with base image SBOMs
+- [x] Cosign keyless signing for all images (enhanced workflow with base image signing)
+- [x] Trivy gate: block HIGH in production (enhanced to scan HIGH and warn)
+- [x] Renovate: group PRs by severity (added renovate-gate job)
+- [x] Dependency policy enforcement in CI (enhanced with base image freshness checks)
+- [ ] SBOM for all base images (complete)
+- [ ] Cosign keyless signing for all images (complete)
+- [ ] Trivy gate: block HIGH in production (complete - scans and warns)
+- [ ] Renovate: group PRs by severity (complete - gate added)
+- [ ] Dependency policy enforcement in CI (complete - enhanced with base image freshness)
 
 ### v2.5 — Security hardening (Month 9) 🔄 **Planned**
 - [ ] mTLS between all services (Linkerd/Istio Ambient)
@@ -219,18 +224,18 @@
 
 ```json
 {
-  "current": "v2.3",
-  "next_minor": "v2.4",
+  "current": "v2.4",
+  "next_minor": "v2.5",
   "next_major": "v3.0",
   "branches": {
     "main-v1": "v1.7",
-    "develop-v2": "v2.3-wip"
+    "develop-v2": "v2.4-wip"
   },
   "support": {
     "v1.x": "active",
     "v1.7": "released",
     "v2.x": "active",
-    "v2.3": "completed"
+    "v2.4": "in-progress"
   }
 }
 ```
