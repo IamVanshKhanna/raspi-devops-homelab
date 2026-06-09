@@ -4,34 +4,38 @@
 
 ---
 
-## [v1.2.0] — In Progress (Secrets + Backup Automation)
-
-### Added (v1.2.0-rc1)
-- **Infisical secret manager** stack (PostgreSQL + Redis + Infisical)
-- **Infisical environment variables** in `.env.example` (AUTH_SECRET, ENCRYPTION_KEY, REDIS_PASSWORD)
-- **Infisical health check** in `scripts/health-check.sh` and `make verify-secrets`
-- **Infisical phase** in deployment (`up-phase2`, `up-secrets`)
+## [v1.2.0] — 2026-06-09
+### Added
+- **Infisical secret manager** stack (PostgreSQL 16 + Redis 7 + Infisical 1.7.1)
+- **Infisical health check** in `health-check.sh` and `make verify-secrets`
+- **Infisical deployment phase** (`up-secrets`, `up-phase2` before monitoring)
 - **Backup restore test script** (`scripts/restore-test.sh`) for CI/CD
 - **Backup wrapper with alerting** (`scripts/backup-wrapper.sh`, `scripts/backup-alert.sh`)
 - **Backup verification target** (`make verify-backup`)
 - **Restore test Makefile target** (`make restore-test`)
 - **Enhanced backup-test GitHub Action** with actual restore verification
 - **Infisical environment variables** in `.env.example`
+- **ADR-004**: Secrets Management — Infisical over .env Files
 
 ### Changed
 - **Deployment order**: Secrets (Infisical) now deploys before Monitoring (phase 2)
 - **Makefile**: Added `up-secrets`, `verify-secrets`, `verify-backup`, `restore-test` targets
 - **Health check**: Added Infisical container checks
 - **Backup test workflow**: Now runs actual restore test with restic
+- **Deployment phases**: Now 6 phases (core → secrets → monitoring → apps → smarthome → uptime)
 
 ### Security
 - **Infisical** for centralized secret management (PostgreSQL + Redis backend)
 - **Backup alerting** via Telegram on failure
 - **Restore test** validates backup integrity weekly in CI
+- **ADR-004** documents secrets management rationale
 
 ### Documentation
-- Updated `.env.example` with Infisical variables
-- Added Infisical to `SETUP_GUIDE.md` (pending)
+- **ADR-004**: Secrets Management — Infisical over .env Files
+- **SETUP_GUIDE.md**: Updated for v1.2 with Infisical setup
+- **CHANGELOG.md**: v1.2 released
+- **VERSION_ROADMAP.md**: v1.2 marked complete
+- **New Makefile targets**: `up-secrets`, `verify-secrets`, `verify-backup`, `restore-test`
 
 ---
 
@@ -94,13 +98,21 @@
 
 ---
 
-## [v1.3.0] — Planned (Hermes Agent Expansion)
-### Added
-- Skill: `backup-ops` (snapshots, restore, verify)
+## [v1.3.0] — In Progress (Hermes Agent Expansion)
+### Added (v1.3.0-rc1)
+- Skill: `backup-ops` (list snapshots, trigger restore, verify)
 - Skill: `security-audit` (Trivy summary, CVE triage)
-- Skill: `capacity-plan` (RAM/disk trends, forecast)
+- Skill: `capacity-plan` (RAM/disk trend, forecast)
 - Cronjob: daily health summary via Telegram
-- Optional: TTS for critical alerts
+- Skill: `homelab-ops` enhancements (log search, metrics query)
+- ADR-005: Hermes Skills Architecture
+
+### Changed
+- Hermes health check includes skill metadata
+- Updated HERMES_ON_PI.md with new skills
+
+### Security
+- Skills run with least privilege (read-only by default)
 
 ---
 
@@ -109,8 +121,8 @@
 - Authelia SSO + 2FA (ForwardAuth on all external)
 - Cloudflare DNS-01 ACME → wildcard certs, port 80 closed
 - CrowdSec / fail2ban hardening
-- SBOM (Syft) + signing (Cosign) in CI
-- Threat model (STRIDE) + incident runbooks
+- SBOM generation (Syft) + signing (Cosign) in CI
+- Threat model doc (STRIDE) + incident runbooks
 
 ---
 
