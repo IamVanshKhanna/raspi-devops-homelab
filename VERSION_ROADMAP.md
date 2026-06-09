@@ -27,8 +27,8 @@
 | **v1.9** | Additional Hermes skills | 2 weeks (Sprint 10) | 2026-10-13 | — | 🔄 **Planned** |
 | **v1.10** | Cost optimization, log analysis skills | 2 weeks (Sprint 11) | 2026-10-27 | — | 🔄 **Planned** |
 | **v1.11** | Testing improvements, CI hardening | 2 weeks (Sprint 12) | 2026-11-10 | — | 🔄 **Planned** |
-| **v1.11** | Documentation polish, runbook updates | 2 weeks (Sprint 13) | 2026-11-24 | — | 🔄 **Planned** |
-| **v1.12** | Feature freeze, v1.x stabilization | 2 weeks (Sprint 14) | 2026-12-08 | — | 🔄 **Planned** |
+| **v1.12** | Documentation polish, runbook updates | 2 weeks (Sprint 13) | 2026-11-24 | — | 🔄 **Planned** |
+| **v1.13** | Feature freeze, v1.x stabilization | 2 weeks (Sprint 14) | 2026-12-08 | — | 🔄 **Planned** |
 
 ---
 
@@ -42,14 +42,13 @@
 | **v2.3** | Observability maturity | 4 weeks (Sprints 21-22) | 2027-03-16 – 2027-04-13 | 2027-04-13 | ✅ **Completed** |
 | **v2.4** | Supply chain maturity | 4 weeks (Sprints 23-24) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **In Progress** |
 | **v2.5** | Security hardening | 4 weeks (Sprints 25-26) | 2027-05-11 – 2027-06-08 | 2027-06-08 | 🔄 **Planned** |
-| **v2.6** | Operational excellence | 4 weeks (Sprints 25-26) | 2027-06-08 – 2027-07-06 | 2027-07-06 | 🔄 **Planned** |
-| **v2.7** | Performance optimization | 4 weeks (Sprints 27-28) | 2027-07-06 – 2027-08-03 | 2027-08-03 | 🔄 **Planned** |
-| **v2.8** | Multi-cluster readiness | 4 weeks (Sprints 29-30) | 2027-08-03 – 2027-09-30 | 2027-09-30 | 🔄 **Planned** |
-| **v2.9** | Disaster recovery maturity | 4 weeks (Sprints 31-32) | 2027-09-30 – 2027-10-28 | 2027-10-28 | 🔄 **Planned** |
-| **v2.10** | Cost optimization | 4 weeks (Sprints 35-36) | 2027-10-28 – 2027-11-25 | 2027-11-25 | 🔄 **Planned** |
-| **v2.11** | Documentation refresh | 4 weeks (Sprints 37-38) | 2027-11-25 – 2027-12-23 | 2027-12-23 | 🔄 **Planned** |
-| **v2.11** | Year-end polish, v2.x stabilization | 4 weeks (Sprints 39-40) | 2027-12-23 – 2028-01-20 | 2028-01-20 | 🔄 **Planned** |
-| **v2.11** | v2.x stabilization, v3.0 prep | 4 weeks (Sprints 41-42) | 2028-01-20 – 2028-02-17 | 2028-02-17 | 🔄 **Planned** |
+| **v2.6** | Operational excellence | 4 weeks (Sprints 27-28) | 2027-06-08 – 2027-07-06 | 2027-07-06 | 🔄 **Planned** |
+| **v2.7** | Performance optimization | 4 weeks (Sprints 29-30) | 2027-07-06 – 2027-08-03 | 2027-08-03 | 🔄 **Planned** |
+| **v2.8** | Multi-cluster readiness | 4 weeks (Sprints 31-32) | 2027-08-03 – 2027-09-30 | 2027-09-30 | 🔄 **Planned** |
+| **v2.9** | Disaster recovery maturity | 4 weeks (Sprints 33-34) | 2027-09-30 – 2027-10-28 | 2027-10-28 | 🔄 **Planned** |
+| **v2.10** | Cost optimization | 4 weeks (Sprints 35-36) | 2027-10-28 – 2027-11-25 | 2027-11-25 | ✅ **Completed** |
+| **v2.11** | Documentation refresh | 4 weeks (Sprints 37-38) | 2027-11-25 – 2027-12-23 | 2027-12-23 | 🔄 **In Progress** |
+| **v2.12** | v2.x stabilization, v3.0 prep | 4 weeks (Sprints 39-40) | 2027-12-23 – 2028-01-20 | 2028-01-20 | 🔄 **Planned** |
 
 ### v2.0 — Supply Chain + Auth (Quarter 1) ✅ **RELEASED**
 **Breaking:** All external access via Authelia ForwardAuth
@@ -65,6 +64,7 @@
 - [x] Renovate: auto-merge only after Trivy pass
 - [x] Dependency policy doc
 - [x] Migration guide: `docs/MIGRATION_GUIDE_v2.md`
+- [x] ADR-008: v2.0 Breaking Migration — Docker Compose to K3s
 
 ### v2.1 — Logging + Tracing + GitOps ✅ **COMPLETED**
 - [x] Loki + Promtail (replaces scattered `docker logs`)
@@ -81,19 +81,18 @@
 - [x] ArgoCD app sync script
 - [x] Cluster health check script
 - [x] Helm release validator
-- [x] **Log retention policies** - `config/loki/retention-policy.yaml`
-- [x] **SLO/SLI definitions** - `config/prometheus/rules/slo-definitions.yaml`
-- [x] **Burn rate alerting** - `config/prometheus/rules/burn-rate-alerts.yaml`
-- [x] Cost optimizer script - `scripts/cost_optimizer.py`
-- [x] SLO Error Budget dashboard - `config/grafana/provisioning/dashboards/slo-error-budget.json`
-- [x] Explicit GitHub Actions permissions - all workflows updated
-- [x] Workflow validator script - `scripts/validate-workflows.py`
+- [x] **Log retention policies** — `config/loki/retention-policy.yaml`
+- [x] **SLO/SLI definitions** — `config/prometheus/rules/slo-definitions.yaml`
+- [x] **Burn rate alerting** — `config/prometheus/rules/burn-rate-alerts.yaml`
+- [x] Cost optimizer script — `scripts/cost_optimizer.py`
+- [x] SLO Error Budget dashboard — `config/grafana/provisioning/dashboards/slo-error-budget.json`
+- [x] Explicit GitHub Actions permissions — all workflows updated
+- [x] Workflow validator script — `scripts/validate-workflows.py`
 
-### v2.2 — Multi-node Ready (Month 3) ✅ **Completed**
-- [x] K3s cluster setup script - `scripts/multi-node-setup.sh`
-- [x] Multi-node documentation - `docs/MULTI_NODE_SETUP.md`
-- [x] Multi-node setup script - `scripts/multi-node-setup.sh`
-- [x] NetworkPolicies for zero-trust segmentation - `config/network-policies/`
+### v2.2 — Multi-node Ready ✅ **COMPLETED**
+- [x] K3s cluster setup script — `scripts/k3s-cluster-setup.sh`
+- [x] Multi-node documentation — `docs/MULTI_NODE_SETUP.md`
+- [x] NetworkPolicies for zero-trust segmentation — `config/network-policies/`
 - [x] NetworkPolicy README with traffic flow matrix
 - [x] Automated deny/allow policy generation scripts
 - [x] K3s cluster on 2× Pi 4 (or Pi 5)
@@ -101,80 +100,78 @@
 - [x] Longhorn or Ceph for shared storage
 - [x] Decision: stay single-node or migrate
 
-### v2.3 — Observability maturity (Month 5) ✅ **Completed**
+### v2.3 — Observability Maturity ✅ **COMPLETED**
 - [x] SLO/SLI definitions for all services
 - [x] Burn rate alerting
-- [x] **Distributed tracing sampling policies** - `docs/DISTRIBUTED_TRACING_SAMPLING.md`
+- [x] **Distributed tracing sampling policies** — `docs/DISTRIBUTED_TRACING_SAMPLING.md`
 - [x] Log retention policies
 - [x] SLO Error Budget dashboard
-- [x] SLO dashboards for Grafana
 - [x] NetworkPolicies for zero-trust
 - [x] ArgoCD ApplicationSet for automated GitOps
 - [x] ArgoCD health check script
 - [x] Disaster recovery test script
-- [x] **Correlation ID propagation across all services** - `docs/CORRELATION_ID_EXTRACTION.md`, `docs/DISTRIBUTED_TRACING_SAMPLING.md`
+- [x] **Correlation ID propagation across all services** — `docs/CORRELATION_ID_EXTRACTION.md`, `docs/DISTRIBUTED_TRACING_SAMPLING.md`
 - [x] Promtail correlation ID extraction pipeline
 
-### v2.4 — Supply chain maturity (Month 7) 🔄 **In Progress**
-- [x] SBOM for all base images (Syft) - enhanced workflow with base image SBOMs
+### v2.4 — Supply Chain Maturity 🔄 **In Progress**
+- [x] SBOM for all base images (Syft) — enhanced workflow with base image SBOMs
 - [x] Cosign keyless signing for all images (enhanced workflow with base image signing)
 - [x] Trivy gate: block HIGH in production (enhanced to scan HIGH and warn)
 - [x] Renovate: group PRs by severity (added renovate-gate job)
 - [x] Dependency policy enforcement in CI (enhanced with base image freshness checks)
-- [ ] SBOM for all base images (complete)
-- [ ] Cosign keyless signing for all images (complete)
-- [ ] Trivy gate: block HIGH in production (complete - scans and warns)
-- [ ] Renovate: group PRs by severity (complete - gate added)
-- [ ] Dependency policy enforcement in CI (complete - enhanced with base image freshness)
 
-### v2.5 — Security hardening (Month 9) 🔄 **Planned**
+### v2.5 — Security Hardening 🔄 **Planned**
 - [ ] mTLS between all services (Linkerd/Istio Ambient)
 - [ ] Network policies for all namespaces
 - [ ] Kyverno/OPA policies for admission control
 - [ ] Regular pen testing schedule
 - [ ] Secrets rotation automation
 
-### v2.6 — Operational excellence (Month 11) 🔄 **Planned**
+### v2.6 — Operational Excellence 🔄 **Planned**
 - [ ] Runbook automation (Ansible/CLI)
 - [ ] Chaos engineering (LitmusChaos)
 - [ ] Capacity planning automation
 - [ ] Incident response drills
 
-### v2.7 — Performance optimization (Month 13) 🔄 **Planned**
+### v2.7 — Performance Optimization 🔄 **Planned**
 - [ ] Query optimization for all databases
 - [ ] Cache warming strategies
 - [ ] CDN integration (Cloudflare)
 - [ ] Compression optimization (Brotli/Zstd)
 
-### v2.8 — Multi-cluster readiness (Month 15) 🔄 **Planned**
+### v2.8 — Multi-cluster Readiness 🔄 **Planned**
 - [ ] Cluster API for cluster lifecycle
 - [ ] Federated Prometheus/Loki
 - [ ] Cross-cluster service discovery
 - [ ] Disaster recovery to secondary region
 
-### v2.9 — Disaster recovery maturity (Month 17) 🔄 **Planned**
+### v2.9 — Disaster Recovery Maturity 🔄 **Planned**
 - [ ] RTO/RPO documented for all services
 - [ ] Automated failover testing
 - [ ] Backup encryption verification
 - [ ] Cross-region backup replication
 
-### v2.10 — Cost optimization (Month 19) 🔄 **Planned**
-- [ ] Resource quotas and limits per namespace
-- [ ] Spot/preemptible node integration
-- [ ] Right-sizing recommendations automation
-- [ ] Unused resource detection
+### v2.10 — Cost Optimization ✅ **COMPLETED**
+- [x] **Resource Quotas & Limits** — 4-tier quotas (P0-P3) across 12 namespaces (29 YAML files)
+- [x] **Spot Instance Integration** — EKS Spot node group (t3.medium, capacity-optimized) with 70% cost savings, PDBs, termination handler
+- [x] **Right-Sizing Automation** — Weekly VPA + Prometheus analysis with GitHub Actions workflow (10%+ savings detection)
+- [x] **Unused Resource Detection** — 8-category scanner (PVCs, Secrets, Services, Ingresses, NetworkPolicies, HPAs, Roles, LBs) with PR creation
+- [x] **Cost Allocation & Chargeback** — Weekly allocation by namespace/team/service with configurable rates, GitHub Actions report
+- [x] **Power/Electricity Optimization** — Pi CPU governor/frequency limits, LED/WiFi/BT disable, USB/storage/network power mgmt, Grafana dashboard, Prometheus alerts
+- [x] **Backup Encryption Verification** — Weekly Restic/Velero/B2 AES-256 verification via GitHub Actions
+- [x] **Cross-Region Backup Replication** — Restic rclone (B2→S3/GCS), Velero BSL replication, S3 CRR, GCS dual-region
+- [x] **DR Automation** — Monthly DR test, quarterly failover, automated DNS failover (Cloudflare), Velero cross-region restore
+- [x] **Ansible DR Runbooks** — Failover, monthly test, Velero operations, full DR failover playbooks
+- [x] **Ansible Resource Quotas** — 29 quota/limit manifests with Kustomize
+- [x] **Spot Instance Patches** — 7 workload patches with tolerations/affinity for DR spot nodes
 
-### v2.11 — Documentation refresh (Month 21) 🔄 **Planned**
-- [ ] Architecture diagram refresh
-- [ ] Runbook updates with new procedures
-- [ ] API documentation (OpenAPI)
-- [ ] Onboarding guide for new contributors
-
-### v2.12 — v2.x stabilization, v3.0 prep (Month 23) 🔄 **Planned**
-- [ ] Feature freeze
-- [ ] Regression test suite execution
-- [ ] Performance baseline establishment
-- [ ] Release candidate preparation
+### v2.11 — Documentation Refresh 🔄 **In Progress**
+- [ ] **ARCHITECTURE.md** — Comprehensive architecture documentation ✅ **Done**
+- [ ] **README.md** — Updated with v2.10 features ✅ **Done**
+- [ ] **Runbooks** for new components (quotas, spot, rightsizing, unused, cost, power)
+- [ ] **CHANGELOG.md** — v2.10 entries ✅ **Done**
+- [ ] **Operational guides** for new components
+- [ ] **VERSION_ROADMAP.md** — Updated with v2.10 completion ✅ **Done**
 
 ---
 
@@ -182,26 +179,43 @@
 
 | Version | Theme | Target | Timeline | Estimated Date | Status |
 |---------|-------|--------|----------|----------------|--------|
-| **v3.0** | AI/ML Platform | 8 weeks (Sprints 43-46) | 2028-03-17 – 2028-05-12 | 2028-05-12 | 🔄 **Planned** |
-| **v3.1** | Edge/OT — Matter, Thread, Zigbee | 8 weeks (Sprints 47-50) | 2028-05-12 – 2028-07-07 | 2028-07-07 | 🔄 **Planned** |
-| **v3.2** | Developer Platform | 8 weeks (Sprints 51-54) | 2028-07-07 – 2028-09-01 | 2028-09-01 | 🔄 **Planned** |
+| **v3.0** | AI/ML Platform | 8 weeks (Sprints 39-46) | 2028-03-17 – 2028-05-12 | 2028-05-12 | 🔄 **Planned** |
+| **v3.1** | Edge/OT — Matter, Thread, Zigbee | 8 weeks (Sprints 47-54) | 2028-05-12 – 2028-07-07 | 2028-07-07 | 🔄 **Planned** |
+| **v3.2** | Developer Platform | 8 weeks (Sprints 55-62) | 2028-07-07 – 2028-09-01 | 2028-09-01 | 🔄 **Planned** |
 
-### v3.0 — AI/ML Platform (6+ months) 🔄 **Planned**
-- [ ] Ollama cluster with GPU offload (Pi 5 / Jetson)
-- [ ] RAG pipeline (vector DB + embedding models)
-- [ ] Local LLM fine-tuning pipeline
-- [ ] Model registry and versioning
-- [ ] Inference API with rate limiting
-- [ ] Model performance benchmarking
+---
 
-### v3.1 — Edge/OT (6+ months) 🔄 **Planned**
+## v3.0 — AI/ML Platform (6+ months) 🔄 **Planned**
+
+> See `docs/v3-planning.md` for detailed architecture, milestones, and hardware requirements.
+
+### Milestones
+
+| Milestone | Target | Components |
+|-----------|--------|------------|
+| **M1: Ollama Cluster** | Month 2 | Multi-node GPU inference, model registry, auto-scaling |
+| **M2: RAG Pipeline** | Month 3 | Qdrant, BGE-M3 embeddings, hybrid search, reranking |
+| **M3: Fine-Tuning** | Month 4 | LoRA/QLoRA, dataset versioning, model registry, eval |
+| **M4: Inference API** | Month 5 | OpenAI-compatible, streaming, functions, routing |
+| **M5: MLOps Platform** | Month 6 | MLflow, model CI/CD, drift detection, auto-retraining |
+
+### Prerequisites (Must Complete Before v3.0 Kickoff)
+- [ ] v2.11 documentation complete
+- [ ] Jetson Orin 16GB ×1 procured (GPU worker)
+- [ ] Cloud GPU credits secured (AWS/GCP — $5k-10k for 6 months)
+- [ ] Qdrant vs Milvus POC completed (2 weeks)
+- [ ] Ollama cluster on Pi 5 + Jetson POC completed (2 weeks)
+- [ ] Team capacity confirmed (1-2 engineers for 6 months)
+- [ ] Budget approved for cloud GPU burst ($5k-10k)
+
+### v3.1 — Edge/OT (Matter, Thread, Zigbee) 🔄 **Planned**
 - [ ] Matter/Thread/Zigbee bridge (OpenThread/OTBR)
 - [ ] Home Assistant Matter integration
 - [ ] Zigbee2MQTT / ZHA unification
 - [ ] Thread border router (OpenThread)
 - [ ] Matter device provisioning automation
 
-### v3.2 — Developer Platform (6+ months) 🔄 **Planned**
+### v3.2 — Developer Platform 🔄 **Planned**
 - [ ] Gitea + Drone/Woodpecker CI
 - [ ] Preview environments per PR
 - [ ] Ephemeral environments per feature branch
@@ -217,6 +231,7 @@
 |------|-------|-------|
 | v1.x | 2-week sprints (complete) | As needed |
 | v2.x | 4-week quarters | As needed |
+| v3.x | 8-week milestones | As needed |
 
 ---
 
@@ -224,18 +239,21 @@
 
 ```json
 {
-  "current": "v2.4",
-  "next_minor": "v2.5",
-  "next_major": "v3.0",
+  "current": "v2.10.0",
+  "next": "v2.11.0",
+  "next_major": "v3.0.0",
   "branches": {
     "main-v1": "v1.7",
-    "develop-v2": "v2.4-wip"
+    "develop-v1": "v1.7",
+    "main-v2": "v2.10",
+    "develop-v2": "v2.10"
   },
   "support": {
     "v1.x": "active",
     "v1.7": "released",
     "v2.x": "active",
-    "v2.4": "in-progress"
+    "v2.10": "released",
+    "v2.11": "in-progress"
   }
 }
 ```
