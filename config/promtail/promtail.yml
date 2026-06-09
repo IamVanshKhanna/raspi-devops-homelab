@@ -26,7 +26,20 @@ scrape_configs:
             container: container_name
             stream: stream
             log: log
+      - regex:
+          expression: '(?P<correlation_id>[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})'
+          source: log
+      - regex:
+          expression: '(?P<request_id>req-[a-zA-Z0-9-]+)'
+          source: log
+      - regex:
+          expression: 'traceparent: (?P<trace_id>[a-f0-9]{32})-(?P<span_id>[a-f0-9]{16})'
+          source: log
       - labels:
+          correlation_id:
+          request_id:
+          trace_id:
+          span_id:
           container:
       - output:
           source: log
@@ -48,4 +61,4 @@ scrape_configs:
       - labels:
           unit:
       - output:
-          source: message
+          source: message"
