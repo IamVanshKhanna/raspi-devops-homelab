@@ -5,9 +5,15 @@ on:
     - cron: '0 5 * * 0'  # Weekly Sunday 5 AM (after backup)
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   backup-test:
+    name: Backup Verification
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
