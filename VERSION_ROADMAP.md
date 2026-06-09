@@ -11,7 +11,7 @@
 
 ---
 
-## v1.x — Baseline (Current: v1.3 → v1.4 in progress)
+## v1.x — Baseline (Current: v1.4 → v1.5 planned)
 
 | Version | Focus | Target | Status |
 |---------|-------|--------|--------|
@@ -19,7 +19,9 @@
 | **v1.1** | Observability hardening | 2 weeks | ✅ **Done** |
 | **v1.2** | Secrets + backup automation | 4 weeks | ✅ **Done** |
 | **v1.3** | Hermes agent expansion | 6 weeks | ✅ **Done** |
-| **v1.4** | Security + compliance | 8 weeks | 🔄 **In Progress** |
+| **v1.4** | Security + compliance | 8 weeks | ✅ **Done** |
+| **v1.5** | Supply chain hardening | 10 weeks | 🔄 Planned |
+| **v1.6** | Tempo tracing + cronjob automation | 12 weeks | 🔄 Planned |
 
 ### v1.1 — Observability Hardening ✅ **COMPLETED**
 - [x] Loki + Promtail for centralized logs
@@ -56,12 +58,34 @@
 - [ ] Cronjob: daily health summary via Telegram
 - [ ] Voice TTS for critical alerts (optional)
 
-### v1.4 — Security + Compliance (Target: 8 weeks) 🔄 **In Progress**
-- [ ] Authelia SSO + 2FA in front of all external services
-- [ ] DNS-01 ACME (Cloudflare) → close port 80
-- [ ] CrowdSec or fail2ban hardening
-- [ ] SBOM generation (Syft) + signing (Cosign)
-- [ ] Threat model doc (STRIDE) + incident runbooks
+### v1.4 — Security + Compliance ✅ **COMPLETED**
+- [x] Authelia SSO + 2FA in front of all external services
+- [x] DNS-01 ACME (Cloudflare) → close port 80
+- [x] CrowdSec stack for intrusion detection
+- [x] Traefik ForwardAuth middleware on all external services
+- [x] Cloudflare DNS-01 ACME configuration
+- [x] CrowdSec stack for intrusion detection
+- [x] Traefik ForwardAuth middleware on all external services
+- [x] ADR-006: Threat Model (STRIDE)
+- [x] Runbooks: Service Down, Backup Failure, Security Incident
+- [ ] SBOM generation (Syft) + signing (Cosign) in CI
+- [ ] CrowdSec or fail2ban hardening (CrowdSec done)
+- [ ] Document secret rotation procedure
+
+### v1.5 — Supply Chain Hardening (Target: 10 weeks)
+- [ ] Syft SBOM on every image build
+- [ ] Cosign keyless signing (OIDC)
+- [ ] Trivy gate in CI: fail on CRITICAL
+- [ ] Renovate: auto-merge only after Trivy pass
+- [ ] Dependency policy doc
+- [ ] SBOM generation (Syft) + signing (Cosign) in CI
+
+### v1.6 — Tracing + Automation (Target: 12 weeks)
+- [ ] Tempo for distributed traces (OpenTelemetry sidecar)
+- [ ] Grafana: logs + metrics + traces unified
+- [ ] Cronjob: daily health summary via Telegram (Hermes)
+- [ ] Voice TTS for critical alerts (optional)
+- [ ] Correlation IDs across services
 
 ---
 
@@ -69,12 +93,11 @@
 
 | Version | Theme | Key Changes |
 |---------|-------|-------------|
-| **v2.0** | SSO + Auth | Authelia, Infisical, DNS-01, port 80 closed |
+| **v2.0** | SSO + Auth + Supply Chain | Authelia, Infisical, DNS-01, SBOM, Cosign, port 80 closed |
 | **v2.1** | Logging + Tracing | Loki, Tempo, distributed traces |
-| **v2.2** | Supply Chain | SBOM, Cosign, Trivy gate in CI |
-| **v2.3** | Multi-node Ready | K3s eval, external DB, shared storage |
+| **v2.2** | Multi-node Ready | K3s eval, external DB, shared storage |
 
-### v2.0 — SSO + Auth (Month 3-4)
+### v2.0 — Supply Chain + Auth (Quarter 1)
 **Breaking:** All external access via Authelia ForwardAuth
 - Authelia + Redis session store
 - Traefik middleware: `forwardauth` on all routers
@@ -82,21 +105,19 @@
 - Tailscale ACLs aligned with Authelia groups
 - Infisical for all secrets (no `.env` in repo)
 - Cloudflare DNS-01 → wildcard certs, port 80 closed
-
-### v2.1 — Logging + Tracing (Month 5)
-- Loki + Promtail (replaces scattered `docker logs`)
-- Tempo for traces (OpenTelemetry sidecar)
-- Grafana: logs + metrics + traces unified
-- Correlation IDs across services
-
-### v2.2 — Supply Chain Hardening (Month 6)
 - Syft SBOM on every image build
 - Cosign keyless signing (OIDC)
 - Trivy gate in CI: fail on CRITICAL
 - Renovate: auto-merge only after Trivy pass
 - Dependency policy doc
 
-### v2.3 — Multi-node Evaluation (Month 7)
+### v2.1 — Logging + Tracing (Quarter 2)
+- Loki + Promtail (replaces scattered `docker logs`)
+- Tempo for traces (OpenTelemetry sidecar)
+- Grafana: logs + metrics + traces unified
+- Correlation IDs across services
+
+### v2.2 — Multi-node Evaluation (Quarter 3)
 - K3s cluster on 2× Pi 4 (or Pi 5)
 - External PostgreSQL (Patroni) + Redis Cluster
 - Longhorn or Ceph for shared storage
@@ -131,21 +152,41 @@
 
 ---
 
-## Current Sprint (v1.4 — Security + Compliance)
+## Future Work Ideas (Post v1.4)
 
 ```bash
-# Branch
-git checkout -b v1.4-security-compliance
+# Immediate (v1.5)
+git checkout -b v1.5-supply-chain
+# 1. Add Syft SBOM generation to CI
+# 2. Add Cosign keyless signing
+# 3. Add Trivy gate to CI
+# 4. Renovate auto-merge after Trivy pass
 
-# Tasks for v1.4
-# 1. Add Authelia stack (Redis + Authelia)
-# 2. Configure Traefik ForwardAuth middleware
-# 3. DNS-01 ACME with Cloudflare
-# 4. Add CrowdSec stack
-# 5. Add Syft + Cosign to CI
-# 6. Create STRIDE threat model
-# 7. Write incident runbooks
-# 8. PR → merge → tag v1.4
+# v1.6
+git checkout -b v1.6-tracing
+# 1. Add Tempo + OpenTelemetry collector
+# 2. Configure distributed tracing
+# 3. Add daily health summary cronjob (Hermes)
+# 4. Voice TTS for alerts
+
+# v2.0
+git checkout -b v2.0-supply-chain-auth
+# 1. Migrate all secrets to Infisical (no .env)
+# 2. SBOM + Cosign on all images
+# 3. Trivy gate in CI
+# 4. DNS-01 only (port 80 closed)
+# 5. Renovate gate
+
+# v2.1
+git checkout -b v2.1-tracing
+# 1. Tempo + OpenTelemetry
+# 2. Correlation IDs
+
+# v2.2
+git checkout -b v2.2-multi-node
+# 1. K3s on 2x Pi
+# 2. Patroni PostgreSQL
+# 3. Longhorn/Ceph
 ```
 
 ---
@@ -154,16 +195,16 @@ git checkout -b v1.4-security-compliance
 
 ```json
 {
-  "current": "v1.3",
-  "next_minor": "v1.4",
+  "current": "v1.4",
+  "next_minor": "v1.5",
   "next_major": "v2.0",
   "branches": {
-    "main": "v1.3",
-    "develop": "v1.4-wip"
+    "main": "v1.4",
+    "develop": "v1.5-wip"
   },
   "support": {
     "v1.x": "active",
-    "v1.3": "released"
+    "v1.4": "released"
   }
 }
 ```

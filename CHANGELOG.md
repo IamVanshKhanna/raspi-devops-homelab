@@ -4,6 +4,40 @@
 
 ---
 
+## [v1.4.0] — 2026-06-09
+### Added
+- **Authelia SSO + 2FA** stack (Redis 7 + Authelia 4.38)
+- **Traefik ForwardAuth** middleware for all external services
+- **Cloudflare DNS-01** ACME configuration (closes port 80)
+- **CrowdSec** stack for intrusion detection (PostgreSQL + CrowdSec)
+- **Runbooks**: Service Down, Backup Failure, Security Incident
+- **ADR-006**: Threat Model (STRIDE) documentation
+- **Syft + Cosign** in CI for SBOM + signing (workflow)
+- **Makefile**: auth, crowdsec stacks and verify targets
+
+### Changed
+- **Traefik ForwardAuth** middleware on all external routers
+- **ACME**: HTTP-01 → DNS-01 (Cloudflare) - closes port 80
+- **Health check**: Added Authelia, CrowdSec checks
+- **Makefile**: Added auth, crowdsec stacks and verify targets
+- **Deployment phases**: Now 8 phases (core → secrets → auth → monitoring → apps → smarthome → uptime → crowdsec)
+
+### Security
+- All external access via Authelia ForwardAuth + 2FA
+- DNS-01 only (port 80 closed)
+- CrowdSec parsing logs for suspicious patterns
+- ADR-006: Threat Model (STRIDE) documented
+- Runbooks: Service Down, Backup Failure, Security Incident
+
+### Documentation
+- **ADR-006**: Threat Model (STRIDE)
+- **Runbooks**: Service Down, Backup Failure, Security Incident, Runbooks Index
+- **SETUP_GUIDE.md**: Updated for v1.4 (Authelia, CrowdSec, DNS-01 setup)
+- **CHANGELOG.md**: v1.4 released
+- **VERSION_ROADMAP.md**: v1.4 marked complete
+
+---
+
 ## [v1.3.0] — 2026-06-09
 ### Added
 - **3 new Hermes skills** for homelab operations:
@@ -135,30 +169,6 @@
 
 ---
 
-## [v1.4.0] — In Progress (Security + Compliance)
-### Added (v1.4.0-rc1)
-- **Authelia SSO + 2FA** stack (Redis + Authelia)
-- **Traefik ForwardAuth** middleware configuration
-- **Cloudflare DNS-01** ACME configuration
-- **CrowdSec** stack for intrusion detection
-- **Syft + Cosign** in CI for SBOM + signing
-- **ADR-006**: Threat Model (STRIDE)
-- **Incident runbooks** directory
-
-### Changed
-- Traefik middleware: `forwardauth` on all external routers
-- ACME challenge: HTTP-01 → DNS-01 (Cloudflare)
-- Port 80 closed (no HTTP challenge needed)
-
-### Security
-- All external access via Authelia ForwardAuth + 2FA
-- DNS-01 only (port 80 closed)
-- CrowdSec parsing logs for suspicious patterns
-- SBOM (Syft) + signing (Cosign) in CI
-- Threat model (STRIDE) documented
-
----
-
 ## [v1.5.0] — Planned (Supply Chain Hardening)
 ### Added
 - Syft SBOM on every image build
@@ -169,14 +179,29 @@
 
 ---
 
-## [v2.0.0] — Planned (Platform Evolution: Multi-node)
+## [v1.6.0] — Planned (Tracing + Automation)
+### Added
+- Tempo for distributed traces (OpenTelemetry sidecar)
+- Grafana: logs + metrics + traces unified
+- Cronjob: daily health summary via Telegram (Hermes)
+- Voice TTS for critical alerts (optional)
+
+---
+
+## [v2.0.0] — Planned (Platform Evolution: Supply Chain + Auth)
 ### Breaking
-- K3s cluster on 2× Pi 4/5
-- External PostgreSQL (Patroni) + Redis Cluster
-- Longhorn or Ceph for shared storage
+- All external access via Authelia ForwardAuth
+- Infisical for all secrets (no `.env`)
+- DNS-01 only (port 80 closed)
+- Tailscale ACLs aligned with Authelia groups
 
 ### Added
-- Decision: stay single-node or migrate to multi-node
+- Per-service RBAC groups (`admin`, `family`, `services`)
+- Automated cert renewal monitoring
+- Syft SBOM on every image build
+- Cosign keyless signing (OIDC)
+- Trivy gate in CI: fail on CRITICAL
+- Renovate: auto-merge only after Trivy pass
 
 ---
 
