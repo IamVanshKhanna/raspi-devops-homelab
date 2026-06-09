@@ -4,6 +4,35 @@
 
 ---
 
+## [v1.1.0] — 2026-06-09
+### Added
+- Loki + Promtail for centralized log aggregation
+- Alertmanager with Telegram receivers
+- Prometheus alerting rules (infrastructure, containers, system)
+- Grafana dashboards: System Overview, Containers, RED metrics
+- Uptime Kuma stack for external monitoring
+- `make verify-v1` includes Loki, Alertmanager, Uptime Kuma checks
+- ZRAM 2 GB swap configuration in setup.sh
+- Prometheus scrape configs for Loki, Promtail, Alertmanager
+- Prometheus alerting rules: infrastructure, containers, system
+
+### Changed
+- Prometheus scrape configs updated for Loki, Promtail, Alertmanager
+- Health check validates log pipeline + alerting + uptime
+- Monitoring stack updated to v1.1 (Loki 2.9, Promtail 2.9, Alertmanager 0.26)
+- Setup.sh adds ZRAM swap, restic, zram-tools packages
+
+### Security
+- Alertmanager Telegram integration for critical/warning alerts
+- Prometheus alerting rules for OOM, restarts, disk, CPU, temp
+
+### Documentation
+- VERSION_ROADMAP.md: v1.1 marked complete
+- SETUP_GUIDE.md: v1.1 services (Loki, Promtail, Alertmanager, Uptime Kuma)
+- New dashboards: System Overview, Containers
+
+---
+
 ## [v1.0.0] — 2026-06-09
 ### Added
 - Core stack: Traefik v3, Portainer, Pi-hole, Tailscale
@@ -31,20 +60,6 @@
 - README with quick start
 - HERMES_ON_PI.md install guide
 - V1_CHECKLIST.md acceptance criteria
-
----
-
-## [v1.1.0] — Planned (Observability Hardening)
-### Added
-- Loki + Promtail for centralized logs
-- Alertmanager with Telegram/email receivers
-- Grafana dashboards: RED metrics, SLO panels, per-service
-- Uptime Kuma external monitoring stack
-- Log/alert verification in `make verify-v1`
-
-### Changed
-- Prometheus scrape configs include Loki/Promtail targets
-- Health check validates log pipeline
 
 ---
 
