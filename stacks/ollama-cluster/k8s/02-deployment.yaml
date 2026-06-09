@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ai
+  labels:
+    app: ollama
+    version: "0.3.14"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ollama
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: ollama
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "11434"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values: [ollama]
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: ollama
+        image: ollama/ollama:0.3.14
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 11434
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: ollama-models
+          mountPath: /root/.ollama
+        - name: ollama-config
+          mountPath: /etc/ollama
+        env:
+        - name: OLLAMA_NUM_PARALLEL
+          value: "2"
+        - name: OLLAMA_MAX_LOADED_MODELS
+          value: "3"
+        - name: OLLAMA_FLASH_ATTENTION
+          value: "1"
+        - name: OLLAMA_HOST
+          value: "0.0.0.0"
+        - name: OLLAMA_ORIGINS
+          value: "*"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /api/tags
+            port: 11434
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/tags
+            port: 11434
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Uncomment for GPU support (requires nvidia-container-toolkit and node labels)
+        # resources:
+        #   limits:
+        #     nvidia.com/gpu: 1
+        #     memory: "4Gi"
+        #     cpu: "2000m"
+        #   requests:
+        #     nvidia.com/gpu: 1
+        #     memory: "2Gi"
+        #     cpu: "1000m"
+      initContainers:
+      - name: model-puller
+        image: ollama/ollama:0.3.14
+        imagePullPolicy: IfNotPresent
+        command: ["ollama", "pull"]
+        args: ["gemma:2b", "llama3:8b", "codellama:7b"]
+        volumeMounts:
+        - name: ollama-models
+          mountPath: /root/.ollama
+        env:
+        - name: OLLAMA_HOST
+          value: "0.0.0.0"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: ollama-models
+        persistentVolumeClaim:
+          claimName: ollama-models-pvc
+      - name: ollama-config
+        configMap:
+          name: ollama-config
+          items:
+          - key: ollama.yaml
+            path: ollama.yaml
