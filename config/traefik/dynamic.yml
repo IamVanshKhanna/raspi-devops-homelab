@@ -19,7 +19,31 @@ http:
           X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
           server: ""
 
-    # Basic auth middleware (use htpasswd to generate)
+    # Authelia ForwardAuth middleware
+    authelia-forwardauth:
+      forwardAuth:
+        address: http://authelia:9091/api/verify
+        trustForwardHeader: true
+        authResponseHeaders:
+          - Remote-User
+          - Remote-Groups
+          - Remote-Name
+          - Remote-Email
+
+    # Authelia ForwardAuth with 2FA for sensitive services
+    authelia-forwardauth-2fa:
+      forwardAuth:
+        address: http://authelia:9091/api/verify
+        trustForwardHeader: true
+        authResponseHeaders:
+          - Remote-User
+          - Remote-Groups
+          - Remote-Name
+          - Remote-Email
+        tls:
+          insecureSkipVerify: true
+
+    # Basic auth middleware (for Traefik dashboard fallback)
     basic-auth:
       basicAuth:
         usersFile: /auth/.htpasswd
