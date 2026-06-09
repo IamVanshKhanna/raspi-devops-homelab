@@ -11,38 +11,40 @@
 
 ---
 
-## v1.x — Baseline (Current: v1.0)
+## v1.x — Baseline (Current: v1.1)
 
-| Version | Focus | Target |
-|---------|-------|--------|
-| **v1.0** | Production baseline | ✅ Released |
-| **v1.1** | Observability hardening | 2 weeks |
-| **v1.2** | Secrets + backup automation | 4 weeks |
-| **v1.3** | Hermès agent expansion | 6 weeks |
-| **v1.4** | Security + compliance | 8 weeks |
+| Version | Focus | Target | Status |
+|---------|-------|--------|--------|
+| **v1.0** | Production baseline | Day 1 | ✅ Released |
+| **v1.1** | Observability hardening | 2 weeks | ✅ **Done** |
+| **v1.2** | Secrets + backup automation | 4 weeks | 🔄 Planned |
+| **v1.3** | Hermes agent expansion | 6 weeks | 🔄 Planned |
+| **v1.4** | Security + compliance | 8 weeks | 🔄 Planned |
 
-### v1.1 — Observability Hardening (2 weeks)
-- [ ] Loki + Promtail for centralized logs
-- [ ] Alertmanager + Telegram/email alerts
-- [ ] Grafana dashboards: per-service, RED metrics, SLO panels
-- [ ] Uptime Kuma external monitoring
-- [ ] `make verify-v1` includes log/alert checks
+### v1.1 — Observability Hardening ✅ **COMPLETED**
+- [x] Loki + Promtail for centralized logs
+- [x] Alertmanager + Telegram alerts
+- [x] Grafana dashboards: System Overview, Containers, RED metrics
+- [x] Uptime Kuma external monitoring
+- [x] `make verify-v1` includes Loki, Alertmanager, Uptime Kuma checks
+- [x] Prometheus alerting rules (infrastructure, containers, system)
+- [x] Prometheus scrape configs for Loki, Promtail, Alertmanager
 
-### v1.2 — Secrets + Backup Automation (4 weeks)
+### v1.2 — Secrets + Backup Automation (Target: 4 weeks)
 - [ ] Infisical (self-hosted secret manager)
 - [ ] Migrate `.env` → Infisical, inject at deploy
 - [ ] Automated weekly restore test (CI)
 - [ ] Backup alerting on failure
 - [ ] Document secret rotation procedure
 
-### v1.3 — Hermes Agent Expansion (6 weeks)
+### v1.3 — Hermes Agent Expansion (Target: 6 weeks)
 - [ ] Skill: `backup-ops` (list snapshots, trigger restore)
 - [ ] Skill: `security-audit` (Trivy summary, CVE triage)
 - [ ] Skill: `capacity-plan` (RAM/disk trend, forecast)
 - [ ] Cronjob: daily health summary via Telegram
 - [ ] Voice TTS for critical alerts (optional)
 
-### v1.4 — Security + Compliance (8 weeks)
+### v1.4 — Security + Compliance (Target: 8 weeks)
 - [ ] Authelia SSO + 2FA in front of all external services
 - [ ] DNS-01 ACME (Cloudflare) → close port 80
 - [ ] CrowdSec or fail2ban hardening
@@ -117,19 +119,20 @@
 
 ---
 
-## Current Sprint (v1.1)
+## Current Sprint (v1.2 — Secrets + Backup Automation)
 
 ```bash
 # Branch
-git checkout -b v1.1-observability
+git checkout -b v1.2-secrets-backup
 
 # Tasks
-# 1. Add Loki + Promtail to compose/monitoring.yml
-# 2. Add Alertmanager + Telegram template
-# 3. Update Grafana provisioning (dashboards + alerting)
-# 4. Add Uptime Kuma stack
-# 5. Update verify-v1 to check logs/alerts
-# 6. Test, document, PR, merge, tag v1.1
+# 1. Add Infisical to monitoring stack (or new stack)
+# 2. Create Infisical config + migrate .env secrets
+# 3. Update deploy to inject secrets from Infisical
+# 4. Add weekly restore test to backup-test.yml workflow
+# 5. Add backup failure alerting to Alertmanager
+# 6. Document secret rotation procedure
+# 7. Test, document, PR, merge, tag v1.2
 ```
 
 ---
@@ -138,12 +141,12 @@ git checkout -b v1.1-observability
 
 ```json
 {
-  "current": "v1.0",
-  "next_minor": "v1.1",
+  "current": "v1.1",
+  "next_minor": "v1.2",
   "next_major": "v2.0",
   "branches": {
-    "main": "v1.0",
-    "develop": "v1.1-wip"
+    "main": "v1.1",
+    "develop": "v1.2-wip"
   },
   "support": {
     "v1.x": "active",

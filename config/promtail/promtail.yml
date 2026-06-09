@@ -1,0 +1,51 @@
+# Promtail Configuration
+# Scrapes Docker container logs and sends to Loki
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker-containers
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker-logs
+          __path__: /var/lib/docker/containers/*/*.log
+
+    pipeline_stages:
+      - json:
+          expressions:
+            container: container_name
+            stream: stream
+            log: log
+      - labels:
+          container:
+      - output:
+          source: log
+
+  - job_name: systemd-journal
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: systemd
+          __path__: /var/log/journal/*/*.journal
+
+    pipeline_stages:
+      - json:
+          expressions:
+            unit: _SYSTEMD_UNIT
+            message: MESSAGE
+            priority: PRIORITY
+      - labels:
+          unit:
+      - output:
+          source: message

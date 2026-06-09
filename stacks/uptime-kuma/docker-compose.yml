@@ -1,0 +1,31 @@
+# STACK: UPTIME-KUMA
+# External uptime monitoring with status page
+# Access via Traefik at uptime.DOMAIN
+
+version: "3.8"
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  uptime_kuma_data:
+
+services:
+  uptime-kuma:
+    # Check latest: https://github.com/louislam/uptime-kuma/releases
+    image: louislam/uptime-kuma:1.23.9
+    container_name: uptime-kuma
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - uptime_kuma_data:/app/data
+    mem_limit: 128m
+    cpus: 0.25
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.${DOMAIN}`)"
+      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
+      - "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"

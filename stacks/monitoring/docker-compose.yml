@@ -1,6 +1,8 @@
-# STACK: MONITORING
-# Services: Prometheus + Grafana + Node Exporter + cAdvisor
-# Gives full visibility into Pi hardware and all containers.
+# STACK: MONITORING v1.1
+# Services: Prometheus + Grafana + Node Exporter + cAdvisor + Loki + Promtail + Alertmanager
+# Gives full visibility into Pi hardware, containers, logs, and alerts.
+
+version: "3.8"
 
 networks:
   proxy:
@@ -9,9 +11,10 @@ networks:
 volumes:
   prometheus_data:
   grafana_data:
+  loki_data:
+  alertmanager_data:
 
 services:
-
   prometheus:
     # Check latest: https://hub.docker.com/r/prom/prometheus/tags
     image: prom/prometheus:v2.53.0
@@ -32,6 +35,57 @@ services:
       - '--web.enable-lifecycle'
     mem_limit: 512m
     cpus: 0.5
+
+  alertmanager:
+    # Check latest: https://hub.docker.com/r/prom/alertmanager/tags
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ../../config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    mem_limit: 64m
+    cpus: 0.1
+
+  loki:
+    # Check latest: https://hub.docker.com/r/grafana/loki/tags
+    image: grafana/loki:2.9.0
+    container_name: loki
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ../../config/loki/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command:
+      - '-config.file=/etc/loki/local-config.yaml'
+    mem_limit: 256m
+    cpus: 0.25
+
+  promtail:
+    # Check latest: https://hub.docker.com/r/grafana/promtail/tags
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../../config/promtail/promtail.yml:/etc/promtail/config.yml:ro
+    command:
+      - '-config.file=/etc/promtail/config.yml'
+    mem_limit: 64m
+    cpus: 0.1
 
   grafana:
     # Check latest: https://hub.docker.com/r/grafana/grafana/tags
