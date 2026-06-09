@@ -1,4 +1,4 @@
-# Step-by-Step Setup Guide — homelab-prod v1.1
+# Step-by-Step Setup Guide — homelab-prod v1.2
 
 > Full setup from blank SSD to fully running homelab on Raspberry Pi 4B 4GB.
 
@@ -67,7 +67,7 @@ ssh vansh@192.168.1.50
 
 ---
 
-## Phase 5 — Configure Environment
+## Phase 5 — Configure Environment (v1.2)
 
 ```bash
 cp .env.example .env
@@ -84,11 +84,19 @@ echo $(htpasswd -nB admin) | sed -e 's/$/$$/g'  # Traefik basic auth
 
 > Never commit your `.env` — it is in `.gitignore`
 
-Required variables for v1.1:
+**Required variables for v1.2:**
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — for Alertmanager alerts
 - `RESTIC_PASSWORD` — Restic repo encryption
 - `B2_ACCOUNT_ID`, `B2_ACCOUNT_KEY`, `B2_BUCKET` — Backblaze B2
-- `RESTIC_REPOSITORY=b2:${B2_BUCKET}:pi4b`
+- `RESTIC_REPOSITORY=b2:${B2_BUCKET}:homelab-prod`
+
+**Infisical variables (generated on first deploy):**
+- `INFISICAL_AUTH_SECRET` — `openssl rand -base64 32`
+- `INFISICAL_ENCRYPTION_KEY` — `openssl rand -base64 32`
+- `INFISICAL_REDIS_PASSWORD` — `openssl rand -base64 32`
+- `INFISICAL_DB_PASSWORD` — `openssl rand -base64 32`
+
+> Never commit your `.env` — it is in `.gitignore`
 
 ---
 
@@ -98,7 +106,6 @@ Required variables for v1.1:
 2. Create subdomain e.g. `myhomelab.duckdns.org`
 3. Point to your home public IP
 4. Auto-update cron on Pi:
-
 ```bash
 mkdir -p ~/duckdns
 nano ~/duckdns/duck.sh
@@ -108,12 +115,11 @@ chmod +x ~/duckdns/duck.sh
 crontab -e
 # Add: */5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1
 ```
-
 5. Forward on router: `80 TCP`, `443 TCP`, `51820 UDP` → `192.168.1.50`
 
 ---
 
-## Phase 7 — Deploy Stacks In Order (v1.1)
+## Phase 7 — Deploy Stacks In Order (v1.2)
 
 ```bash
 cd ~/homelab-prod
@@ -124,27 +130,35 @@ docker logs traefik --tail 20
 
 # Wait for Traefik certs (check logs for ACME success)
 
-# 2. Monitoring (Prometheus, Grafana, Loki, Promtail, Alertmanager, Node Exporter, cAdvisor)
+# 2. Secrets (Infisical) - NEW in v1.2
 make up-phase2
+docker logs infisical --tail 20
+# Wait for Infisical to be healthy
+
+# On first Infisical deploy:
+# 1. Visit https://infisical.yourdomain.com
+# 2. Create admin account
+# 3. Create project "homelab-prod"
+# 4. Add all .env secrets as Infisical secrets (see docs/ADR-004-secrets.md)
+# 4. Generate AUTH_SECRET, ENCRYPTION_KEY, REDIS_PASSWORD in Infisical if not in .env
+
+# 3. Monitoring (Prometheus, Grafana, Loki, Promtail, Alertmanager, Node Exporter, cAdvisor)
+make up-phase3
 docker logs grafana --tail 10
 
-# 3. Apps (Nextcloud + MariaDB + Redis, Vaultwarden, Ollama)
-make up-phase3
+# 4. Apps (Nextcloud + MariaDB + Redis, Vaultwarden, Ollama)
+make up-phase4
 # Wait 2-3 mins for Nextcloud DB init
 docker logs nextcloud --tail 20
 
 # Pull Ollama model (use small models on 4GB RAM)
 docker exec ollama ollama pull gemma:2b
 
-# 4. Network (Pi-hole + WireGuard)
-make up-network
-# Note: network is deployed in phase1, this is for reference
-
 # 5. Smart Home (Home Assistant)
-make up-phase4
+make up-phase5
 
 # 6. Uptime Kuma (external monitoring)
-make up-phase5
+make up-phase6
 ```
 
 ---
@@ -163,7 +177,7 @@ sudo tailscale up --ssh --advertise-exit-node --hostname=pi4b-homelab
 
 ---
 
-## Phase 8 — Schedule Maintenance
+## Phase 9 — Schedule Maintenance
 
 ```bash
 crontab -e
@@ -171,8 +185,8 @@ crontab -e
 
 Add:
 ```bash
-# Daily backup at 3am
-0 3 * * * /home/vansh/homelab-prod/scripts/backup.sh >> /var/log/homelab-backup.log 2>&1
+# Daily backup at 3am (with alerting on failure)
+0 3 * * * /home/vansh/homelab-prod/scripts/backup-wrapper.sh >> /var/log/homelab-backup.log 2>&1
 
 # Health check every 15 minutes
 */15 * * * * /home/vansh/homelab-prod/scripts/health-check.sh >> /var/log/homelab-health.log 2>&1
@@ -186,14 +200,18 @@ Add:
 
 ---
 
-## Phase 9 — Verify
+## Phase 10 — Verify (v1.2)
 
 ```bash
-# Full health check (includes Loki, Alertmanager, Uptime Kuma)
+# Full health check (includes Infisical, Loki, Alertmanager, Uptime Kuma)
 make verify-v1
 
 # Or individually:
 bash scripts/health-check.sh --strict
+
+# Check backup
+make verify-backup
+make restore-test
 
 # Check key metrics
 docker ps
@@ -204,12 +222,13 @@ free -h                 # Check RAM + ZRAM
 
 ---
 
-## Service Access URLs (v1.1)
+## Service Access URLs (v1.2)
 
 | Service | URL |
 |---------|-----|
 | Traefik dashboard | https://traefik.yourdomain.com |
 | Portainer | https://portainer.yourdomain.com |
+| **Infisical** | https://infisical.yourdomain.com |
 | Nextcloud | https://cloud.yourdomain.com |
 | Vaultwarden | https://vault.yourdomain.com |
 | Grafana | https://grafana.yourdomain.com |
@@ -247,21 +266,22 @@ Configure Telegram:
 
 ---
 
-## Backup & Restore
+## Backup & Restore (v1.2)
 
 ```bash
-# Manual backup
+# Manual backup (with alerting on failure)
 make backup
+# Or use wrapper for cron:
+# /home/vansh/homelab-prod/scripts/backup-wrapper.sh
 
 # Verify backup
 make verify-backup
 
-# List snapshots
-restic -r b2:bucket:pi4b snapshots
-
 # Test restore (to /mnt/restore-test)
-make restore SNAPSHOT=latest
+make restore-test
 # Or:
+make restore SNAPSHOT=latest
+# Or manual:
 restic -r b2:bucket:pi4b restore latest --target /mnt/restore-test
 ```
 
@@ -277,3 +297,27 @@ make up-all
 # Or use update script
 /home/vansh/homelab-prod/scripts/update.sh
 ```
+
+---
+
+## Infisical Setup (Post-Deploy)
+
+After `make up-phase2`:
+
+1. Visit https://infisical.yourdomain.com
+2. Create admin account
+3. Create project: **homelab-prod**
+4. Add secrets from your `.env`:
+   - Copy each secret from `.env` to Infisical project
+   - Use same names (e.g., `MYSQL_PASSWORD`, `VAULTWARDEN_ADMIN_TOKEN`)
+5. (Optional) Generate in Infisical:
+   - `AUTH_SECRET`, `ENCRYPTION_KEY`, `REDIS_PASSWORD`, `DB_PASSWORD`
+   - Update `.env` with Infisical-generated values if desired
+6. For CI/CD deploy, use Infisical CLI:
+   ```bash
+   # Install: brew install infisical/get-cli/infisical
+   infisical login
+   infisical run --projectId=... --env=production -- docker compose up -d
+   ```
+
+See `docs/ADR-004-secrets.md` for architecture decisions.

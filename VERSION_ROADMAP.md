@@ -11,13 +11,13 @@
 
 ---
 
-## v1.x — Baseline (Current: v1.1)
+## v1.x — Baseline (Current: v1.1 → v1.2 in progress)
 
 | Version | Focus | Target | Status |
 |---------|-------|--------|--------|
 | **v1.0** | Production baseline | Day 1 | ✅ Released |
 | **v1.1** | Observability hardening | 2 weeks | ✅ **Done** |
-| **v1.2** | Secrets + backup automation | 4 weeks | 🔄 Planned |
+| **v1.2** | Secrets + backup automation | 4 weeks | 🔄 **In Progress** |
 | **v1.3** | Hermes agent expansion | 6 weeks | 🔄 Planned |
 | **v1.4** | Security + compliance | 8 weeks | 🔄 Planned |
 
@@ -30,11 +30,20 @@
 - [x] Prometheus alerting rules (infrastructure, containers, system)
 - [x] Prometheus scrape configs for Loki, Promtail, Alertmanager
 
-### v1.2 — Secrets + Backup Automation (Target: 4 weeks)
-- [ ] Infisical (self-hosted secret manager)
-- [ ] Migrate `.env` → Infisical, inject at deploy
-- [ ] Automated weekly restore test (CI)
-- [ ] Backup alerting on failure
+### v1.2 — Secrets + Backup Automation (Target: 4 weeks) 🔄 **In Progress**
+- [x] **Infisical secret manager** (PostgreSQL + Redis + Infisical stack)
+- [x] **Infisical health check** in `health-check.sh` and `make verify-secrets`
+- [x] **Infisical deployment phase** (`up-secrets`, `up-phase2`)
+- [x] **Backup restore test script** (`scripts/restore-test.sh`)
+- [x] **Backup wrapper with alerting** (`scripts/backup-wrapper.sh`, `scripts/backup-alert.sh`)
+- [x] **Backup verification** (`make verify-backup`)
+- [x] **Restore test target** (`make restore-test`)
+- [x] **Enhanced backup-test workflow** with restore verification
+- [x] **Infisical env vars** in `.env.example`
+- [x] **Infisical deployment phase** before monitoring
+- [ ] Migrate `.env` → Infisical, inject at deploy (Infisical CLI)
+- [ ] Automated weekly restore test in CI (done in workflow)
+- [x] Backup alerting on failure (Telegram)
 - [ ] Document secret rotation procedure
 
 ### v1.3 — Hermes Agent Expansion (Target: 6 weeks)
@@ -125,14 +134,11 @@
 # Branch
 git checkout -b v1.2-secrets-backup
 
-# Tasks
-# 1. Add Infisical to monitoring stack (or new stack)
-# 2. Create Infisical config + migrate .env secrets
-# 3. Update deploy to inject secrets from Infisical
-# 4. Add weekly restore test to backup-test.yml workflow
-# 5. Add backup failure alerting to Alertmanager
-# 6. Document secret rotation procedure
-# 7. Test, document, PR, merge, tag v1.2
+# Remaining tasks for v1.2
+# 1. Migrate .env → Infisical, inject at deploy (Infisical CLI)
+# 2. Document secret rotation procedure
+# 3. Test full deployment with Infisical
+# 4. PR → merge → tag v1.2
 ```
 
 ---
@@ -150,7 +156,7 @@ git checkout -b v1.2-secrets-backup
   },
   "support": {
     "v1.x": "active",
-    "v0.x": "eol"
+    "v1.2-rc1": "release-candidate"
   }
 }
 ```

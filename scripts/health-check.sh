@@ -25,10 +25,12 @@ EXPECTED_CONTAINERS=(
   pihole wireguard
   homeassistant
   uptime-kuma
+  infisical infisical-db infisical-redis
 )
 
 CHECK_LOKI=true
 CHECK_ALERTMANAGER=true
+CHECK_INFISICAL=true
 
 FAILED=0
 WARNINGS=0
@@ -85,6 +87,18 @@ if $CHECK_ALERTMANAGER; then
     printf "${GREEN}Alertmanager ready${NC}\n"
   else
     printf "${RED}Alertmanager not ready${NC}\n"
+    FAILED=$((FAILED + 1))
+  fi
+fi
+
+# Check Infisical
+if $CHECK_INFISICAL; then
+  log ""
+  log "--- Infisical Secret Manager Check ---"
+  if curl -sf http://localhost:8080/api/status >/dev/null 2>&1; then
+    printf "${GREEN}Infisical reachable${NC}\n"
+  else
+    printf "${RED}Infisical not reachable${NC}\n"
     FAILED=$((FAILED + 1))
   fi
 fi
