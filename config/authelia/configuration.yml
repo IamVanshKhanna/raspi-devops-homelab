@@ -1,0 +1,119 @@
+# Authelia Configuration
+# https://www.authelia.com/configuration/
+
+# Required: at least 20 characters
+jwt_secret: "${AUTHELIA_JWT_SECRET}"
+
+default_redirection_url: https://home.${DOMAIN}
+
+server:
+  host: 0.0.0.0
+  port: 9091
+  path: ""
+  read_buffer_size: 4096
+  write_buffer_size: 4096
+  enable_pprof: false
+  enable_expvars: false
+
+log:
+  level: info
+  format: json
+  file_path: /config/authelia.log
+  keep_stdout: true
+
+totp:
+  issuer: homelab-prod
+  algorithm: sha1
+  digits: 6
+  period: 30
+  skew: 1
+
+duo_api:
+  hostname: ""
+  integration_key: ""
+  secret_key: ""
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+    password:
+      algorithm: argon2id
+      iterations: 3
+      salt_length: 16
+      parallelism: 4
+      memory: 64
+    watch: true
+
+access_control:
+  default_policy: deny
+  rules:
+    - domain:
+        - "auth.${DOMAIN}"
+      policy: bypass
+    - domain:
+        - "traefik.${DOMAIN}"
+        - "portainer.${DOMAIN}"
+        - "grafana.${DOMAIN}"
+        - "cloud.${DOMAIN}"
+        - "vault.${DOMAIN}"
+        - "uptime.${DOMAIN}"
+      policy: two_factor
+    - domain:
+        - "infisical.${DOMAIN}"
+      policy: two_factor
+    - domain:
+        - "uptime.${DOMAIN}"
+      policy: two_factor
+    - domain:
+        - "*.${DOMAIN}"
+      policy: two_factor
+
+session:
+  name: authelia_session
+  secret: "${AUTHELIA_SESSION_SECRET}"
+  expiration: 3600
+  inactivity: 1800
+  domain: "${DOMAIN}"
+  same_site: lax
+  remember_me_duration: 2592000
+
+regulation:
+  max_retries: 3
+  find_time: 120
+  ban_time: 300
+
+storage:
+  encryption_key: "${AUTHELIA_STORAGE_ENCRYPTION_KEY}"
+  postgres:
+    host: authelia-db
+    port: 5432
+    database: authelia
+    username: authelia
+    password: "${AUTHELIA_DB_PASSWORD}"
+    # For Redis (alternative):
+    # redis:
+    #   host: authelia-redis
+    #   port: 6379
+    #   password: "${AUTHELIA_REDIS_PASSWORD}"
+    #   database: 0
+
+notifier:
+  filesystem:
+    filename: /config/notification.txt
+
+# For SMTP (optional):
+# notifier:
+#   smtp:
+#     username: "${SMTP_USERNAME}"
+#     password: "${SMTP_PASSWORD}"
+#     host: "${SMTP_HOST}"
+#     port: 587
+#     sender: "${SMTP_FROM}"
+#     subject: "[Authelia] {title}"
+#     startup_check_address: "${SMTP_STARTUP_CHECK_ADDRESS}"
+#     disable_starttls: false
+#     disable_html_emails: false
+#     tls:
+#       server_name: "${SMTP_HOST}"
+#       skip_verify: false
+#     timeout: 5
