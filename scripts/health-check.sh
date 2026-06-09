@@ -26,11 +26,15 @@ EXPECTED_CONTAINERS=(
   homeassistant
   uptime-kuma
   infisical infisical-db infisical-redis
+  authelia authelia-redis
+  crowdsec crowdsec-db
 )
 
 CHECK_LOKI=true
 CHECK_ALERTMANAGER=true
 CHECK_INFISICAL=true
+CHECK_AUTHELIA=true
+CHECK_CROWDSEC=true
 
 FAILED=0
 WARNINGS=0
@@ -99,6 +103,30 @@ if $CHECK_INFISICAL; then
     printf "${GREEN}Infisical reachable${NC}\n"
   else
     printf "${RED}Infisical not reachable${NC}\n"
+    FAILED=$((FAILED + 1))
+  fi
+fi
+
+# Check Authelia
+if $CHECK_AUTHELIA; then
+  log ""
+  log "--- Authelia SSO Check ---"
+  if curl -sf http://localhost:9091/api/healthz >/dev/null 2>&1; then
+    printf "${GREEN}Authelia reachable${NC}\n"
+  else
+    printf "${RED}Authelia not reachable${NC}\n"
+    FAILED=$((FAILED + 1))
+  fi
+fi
+
+# Check CrowdSec
+if $CHECK_CROWDSEC; then
+  log ""
+  log "--- CrowdSec IDS Check ---"
+  if curl -sf http://localhost:8080/health >/dev/null 2>&1; then
+    printf "${GREEN}CrowdSec reachable${NC}\n"
+  else
+    printf "${RED}CrowdSec not reachable${NC}\n"
     FAILED=$((FAILED + 1))
   fi
 fi
