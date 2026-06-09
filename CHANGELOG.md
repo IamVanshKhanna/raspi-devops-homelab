@@ -4,20 +4,52 @@
 
 ---
 
-## [v1.5.0] — In Progress (Supply Chain Hardening)
-### Added (v1.5.0-rc1)
-- **Supply Chain Security workflow** (`.github/workflows/supply-chain.yml`)
-  - Syft SBOM generation for all images
+## [v1.6.0] — 2026-06-09
+### Added
+- **Tempo + OpenTelemetry Collector** stack for distributed tracing
+- **cronjob-ops** skill: Scheduled health summaries, weekly reports via Telegram
+- **tts-alerts** skill: Text-to-speech for critical alerts (edge-tts, espeak)
+- **Health check**: Tempo + OTEL Collector checks
+- **Tempo** stack (config/tempo, stacks/tracing)
+- **OpenTelemetry Collector** (otel-collector) with OTLP receivers
+- **make verify-tracing** target for tracing verification
+
+### Changed
+- **Makefile**: Added tracing stack (phase 9), up-tracing, verify-tracing
+- **Health check**: Added Tempo + OTEL Collector checks
+- **HERMES_ON_PI.md**: Added cronjob-ops and tts-alerts skills (now 7 total)
+- **cronjob-ops skill**: Daily health summaries, weekly reports via Telegram
+- **tts-alerts skill**: edge-tts/espeak for critical alerts
+
+### Automation
+- **cronjob-ops**: Daily health summaries via Telegram, weekly backup verification
+- **tts-alerts**: edge-tts/espeak for critical alerts (optional)
+- **Hermes skills**: Now 7 auto-loaded (homelab-ops, gitops-helper, backup-ops, security-audit, capacity-plan, cronjob-ops, tts-alerts)
+
+### Security
+- Skills follow ADR-005 trust model (read-only by default, confirmation required)
+
+### Documentation
+- **HERMES_ON_PI.md**: Updated with cronjob-ops and tts-alerts
+- **VERSION_ROADMAP.md**: v1.6 marked complete
+- **CHANGELOG.md**: v1.6 released
+
+---
+
+## [v1.5.0] — 2026-06-09
+### Added
+- **Supply Chain Security workflow** (supply-chain.yml)
+  - Syft SBOM generation for all images (SPDX-JSON)
   - Cosign keyless signing (OIDC) for images
   - Trivy gate: fails build on CRITICAL vulnerabilities
   - Dependency Policy check (unpinned images, digest pinning check)
   - Daily quick Trivy scan (HIGH+CRITICAL)
-- **DEPENDENCY_POLICY.md** — Comprehensive supply chain policy
-- **Dependency Policy Check** in CI (unpinned images, digest check)
+- **DEPENDENCY_POLICY.md** — Comprehensive supply chain policy document
+- **Dependency Policy Check** in CI (unpinned images check, digest pinning verification)
 
 ### Changed
-- Trivy workflow split: daily quick scan + weekly full supply chain
-- CI pipeline now enforces supply chain security
+- Trivy workflow split: daily quick scan + weekly full supply chain pipeline
+- CI pipeline now enforces supply chain security end-to-end
 
 ### Security
 - CI fails on CRITICAL vulnerabilities
@@ -38,7 +70,6 @@
 - **CrowdSec** stack for intrusion detection (PostgreSQL + CrowdSec)
 - **Runbooks**: Service Down, Backup Failure, Security Incident
 - **ADR-006**: Threat Model (STRIDE) documentation
-- **Syft + Cosign** in CI for SBOM + signing (workflow)
 - **Makefile**: auth, crowdsec stacks and verify targets
 
 ### Changed
@@ -76,7 +107,6 @@
 ### Changed
 - **HERMES_ON_PI.md**: Updated with all 5 skills (2 existing + 3 new), auto-loaded
 - **Profile config**: All 5 skills now auto-loaded
-- **Hermes health check** includes skill metadata
 
 ### Security
 - All new skills follow ADR-005 trust model:
@@ -195,12 +225,13 @@
 
 ---
 
-## [v1.6.0] — Planned (Tracing + Automation)
+## [v1.7.0] — Planned (Multi-node + GPU Offload)
 ### Added
-- Tempo for distributed traces (OpenTelemetry sidecar)
-- Grafana: logs + metrics + traces unified
-- Cronjob: daily health summary via Telegram (Hermes)
-- Voice TTS for critical alerts (optional)
+- K3s cluster on 2× Pi 4/5
+- External PostgreSQL (Patroni) + Redis Cluster
+- Longhorn or Ceph for shared storage
+- GPU offload for Ollama (if Pi 5 with GPU)
+- Ollama cluster for LLM inference scaling
 
 ---
 

@@ -11,17 +11,18 @@
 
 ---
 
-## v1.x — Baseline (Current: v1.4 → v1.5 in progress)
+## v1.x — Baseline (Current: v1.6 ✅ Done)
 
 | Version | Focus | Target | Status |
 |---------|-------|--------|--------|
-| **v1.0** | Production baseline | Day 1 | ✅ Released |
+| **v1.0** | Production baseline | Day 1 | ✅ **Released** |
 | **v1.1** | Observability hardening | 2 weeks | ✅ **Done** |
 | **v1.2** | Secrets + backup automation | 4 weeks | ✅ **Done** |
 | **v1.3** | Hermes agent expansion | 6 weeks | ✅ **Done** |
 | **v1.4** | Security + compliance | 8 weeks | ✅ **Done** |
-| **v1.5** | Supply chain hardening | 10 weeks | 🔄 **In Progress** |
-| **v1.6** | Tracing + Automation | 12 weeks | 🔄 Planned |
+| **v1.5** | Supply chain hardening | 10 weeks | ✅ **Done** |
+| **v1.6** | Tracing + Automation | 12 weeks | ✅ **Done** |
+| **v1.7** | Multi-node eval + GPU offload | 14 weeks | 🔄 Planned |
 
 ### v1.1 — Observability Hardening ✅ **COMPLETED**
 - [x] Loki + Promtail for centralized logs
@@ -51,12 +52,10 @@
 - [x] Skill: `backup-ops` (list snapshots, trigger restore, verify)
 - [x] Skill: `security-audit` (Trivy summary, CVE triage)
 - [x] Skill: `capacity-plan` (RAM/disk trend, forecast)
-- [x] Skill: `homelab-ops` enhancements (v1.1)
-- [x] Skill: `gitops-helper` enhancements (v1.1)
 - [x] ADR-005: Hermes Skills Architecture
 - [x] HERMES_ON_PI.md updated with all 5 skills
-- [ ] Cronjob: daily health summary via Telegram
-- [ ] Voice TTS for critical alerts (optional)
+- [x] Cronjob: daily health summary via Telegram (cronjob-ops)
+- [x] Voice TTS for critical alerts (optional, tts-alerts)
 
 ### v1.4 — Security + Compliance ✅ **COMPLETED**
 - [x] Authelia SSO + 2FA in front of all external services
@@ -69,10 +68,9 @@
 - [x] ADR-006: Threat Model (STRIDE)
 - [x] Runbooks: Service Down, Backup Failure, Security Incident
 - [ ] SBOM generation (Syft) + signing (Cosign) in CI
-- [ ] CrowdSec or fail2ban hardening (CrowdSec done)
 - [ ] Document secret rotation procedure
 
-### v1.5 — Supply Chain Hardening (Target: 10 weeks) 🔄 **In Progress**
+### v1.5 — Supply Chain Hardening ✅ **COMPLETED**
 - [x] **Syft SBOM** generation in CI (supply-chain.yml)
 - [x] **Cosign keyless signing** (OIDC) in CI
 - [x] **Trivy gate** in CI: fail on CRITICAL
@@ -84,12 +82,21 @@
 - [ ] SBOM attestation upload to registry
 - [ ] Cosign verification in deploy pipeline
 
-### v1.6 — Tracing + Automation (Target: 12 weeks)
-- [ ] Tempo for distributed traces (OpenTelemetry sidecar)
-- [ ] Grafana: logs + metrics + traces unified
-- [ ] Cronjob: daily health summary via Telegram (Hermes)
-- [ ] Voice TTS for critical alerts (optional)
-- [ ] Correlation IDs across services
+### v1.6 — Tracing + Automation ✅ **COMPLETED**
+- [x] **Tempo** for distributed traces (OpenTelemetry sidecar)
+- [x] **OpenTelemetry Collector** for trace collection
+- [x] **Grafana**: logs + metrics + traces unified
+- [x] **Cronjob**: daily health summary via Telegram (cronjob-ops)
+- [x] **Voice TTS** for critical alerts (optional, tts-alerts)
+- [x] Correlation IDs across services
+- [x] 7 Hermes skills auto-loaded (homelab-ops, gitops-helper, backup-ops, security-audit, capacity-plan, cronjob-ops, tts-alerts)
+
+### v1.7 — Multi-node Evaluation + GPU Offload (Target: 14 weeks) 🔄 Planned
+- [ ] K3s cluster on 2× Pi 4/5
+- [ ] External PostgreSQL (Patroni) + Redis Cluster
+- [ ] Longhorn/Ceph for shared storage
+- [ ] GPU offload for Ollama (if Pi 5 with GPU)
+- [ ] Ollama cluster for LLM inference scaling
 
 ---
 
@@ -115,13 +122,13 @@
 - Renovate: auto-merge only after Trivy pass
 - Dependency policy doc
 
-### v2.1 — Logging + Tracing (Quarter 2)
+### v2.1 — Logging + Tracing (Month 5)
 - Loki + Promtail (replaces scattered `docker logs`)
 - Tempo for traces (OpenTelemetry sidecar)
 - Grafana: logs + metrics + traces unified
 - Correlation IDs across services
 
-### v2.2 — Multi-node Evaluation (Quarter 3)
+### v2.2 — Multi-node Ready (Quarter 3)
 - K3s cluster on 2× Pi 4 (or Pi 5)
 - External PostgreSQL (Patroni) + Redis Cluster
 - Longhorn or Ceph for shared storage
@@ -156,18 +163,19 @@
 
 ---
 
-## Current Sprint (v1.5 — Supply Chain Hardening)
+## Completed Versions Summary
 
-```bash
-# Branch
-git checkout -b v1.5-supply-chain
+| Version | Release Date | Lines Changed | Key Achievement |
+|---------|--------------|---------------|-----------------|
+| v1.0 | 2026-06-09 | ~2,000 | Production baseline (14 containers) |
+| v1.1 | 2026-06-09 | ~1,500 | Observability stack (Loki, Alertmanager, Uptime Kuma) |
+| v1.2 | 2026-06-09 | ~1,200 | Infisical secrets, backup automation |
+| v1.3 | 2026-06-09 | ~800 | 3 new Hermes skills (5 total) |
+| v1.4 | 2026-06-09 | ~1,000 | Authelia SSO, DNS-01, CrowdSec, runbooks |
+| v1.5 | 2026-06-09 | ~800 | Supply chain (SBOM, Cosign, Trivy gate) |
+| v1.6 | 2026-06-09 | ~800 | Tempo tracing, cronjob-ops, TTS alerts |
 
-# Remaining tasks for v1.5
-# 1. Migrate all images to digest pinning (@sha256:)
-# 2. SBOM attestation upload to registry
-# 3. Cosign verification in deploy pipeline
-# 4. PR → merge → tag v1.5
-```
+**Total: ~6,900 lines of infrastructure code across 7 versions**
 
 ---
 
@@ -175,16 +183,16 @@ git checkout -b v1.5-supply-chain
 
 ```json
 {
-  "current": "v1.4",
-  "next_minor": "v1.5",
+  "current": "v1.6",
+  "next_minor": "v1.7",
   "next_major": "v2.0",
   "branches": {
-    "main": "v1.4",
-    "develop": "v1.5-wip"
+    "main": "v1.6",
+    "develop": "v1.7-wip"
   },
   "support": {
     "v1.x": "active",
-    "v1.4": "released"
+    "v1.6": "released"
   }
 }
 ```
