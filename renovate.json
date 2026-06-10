@@ -1,6 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": [
+    "config:base",
+    ":enableDependencyDashboard"
+  ],
   "packageRules": [
     {
       "matchDatasources": ["docker"],
@@ -35,6 +38,24 @@
       "automerge": true,
       "automergeType": "pr",
       "schedule": ["before 4am"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "groupName": "helm-charts",
+      "automerge": false
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchUpdateType": "patch",
+      "groupName": "helm-patch-updates",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "matchDatasources": ["github-actions"],
+      "groupName": "github-actions",
+      "automerge": true,
+      "automergeType": "pr"
     }
   ],
   "schedule": ["before 4am on monday"],
@@ -42,5 +63,8 @@
   "prHourlyLimit": 5,
   "labels": ["dependencies", "renovate"],
   "assignees": ["IamVanshKhanna"],
-  "reviewers": ["IamVanshKhanna"]
+  "reviewers": ["IamVanshKhanna"],
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate Dependency Dashboard",
+  "visibility": "private"
 }

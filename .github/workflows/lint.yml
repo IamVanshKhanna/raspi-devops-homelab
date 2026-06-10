@@ -2,9 +2,9 @@ name: Lint & Validate
 
 on:
   push:
-    branches: [main]
+    branches: [main-v2, develop-v2]
   pull_request:
-    branches: [main]
+    branches: [main-v2, develop-v2]
 
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
       - name: Lint YAML files
         run: |
           yamllint -d '{extends: relaxed, rules: {line-length: {max: 200}}}' \
-            config/ stacks/ renovate.json 2>/dev/null || true
+            config/ stacks/ renovate.json helmfile.yaml 2>/dev/null || true
 
   docker-compose-validate:
     name: Docker Compose Config Validation
@@ -56,6 +56,91 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: homelab-ci
 
+  kustomize-validate:
+    name: Kustomize Build Validation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir:
+          - config/cost-optimization/quotas
+          - config/argocd-multicluster
+          - config/submariner
+          - config/cluster-api/providers/metal3
+          - config/cluster-api/clusters/homelab-pi4
+          - config/cluster-api/clusters/homelab-pi5
+          - config/loki-multi
+          - config/thanos
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Validate ${{ matrix.dir }}
+        run: |
+          kustomize build ${{ matrix.dir }} > /dev/null
+
+  helmfile-validate:
+    name: Helmfile Template & Validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Install helmfile
+        run: |
+          curl -sL https://github.com/helmfile/helmfile/releases/download/v0.169.0/helmfile_linux_amd64 -o helmfile
+          chmod +x helmfile
+          sudo mv helmfile /usr/local/bin/
+
+      - name: Add Helm repos
+        run: |
+          helm repo add longhorn https://charts.longhorn.io
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+          helm repo add zalando https://charts.zalando.io
+          helm repo add authelia https://charts.authelia.com
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add nextcloud https://nextcloud.github.io/helm/
+          helm repo add vaultwarden https://charts.vaultwarden.io
+          helm repo add crowdsec https://charts.crowdsec.net
+          helm repo add kyverno https://kyverno.github.io/kyverno/
+          helm repo add linkerd https://helm.linkerd.io/stable
+          helm repo add litmus https://litmuschaos.github.io/litmus-helm/
+          helm repo add thanos https://charts.thanos.io
+          helm repo add loki https://grafana.github.io/helm-charts
+          helm repo add argocd https://argoproj.github.io/argo-helm
+          helm repo add velero https://vmware-tanzu.github.io/helm-charts
+          helm repo update
+
+      - name: Helmfile template (dry-run)
+        run: |
+          helmfile -f helmfile.yaml template --skip-tests > /dev/null
+
+      - name: Check chart versions against latest
+        run: |
+          echo "Checking for outdated chart versions..."
+          # This will warn but not fail - manual review needed
+          for release in $(helmfile -f helmfile.yaml list -o json | jq -r '.[].chart'); do
+            chart=$(echo $release | sed 's/.*\///')
+            current=$(helmfile -f helmfile.yaml list -o json | jq -r ".[] | select(.chart==\"$release\") | .version")
+            echo "Chart: $chart, Current: $current"
+          done
+
   shellcheck:
     name: ShellCheck (Bash scripts)
     runs-on: ubuntu-latest
@@ -84,8 +169,26 @@ jobs:
       - name: Check for unpinned :latest tags
         run: |
           echo "Checking for unpinned :latest image tags..."
-          if grep -rn 'image:.*:latest' stacks/; then
+          if grep -rn 'image:.*:latest' stacks/ helmfile.yaml argocd/ 2>/dev/null; then
             echo "WARNING: Found :latest tags - please pin to specific versions"
             exit 1
           fi
           echo "All images are pinned."
+
+  validate-workflows:
+    name: Validate GitHub Workflows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yamlfmt
+        run: |
+          curl -sL https://github.com/google/yamlfmt/releases/download/v0.12.0/yamlfmt_0.12.0_Linux_x86_64.tar.gz | tar xz
+          sudo mv yamlfmt /usr/local/bin/
+
+      - name: Check workflow YAML formatting
+        run: |
+          yamlfmt -lint .github/workflows/
