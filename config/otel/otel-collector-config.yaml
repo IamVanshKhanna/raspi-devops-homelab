@@ -26,6 +26,30 @@ processors:
     check_interval: 1s
     limit_mib: 500
     spike_limit_mib: 100
+  # Tail-based sampling: 100% errors, slow traces, correlation IDs; 10% rest
+  tail_sampling:
+    decision_wait: 30s
+    num_traces: 50000
+    expected_new_traces_per_sec: 100
+    policy:
+      - name: errors-policy
+        type: string_attribute
+        string_attribute:
+          key: http.status_code
+          values: ["500", "501", "502", "503", "504", "5xx"]
+      - name: slow-traces-policy
+        type: latency
+        latency:
+          threshold_ms: 5000
+      - name: correlation-id-policy
+        type: string_attribute
+        string_attribute:
+          key: correlation_id
+          values: ["*"]
+      - name: probabilistic-policy
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
   resource:
     attributes:
       - key: service.namespace

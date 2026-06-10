@@ -11,6 +11,16 @@
 | [Service Down](service-down.md) | Health check fail, container down | High | < 30 min |
 | [Backup Failure](backup-failure.md) | Backup alert, verify fail | High | < 1 hour |
 | [Security Incident](security-incident.md) | CrowdSec alert, CVE, unauthorized access | Variable | Per severity |
+| [Resource Quota Exceeded](quota-exceeded.md) | Pod Pending, quota alerts, Grafana 100% | High | < 1 hour |
+| [Spot Instance Termination](spot-termination.md) | Spot node NotReady, PDB violation, eviction | Medium | < 15 min |
+| [Rightsizing Recommendations](rightsizing.md) | Weekly PR, Grafana >10% savings, VPA | Low | < 1 week |
+| [Unused Resource Accumulation](unused-resources.md) | Weekly issue, Grafana climbing, detector | Low | < 1 week |
+| [Cost Allocation Anomalies](cost-allocation.md) | Weekly report spike, team budget dispute | Medium | < 1 day |
+| [Power Optimization](power-optimization.md) | Grafana spike, Prometheus alert, cost report | Low | < 1 hour |
+| [Certificate Rotation](cert-rotation.md) | Prometheus alert, expiry < 30d, NotReady | High | < 4 hours |
+| [PDB Validation](pdb-validation.md) | Kyverno audit, node drain blocked, HA gaps | Medium | < 1 day |
+| [SLO Violation](slo-violation.md) | Burn rate alert, error budget < 10%, latency SLO breach | Critical | < 30 min |
+| [Error Budget Exhausted](error-budget-exhausted.md) | Budget < 5%, exhaustion alert | Critical | < 1 hour |
 
 ---
 
@@ -85,7 +95,7 @@ tailscale status
 ## Escalation Contacts
 
 | Role | Contact | When to Escalate |
-|--------|---------|------------------|
+|------|---------|------------------|
 | Primary Admin | Vansh (self) | All incidents |
 | GitHub Issues | homelab-prod/issues | Persistent issues, new procedures |
 

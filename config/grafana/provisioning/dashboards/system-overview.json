@@ -37,7 +37,7 @@
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
       "id": 1,
       "options": {
         "orientation": "auto",
@@ -75,7 +75,7 @@
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
       "id": 2,
       "options": {
         "orientation": "auto",
@@ -113,7 +113,7 @@
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
       "id": 3,
       "options": {
         "orientation": "auto",
@@ -151,7 +151,7 @@
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
       "id": 4,
       "options": {
         "orientation": "auto",
@@ -174,6 +174,120 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 70},
+              {"color": "orange", "value": 85},
+              {"color": "red", "value": 95}
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 4},
+      "id": 5,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""},
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/mnt/backup\"} / node_filesystem_size_bytes{mountpoint=\"/mnt/backup\"})) * 100",
+          "legendFormat": "Backup Disk %",
+          "refId": "A"
+        }
+      ],
+      "title": "Backup Disk Usage",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 60},
+              {"color": "orange", "value": 80},
+              {"color": "red", "value": 90}
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 4},
+      "id": 6,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""},
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "sum by(name) (container_memory_usage_bytes) / sum by(name) (container_spec_memory_limit_bytes) * 100",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Container Memory Usage %",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 70},
+              {"color": "orange", "value": 85},
+              {"color": "red", "value": 95}
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4},
+      "id": 7,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""},
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "sum by(name) (rate(container_cpu_usage_seconds_total[5m])) / sum by(name) (container_spec_cpu_quota / container_spec_cpu_period) * 100",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Container CPU Usage %",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "color": {"mode": "palette-classic"},
           "custom": {"lineWidth": 1},
           "mappings": [],
@@ -183,7 +297,7 @@
         "overrides": []
       },
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-      "id": 5,
+      "id": 8,
       "options": {
         "legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"},
         "tooltip": {"mode": "single"}
@@ -217,7 +331,7 @@
         "overrides": []
       },
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-      "id": 6,
+      "id": 9,
       "options": {
         "legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"},
         "tooltip": {"mode": "single"}
@@ -243,48 +357,17 @@
             "mode": "absolute",
             "steps": [
               {"color": "green", "value": null},
-              {"color": "yellow", "value": 70},
-              {"color": "orange", "value": 85},
-              {"color": "red", "value": 95}
+              {"color": "yellow", "value": 75},
+              {"color": "orange", "value": 80},
+              {"color": "red", "value": 85}
             ]
           },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 16},
-      "id": 7,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""},
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "pluginVersion": "8.0.0",
-      "targets": [
-        {
-          "expr": "sum by(name) (container_memory_usage_bytes) / sum by(name) (container_spec_memory_limit_bytes) * 100",
-          "legendFormat": "{{name}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Container Memory Usage %",
-      "type": "bargauge"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {"mode": "palette-classic"},
-          "custom": {"lineWidth": 1},
-          "mappings": [],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
           "unit": "celsius"
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 12, "x": 6, "y": 16},
-      "id": 8,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "id": 10,
       "options": {
         "legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"},
         "tooltip": {"mode": "single"}
@@ -304,23 +387,81 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 1},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "id": 11,
+      "options": {
+        "legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"},
+        "tooltip": {"mode": "single"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "sum by (namespace) (container_memory_usage_bytes)",
+          "legendFormat": "{{namespace}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Usage by Namespace",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 1},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "id": 12,
+      "options": {
+        "legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"},
+        "tooltip": {"mode": "single"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "sum by (namespace) (rate(container_cpu_usage_seconds_total[5m])) * 100",
+          "legendFormat": "{{namespace}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage by Namespace",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "color": {"mode": "thresholds"},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {"color": "green", "value": null},
-              {"color": "yellow", "value": 80},
-              {"color": "orange", "value": 90},
-              {"color": "red", "value": 95}
+              {"color": "yellow", "value": 60},
+              {"color": "orange", "value": 80},
+              {"color": "red", "value": 90}
             ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 16},
-      "id": 9,
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4},
+      "id": 13,
       "options": {
         "orientation": "auto",
         "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""},
@@ -330,24 +471,125 @@
       "pluginVersion": "8.0.0",
       "targets": [
         {
-          "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/mnt/backup\"} / node_filesystem_size_bytes{mountpoint=\"/mnt/backup\"})) * 100",
-          "legendFormat": "Backup Disk %",
+          "expr": "count(kube_pod_status_phase{phase=\"Running\"}) / count(kube_pod_status_phase) * 100",
+          "legendFormat": "Pods Running %",
           "refId": "A"
         }
       ],
-      "title": "Backup Disk Usage",
+      "title": "Pods Running",
       "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 5},
+              {"color": "orange", "value": 10},
+              {"color": "red", "value": 20}
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8},
+      "id": 14,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""},
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "sum(kube_pod_container_status_restarts_total) by (namespace, pod) > 0",
+          "legendFormat": "Restarts",
+          "refId": "A"
+        }
+      ],
+      "title": "Pod Restarts (non-zero)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 1},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 6, "y": 24},
+      "id": 15,
+      "options": {
+        "legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"},
+        "tooltip": {"mode": "single"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "container_network_receive_bytes_total",
+          "legendFormat": "RX {{pod}}",
+          "refId": "A"
+        },
+        {
+          "expr": "container_network_transmit_bytes_total",
+          "legendFormat": "TX {{pod}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Network I/O by Pod",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 1},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 18, "y": 12},
+      "id": 16,
+      "options": {
+        "legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom"},
+        "tooltip": {"mode": "single"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "sum by (namespace) (container_fs_usage_bytes)",
+          "legendFormat": "{{namespace}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Filesystem Usage by Namespace",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 27,
   "style": "dark",
-  "tags": ["homelab", "system"],
+  "tags": ["homelab", "system", "overview"],
   "templating": {"list": []},
   "time": {"from": "now-1h", "to": "now"},
   "timepicker": {},
   "timezone": "",
   "title": "Homelab System Overview",
-  "uid": "homelab-system",
-  "version": 1
+  "uid": "homelab-system-overview",
+  "version": 2
 }
