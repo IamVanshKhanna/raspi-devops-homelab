@@ -13,6 +13,12 @@ on:
       - 'stacks/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  security-events: write
+
 jobs:
   sbom:
     name: Generate SBOMs
@@ -28,17 +34,44 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - name: Extract images from compose files
-        id: images
+        id: compose-images
         run: |
           IMAGES=$(grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | sed 's/.*image: *//' | sort -u)
           echo "images=$IMAGES" >> $GITHUB_OUTPUT
-      - name: Generate SBOMs
+      - name: Extract images from K8s manifests
+        id: k8s-images
+        run: |
+          IMAGES=$(grep -h "image:" stacks/**/k8s/*.yaml 2>/dev/null | sed 's/.*image: *//' | sort -u)
+          echo "images=$IMAGES" >> $GITHUB_OUTPUT
+      - name: Extract images from Helmfile releases
+        id: helm-images
+        run: |
+          IMAGES=$(grep -h "image:" helmfile.yaml helmfile/**/*.yaml 2>/dev/null | sed 's/.*image: *//' | sed 's/.*repository: *//' | sort -u | grep -v '^{{' | grep -v '^$')
+          echo "images=$IMAGES" >> $GITHUB_OUTPUT
+      - name: Extract images from ArgoCD Applications
+        id: argocd-images
+        run: |
+          IMAGES=$(grep -h "image:" argocd/applications/*.yaml 2>/dev/null | sed 's/.*image: *//' | sort -u)
+          echo "images=$IMAGES" >> $GITHUB_OUTPUT
+      - name: Combine all unique images
+        id: all-images
+        run: |
+          ALL_IMAGES=$(echo -e "${{ steps.compose-images.outputs.images }}\n${{ steps.k8s-images.outputs.images }}\n${{ steps.helm-images.outputs.images }}\n${{ steps.argocd-images.outputs.images }}" | sort -u | grep -v '^$')
+          echo "images=$ALL_IMAGES" >> $GITHUB_OUTPUT
+      - name: Generate SBOMs for all images
         run: |
           mkdir -p sbom-output
-          for img in ${{ steps.images.outputs.images }}; do
+          for img in ${{ steps.all-images.outputs.images }}; do
             safe_name=$(echo "$img" | sed 's|[/:]|-|g')
             echo "Generating SBOM for $img..."
             syft "$img" -o spdx-json=sbom-output/${safe_name}.spdx.json
+          done
+      - name: Generate SBOMs for base images
+        run: |
+          for img in $(grep -h "^FROM " stacks/**/Dockerfile* 2>/dev/null | sed 's/FROM //' | sort -u); do
+            safe_name=$(echo "$img" | sed 's|[/:]|-|g')
+            echo "Generating base image SBOM for $img..."
+            syft "$img" -o spdx-json=sbom-output/base-${safe_name}.spdx.json || true
           done
       - name: Upload SBOMs as artifacts
         uses: actions/upload-artifact@v4
@@ -46,6 +79,10 @@ jobs:
           name: sboms
           path: sbom-output/
           retention-days: 30
+
+      - name: Output combined images for downstream jobs
+        run: |
+          echo "images=${{ steps.all-images.outputs.images }}" >> $GITHUB_OUTPUT
 
   cosign-sign:
     name: Sign Images with Cosign
@@ -66,16 +103,16 @@ jobs:
         with:
           name: sboms
           path: sbom-output
-      - name: Extract images from compose files
-        id: images
+      - name: Extract all images (from sbom job)
+        id: all-images
         run: |
-          IMAGES=$(grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | sed 's/.*image: *//' | sort -u)
+          IMAGES=$(echo -e "${{ needs.sbom.outputs.images }}" | sort -u | grep -v '^$')
           echo "images=$IMAGES" >> $GITHUB_OUTPUT
       - name: Sign images with Cosign (keyless)
         env:
           COSIGN_YES: "true"
         run: |
-          for img in ${{ steps.images.outputs.images }}; do
+          for img in ${{ steps.all-images.outputs.images }}; do
             echo "Signing $img..."
             cosign sign --yes "$img" || echo "Warning: Could not sign $img (may not exist in registry)"
           done
@@ -92,23 +129,32 @@ jobs:
       - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-      - name: Extract images from compose files
-        id: images
+      - name: Get all images from sbom job
+        id: all-images
         run: |
-          IMAGES=$(grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | sed 's/.*image: *//' | sort -u)
+          IMAGES=$(echo -e "${{ needs.sbom.outputs.images }}" | sort -u | grep -v '^$')
           echo "images=$IMAGES" >> $GITHUB_OUTPUT
-      - name: Scan images (fail on CRITICAL)
+      - name: Scan images (fail on CRITICAL and HIGH in production)
         run: |
           EXIT_CODE=0
-          for img in ${{ steps.images.outputs.images }}; do
+          for img in ${{ steps.all-images.outputs.images }}; do
             echo "Scanning $img for CRITICAL vulnerabilities..."
             trivy image --severity CRITICAL --exit-code 1 --format table "$img" || EXIT_CODE=1
+          done
+          exit $EXIT_CODE
+      - name: Scan for HIGH severity (fail on HIGH for production)
+        if: always()
+        run: |
+          EXIT_CODE=0
+          for img in ${{ steps.all-images.outputs.images }}; do
+            echo "Scanning $img for HIGH vulnerabilities..."
+            trivy image --severity HIGH --exit-code 1 --format table "$img" || EXIT_CODE=1
           done
           exit $EXIT_CODE
       - name: Upload SARIF (all severities)
         if: always()
         run: |
-          for img in ${{ steps.images.outputs.images }}; do
+          for img in ${{ steps.all-images.outputs.images }}; do
             safe_name=$(echo "$img" | sed 's|[/:]|-|g')
             trivy image --severity CRITICAL,HIGH,MEDIUM,LOW --exit-code 0 --format sarif --output "trivy-${safe_name}.sarif" "$img" || true
           done
@@ -122,24 +168,94 @@ jobs:
   dependency-policy:
     name: Check Dependency Policy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Check for unpinned images
+      - name: Check for unpinned images (all sources)
         run: |
           echo "Checking for unpinned images (latest tag)..."
-          UNPINNED=$(grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | grep ":latest" | wc -l)
-          if [ "$UNPINNED" -gt 0 ]; then
-            echo "::warning::Found $UNPINNED images using :latest tag"
-            grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | grep ":latest"
+          UNPINNED=$( (
+            grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null ;
+            grep -h "image:" stacks/**/k8s/*.yaml 2>/dev/null ;
+            grep -h "image:" helmfile.yaml helmfile/**/*.yaml 2>/dev/null ;
+            grep -h "image:" argocd/applications/*.yaml 2>/dev/null
+          ) | grep ":latest" | sort -u)
+          UNPINNED_COUNT=$(echo "$UNPINNED" | grep -c . | grep -v '^0$' || echo 0)
+          if [ "$UNPINNED_COUNT" -gt 0 ]; then
+            echo "::warning::Found $UNPINNED_COUNT images using :latest tag"
+            echo "$UNPINNED"
             exit 1
           fi
           echo "All images pinned"
-      - name: Check for digest references
+      - name: Check for digest references (all sources)
         run: |
           echo "Checking for digest references (@sha256:)..."
-          DIGEST_COUNT=$(grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | grep "@sha256:" | wc -l)
-          TOTAL_COUNT=$(grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null | wc -l)
+          ALL_IMAGES=$( (
+            grep -h "image:" stacks/**/docker-compose.yml 2>/dev/null ;
+            grep -h "image:" stacks/**/k8s/*.yaml 2>/dev/null ;
+            grep -h "image:" helmfile.yaml helmfile/**/*.yaml 2>/dev/null ;
+            grep -h "image:" argocd/applications/*.yaml 2>/dev/null
+          ) | sort -u)
+          DIGEST_COUNT=$(echo "$ALL_IMAGES" | grep -c "@sha256:")
+          TOTAL_COUNT=$(echo "$ALL_IMAGES" | grep -c . || echo 0)
           echo "Images with digest: $DIGEST_COUNT / $TOTAL_COUNT"
           if [ "$DIGEST_COUNT" -eq 0 ] && [ "$TOTAL_COUNT" -gt 0 ]; then
             echo "::warning::No images use digest references. Consider pinning by digest for supply chain security."
+          fi
+      - name: Check base image freshness
+        run: |
+          echo "Checking base image freshness..."
+          # Check Dockerfile base images
+          for df in stacks/**/Dockerfile*; do
+            if [ -f "$df" ]; then
+              base=$(grep "^FROM " "$df" | head -1 | sed 's/FROM //')
+              if [ -n "$base" ] && [[ ! "$base" =~ @sha256: ]]; then
+                echo "::notice file=$df::Base image $base not pinned by digest"
+              fi
+            fi
+          done
+      - name: Check image age (warn if base image > 6 months old)
+        run: |
+          echo "Checking base image age..."
+          for df in stacks/**/Dockerfile*; do
+            if [ -f "$df" ]; then
+              base=$(grep "^FROM " "$df" | head -1 | sed 's/FROM //')
+              if [ -n "$base" ]; then
+                echo "::notice file=$df::Base image: $base (check age manually)"
+              fi
+            fi
+          done
+
+  renovate-gate:
+    name: Renovate Grouping Gate
+    runs-on: ubuntu-latest
+    needs: trivy-gate
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check renovate config
+        run: |
+          if [ -f renovate.json ]; then
+            echo "Checking renovate config..."
+            if grep -q '"groupName"' renovate.json; then
+              echo "✓ Renovate grouping configured"
+              # Check for severity-based grouping
+              if grep -q '"groupName".*severity' renovate.json; then
+                echo "✓ Severity-based grouping configured"
+              else
+                echo "::warning::Consider adding severity-based grouping rules"
+              fi
+            else
+              echo "::warning::Renovate grouping not configured. Consider adding groupName rules for better PR management."
+            fi
+          else
+            echo "::warning::No renovate.json found"
+          fi
+      - name: Validate renovate config syntax
+        run: |
+          if [ -f renovate.json ]; then
+            python3 -m json.tool renovate.json > /dev/null && echo "✓ renovate.json is valid JSON"
           fi

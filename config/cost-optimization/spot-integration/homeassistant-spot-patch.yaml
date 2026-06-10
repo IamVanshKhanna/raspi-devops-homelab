@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homeassistant
+  namespace: smarthome
+spec:
+  template:
+    spec:
+      nodeSelector:
+        lifecycle: spot
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "spot"
+        effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: lifecycle
+                operator: In
+                values:
+                - spot

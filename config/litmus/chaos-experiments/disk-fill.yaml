@@ -1,0 +1,27 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: disk-fill-engine
+  namespace: litmus
+spec:
+  appinfo:
+    appns: "apps"
+    applabel: "app.kubernetes.io/name=nextcloud"
+  chaosServiceAccount: litmus-admin
+  experiments:
+    - name: disk-fill
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "60"
+            - name: CHAOS_INTERVAL
+              value: "10"
+            - name: FILL_PERCENTAGE
+              value: "80"
+            - name: TARGET_PODS
+              value: ""
+            - name: PODS_AFFECTED_PERC
+              value: "50"
+            - name: EPHEMERAL_STORAGE_PATH
+              value: "/tmp"

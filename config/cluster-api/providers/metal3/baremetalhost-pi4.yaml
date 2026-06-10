@@ -1,0 +1,22 @@
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: pi4-node-0
+  namespace: homelab-clusters
+  labels:
+    homelab.io/hardware: pi4
+    homelab.io/role: worker
+spec:
+  online: true
+  bootMACAddress: "aa:bb:cc:dd:ee:01"
+  bootMode: "uefi"
+  hardwareProfile: "default"
+  externallyProvisioned: false
+  bmc:
+    address: ipmi://192.168.1.101:6230
+    credentialsName: pi4-node-0-bmc-secret
+    disableCertificateVerification: true
+  rootDeviceHints:
+    deviceName: "/dev/nvme0n1"
+    minSizeGigabytes: 100
+  preprovisioningNetworkDataName: "pi4-node-0-network"

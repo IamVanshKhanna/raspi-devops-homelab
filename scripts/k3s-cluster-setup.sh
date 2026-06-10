@@ -269,6 +269,20 @@ kubectl get nodes -o wide
 kubectl get pods -A
 kubectl get pv,pvc -A
 
+# Install secrets-rotation script and systemd timer
+log "Installing secrets-rotation script and systemd timer..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cp "$SCRIPT_DIR/secrets-rotation.sh" /usr/local/bin/secrets-rotation.sh
+chmod +x /usr/local/bin/secrets-rotation.sh
+
+cp "$SCRIPT_DIR/homelab-secrets-rotation.service" /etc/systemd/system/
+cp "$SCRIPT_DIR/homelab-secrets-rotation.timer" /etc/systemd/system/
+
+systemctl daemon-reload
+systemctl enable homelab-secrets-rotation.timer
+systemctl start homelab-secrets-rotation.timer
+log "Secrets rotation timer installed and started"
+
 log "✅ K3s cluster setup complete!"
 log ""
 log "Next steps:"

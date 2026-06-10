@@ -1,0 +1,72 @@
+# ServiceExports for Cluster 1 (Pi 4B) - Export services to other clusters
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: nextcloud
+  namespace: apps
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: vaultwarden
+  namespace: apps
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: homeassistant
+  namespace: smarthome
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: postgresql
+  namespace: databases
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: redis
+  namespace: databases
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: grafana
+  namespace: monitoring
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: alertmanager
+  namespace: monitoring
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: loki
+  namespace: logging
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: tempo
+  namespace: tracing
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: infisical
+  namespace: secrets
+---
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: authelia
+  namespace: auth

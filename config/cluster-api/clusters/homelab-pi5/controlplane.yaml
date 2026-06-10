@@ -1,0 +1,32 @@
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: homelab-pi5-cp
+  namespace: homelab-clusters
+spec:
+  replicas: 1
+  version: v1.28.5
+  machineTemplate:
+    infrastructureRef:
+      kind: Metal3MachineTemplate
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      name: homelab-pi5-cp
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      controllerManager:
+        extraArgs:
+          node-cidr-mask-size: "24"
+      apiServer:
+        extraArgs:
+          default-not-ready-toleration-seconds: "30"
+          default-unreachable-toleration-seconds: "30"
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          max-pods: "250"
+          eviction-hard: "memory.available<1Gi,nodefs.available<5%"
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          max-pods: "250"
+          eviction-hard: "memory.available<1Gi,nodefs.available<5%"
