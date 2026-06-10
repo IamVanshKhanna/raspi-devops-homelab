@@ -1,0 +1,46 @@
+groups:
+  - name: cert-expiry
+    rules:
+      - alert: CertificateExpiringSoon
+        expr: |
+          kube_certmanager_certificate_expiration_timestamp_seconds - time() < 30 * 24 * 3600
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expiring in < 30 days"
+          description: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in {{ printf \"%.0f\" (($value / 3600 / 24)) }} days. cert-manager should auto-renew."
+          runbook_url: "https://github.com/IamVanshKhanna/homelab-prod/blob/main/docs/runbooks/cert-rotation.md"
+
+      - alert: CertificateExpiringCritical
+        expr: |
+          kube_certmanager_certificate_expiration_timestamp_seconds - time() < 7 * 24 * 3600
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expiring in < 7 days"
+          description: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in {{ printf \"%.0f\" (($value / 3600 / 24)) }} days. Manual intervention may be required."
+          runbook_url: "https://github.com/IamVanshKhanna/homelab-prod/blob/main/docs/runbooks/cert-rotation.md"
+
+      - alert: CertificateNotReady
+        expr: |
+          kube_certmanager_certificate_status_condition{condition="Ready",status!="True"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} not Ready"
+          description: "Certificate {{ $labels.namespace }}/{{ $labels.name }} has Ready condition = {{ $labels.status }}. Check cert-manager logs."
+          runbook_url: "https://github.com/IamVanshKhanna/homelab-prod/blob/main/docs/runbooks/cert-rotation.md"
+
+      - alert: CertificateRequestFailed
+        expr: |
+          kube_certmanager_certificaterequest_status_condition{condition="Ready",status="False"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CertificateRequest {{ $labels.namespace }}/{{ $labels.name }} failed"
+          description: "CertificateRequest {{ $labels.namespace }}/{{ $labels.name }} failed. Check cert-manager logs and Issuer status."
+          runbook_url: "https://github.com/IamVanshKhanna/homelab-prod/blob/main/docs/runbooks/cert-rotation.md"
