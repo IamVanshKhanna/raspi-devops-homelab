@@ -166,12 +166,12 @@
 - [x] **Spot Instance Patches** — 7 workload patches with tolerations/affinity for DR spot nodes
 
 ### v2.11 — Documentation Refresh 🔄 **In Progress**
-- [ ] **ARCHITECTURE.md** — Comprehensive architecture documentation ✅ **Done**
-- [ ] **README.md** — Updated with v2.10 features ✅ **Done**
-- [ ] **Runbooks** for new components (quotas, spot, rightsizing, unused, cost, power)
-- [ ] **CHANGELOG.md** — v2.10 entries ✅ **Done**
-- [ ] **Operational guides** for new components
-- [ ] **VERSION_ROADMAP.md** — Updated with v2.10 completion ✅ **Done**
+- [x] **ARCHITECTURE.md** — Comprehensive architecture documentation ✅ **Done**
+- [x] **README.md** — Updated with v2.10 features ✅ **Done**
+- [x] **Runbooks** for new components (quotas, spot, rightsizing, unused, cost, power) ✅ **Done**
+- [x] **CHANGELOG.md** — v2.10 entries ✅ **Done**
+- [x] **Operational guides** for new components ✅ **Done** (exists in operational-guides.md)
+- [x] **VERSION_ROADMAP.md** — Updated with v2.10 completion ✅ **Done**
 
 ---
 
@@ -239,21 +239,21 @@
 
 ```json
 {
-  "current": "v2.10.0",
-  "next": "v2.11.0",
+  "current": "v2.11.0",
+  "next": "v2.12.0",
   "next_major": "v3.0.0",
   "branches": {
     "main-v1": "v1.7",
     "develop-v1": "v1.7",
-    "main-v2": "v2.10",
-    "develop-v2": "v2.10"
+    "main-v2": "v2.11",
+    "develop-v2": "v2.11"
   },
   "support": {
     "v1.x": "active",
     "v1.7": "released",
     "v2.x": "active",
     "v2.10": "released",
-    "v2.11": "in-progress"
+    "v2.11": "released"
   }
 }
 ```
