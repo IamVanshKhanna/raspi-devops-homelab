@@ -1,0 +1,13 @@
+# PDB Template: Standard Deployment (50% available)
+# Usage: sed 's/NAMESPACE/<namespace>/g; s/APP_LABEL/<app-label>/g' | kubectl apply -f -
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-standard-deployment
+  namespace: NAMESPACE
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: standard

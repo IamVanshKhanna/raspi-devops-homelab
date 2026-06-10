@@ -1,0 +1,13 @@
+# PDB Template: Spot-tolerant Workloads (allow full disruption)
+# Usage: sed 's/NAMESPACE/<namespace>/g' | kubectl apply -f -
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-spot-tolerant
+  namespace: NAMESPACE
+spec:
+  maxUnavailable: 100%
+  selector:
+    matchLabels:
+      lifecycle: spot
