@@ -1,0 +1,15 @@
+# Default Deny Egress - Apply per namespace
+# Usage: sed 's/NAMESPACE/<your-namespace>/g' | kubectl apply -f -
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: NAMESPACE
+  labels:
+    policy: egress-deny
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress: []

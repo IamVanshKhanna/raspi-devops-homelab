@@ -1,0 +1,56 @@
+# Require Cosign Signature Verification for All Images
+# Validates that container images have valid cosign signatures before admission
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-cosign-verification
+  annotations:
+    policies.kyverno.io/title: Require Cosign Verification
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Requires all container images to have valid cosign signatures.
+      Images must be signed with the trusted public key.
+      Excludes system namespaces and images with explicit exception label.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: verify-cosign-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - cert-manager
+                - kyverno
+                - linkerd
+                - linkerd-viz
+                - monitoring
+                - logging
+                - tracing
+      verifyImages:
+        - imageReferences:
+            - "*"
+          attesters:
+            - entries:
+                - keys:
+                    # Public key for cosign verification
+                    # Generate with: cosign generate-key-pair
+                    # Store public key in Kyverno ConfigMap or Vault
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYQ==
+                      -----END PUBLIC KEY-----
