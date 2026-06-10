@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   yaml-lint:
     name: YAML Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +38,8 @@ jobs:
           - stacks/apps/docker-compose.yml
           - stacks/network/docker-compose.yml
           - stacks/smarthome/docker-compose.yml
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,6 +59,8 @@ jobs:
   shellcheck:
     name: ShellCheck (Bash scripts)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,6 +75,8 @@ jobs:
   check-latest-tags:
     name: Warn on :latest image tags
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4

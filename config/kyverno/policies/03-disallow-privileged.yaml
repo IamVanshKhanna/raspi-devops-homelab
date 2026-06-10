@@ -1,0 +1,53 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-privileged
+  labels:
+    app.kubernetes.io/name: kyverno
+    policy-type: pod-security
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: no-privileged-containers
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+                - ReplicaSet
+      validate:
+        message: "Privileged containers are not allowed"
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                - key: "{{ element.securityContext.privileged }}"
+                  operator: Equals
+                  value: true
+          - list: "request.object.spec.initContainers"
+            deny:
+              conditions:
+                - key: "{{ element.securityContext.privileged }}"
+                  operator: Equals
+                  value: true
+          - list: "request.object.spec.ephemeralContainers"
+            deny:
+              conditions:
+                - key: "{{ element.securityContext.privileged }}"
+                  operator: Equals
+                  value: true
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - cert-manager
+                - argocd
+                - longhorn-system

@@ -1,0 +1,112 @@
+---
+# Velero Operations Playbook - Backup, Restore, and DR operations
+- name: Velero Operations
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    kubeconfig: "/etc/rancher/k3s/k3s.yaml"
+    velero_namespace: "velero"
+    
+  tasks:
+    - name: List all Velero backups
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} backup get -o json | jq -r '.[] | "\(.metadata.name)\t\(.status.phase)\t\(.status.startTimestamp)\t\(.status.completionTimestamp)\t\(.status.errors)"'
+      register: backup_list
+      changed_when: false
+
+    - name: Display backup list
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ backup_list.stdout_lines }}"
+
+    - name: Create manual backup
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} backup create \
+          --include-namespaces {{ include_namespaces | default('*') | join(',') }} \
+          --exclude-namespaces {{ exclude_namespaces | default('') | join(',') }} \
+          --ttl {{ ttl | default('72h') }} \
+          --wait --timeout=300s
+      register: backup_create
+      when: create_backup | default(false)
+      changed_when: true
+
+    - name: Describe backup details
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} backup describe {{ backup_name }} --details -o json
+      register: backup_desc
+      when: backup_name is defined
+      changed_when: false
+
+    - name: List restore operations
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} restore get -o json | jq -r '.[] | "\(.metadata.name)\t\(.spec.backupName)\t\(.status.phase)\t\(.status.startTimestamp)\t\(.status.completionTimestamp)"'
+      register: restore_list
+      changed_when: false
+
+    - name: Restore from backup
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} restore create \
+          --from-backup {{ restore_from_backup }} \
+          --include-namespaces {{ include_namespaces | default('') | join(',') }} \
+          --exclude-namespaces {{ exclude_namespaces | default('') | join(',') }} \
+          --namespace-mappings {{ namespace_mappings | default('') | join(',') }} \
+          --wait --timeout=300s
+      register: restore_create
+      when: restore_from_backup is defined
+      changed_when: true
+
+    - name: Check Velero installation
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} version
+      register: velero_version
+      changed_when: false
+
+    - name: Display Velero version
+      debug:
+        msg: "Velero version: {{ velero_version.stdout }}"
+
+    - name: Check BSL configuration
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} backup-location get -o json
+      register: bsl_list
+      changed_when: false
+
+    - name: Display BSL list
+      debug:
+        msg: "{{ bsl_list.stdout }}"
+
+    - name: Check VSL configuration
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} snapshot-location get -o json
+      register: vsl_list
+      changed_when: false
+
+    - name: Display VSL list
+      debug:
+        msg: "{{ vsl_list.stdout }}"
+
+    - name: Check Velero pod status
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig }} -n {{ velero_namespace }} get pods -o wide
+      register: velero_pods
+      changed_when: false
+      ignore_errors: true
+
+    - name: Display Velero pod status
+      debug:
+        msg: "{{ velero_pods.stdout }}"
+
+    - name: Delete old backups
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} backup delete {{ backup_to_delete }} --confirm
+      register: backup_delete
+      when: backup_to_delete is defined
+      changed_when: true
+
+    - name: Cleanup completed restores
+      shell: |
+        velero --kubeconfig={{ kubeconfig }} restore delete --all --confirm
+      register: restore_cleanup
+      when: cleanup_restores | default(false)
+      changed_when: true

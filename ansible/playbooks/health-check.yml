@@ -1,0 +1,142 @@
+---
+# Health check playbook - comprehensive cluster health verification
+- name: Run cluster health checks
+  hosts: k3s_cluster
+  become: true
+  vars:
+    kubeconfig_path: /etc/rancher/k3s/k3s.yaml
+    expected_namespaces:
+      - traefik
+      - portainer
+      - cert-manager
+      - monitoring
+      - logging
+      - tracing
+      - secrets
+      - auth
+      - apps
+      - smarthome
+      - uptime
+      - security
+      - ai
+      - databases
+      - postgres-system
+      - kyverno
+      - linkerd
+      - linkerd-viz
+      - longhorn-system
+      - argocd
+  tasks:
+    - name: Check node status
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get nodes -o json | jq -r '.items[] | "\(.metadata.name) \(.status.conditions[] | select(.type=="Ready") | .status)"'
+      register: node_status
+      changed_when: false
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Assert all nodes Ready
+      assert:
+        that:
+          - "'NotReady' not in node_status.stdout"
+          - "node_status.stdout_lines | length == groups['k3s_cluster'] | length"
+        fail_msg: "Node health check failed:\n{{ node_status.stdout }}"
+        success_msg: "All {{ groups['k3s_cluster'] | length }} nodes are Ready"
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Check system pods
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get pods -n kube-system -o json | jq -r '.items[] | select(.status.phase != "Running" and .status.phase != "Succeeded") | "\(.metadata.namespace)/\(.metadata.name) \(.status.phase)"'
+      register: system_pods
+      changed_when: false
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Assert system pods healthy
+      assert:
+        that:
+          - "system_pods.stdout == ''"
+        fail_msg: "Unhealthy system pods:\n{{ system_pods.stdout }}"
+        success_msg: "All system pods healthy"
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Check workload pods across namespaces
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get pods -A -o json | jq -r '.items[] | select(.status.phase != "Running" and .status.phase != "Succeeded") | "\(.metadata.namespace)/\(.metadata.name) \(.status.phase) \(.status.containerStatuses[]?.state.waiting.reason // .status.containerStatuses[]?.state.terminated.reason // \"\")"'
+      register: workload_pods
+      changed_when: false
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Report unhealthy workload pods
+      debug:
+        msg: "Unhealthy workload pods (if any):\n{{ workload_pods.stdout }}"
+      when: workload_pods.stdout != ""
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Check PVCs bound
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get pvc -A -o json | jq -r '.items[] | select(.status.phase != "Bound") | "\(.metadata.namespace)/\(.metadata.name) \(.status.phase)"'
+      register: pvc_status
+      changed_when: false
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Assert PVCs bound
+      assert:
+        that:
+          - "pvc_status.stdout == ''"
+        fail_msg: "Unbound PVCs:\n{{ pvc_status.stdout }}"
+        success_msg: "All PVCs bound"
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Check Cert-Manager certificates
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get certificates -A -o json | jq -r '.items[] | select(.status.conditions[] | select(.type=="Ready" and .status=="False")) | "\(.metadata.namespace)/\(.metadata.name) NOT READY"'
+      register: cert_status
+      changed_when: false
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Report certificate issues
+      debug:
+        msg: "Certificate issues:\n{{ cert_status.stdout }}"
+      when: cert_status.stdout != ""
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Check Longhorn status
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get nodes.longhorn.io -o json | jq -r '.items[] | select(.status.conditions[] | select(.type=="Ready" and .status!="True")) | "\(.metadata.name) \(.status.conditions[] | select(.type=="Ready") | .status)"'
+      register: longhorn_status
+      changed_when: false
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Assert Longhorn healthy
+      assert:
+        that:
+          - "longhorn_status.stdout == ''"
+        fail_msg: "Longhorn nodes not ready:\n{{ longhorn_status.stdout }}"
+        success_msg: "Longhorn healthy"
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Run external health check script
+      shell: |
+        cd {{ homelab_path }} && ./scripts/health-check.sh --strict
+      register: health_check
+      changed_when: false
+      ignore_errors: true
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true
+
+    - name: Report health check result
+      debug:
+        msg: "Health check {{ 'PASSED' if health_check.rc == 0 else 'FAILED' }}:\n{{ health_check.stdout }}"
+      delegate_to: "{{ groups['control_plane'][0] }}"
+      run_once: true

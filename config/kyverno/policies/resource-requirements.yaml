@@ -1,0 +1,47 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: "Require Resource Limits"
+    policies.kyverno.io/category: "Resource Management"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-limits-and-requests
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "All containers must have CPU and memory limits and requests"
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+                    
+    - name: limit-max-resources
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "CPU limit must not exceed 4 cores, memory limit must not exceed 8Gi"
+        deny:
+          conditions:
+            all:
+            - key: "{{ sum(request.object.spec.containers[*].resources.limits.cpu) }}"
+              operator: GreaterThan
+              value: "4"
+            - key: "{{ sum(request.object.spec.containers[*].resources.limits.memory) }}"
+              operator: GreaterThan
+              value: "8Gi"

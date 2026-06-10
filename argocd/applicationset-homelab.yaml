@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: homelab-prod
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/IamVanshKhanna/homelab-prod.git
+        revision: HEAD
+        directories:
+          - path: argocd/applications/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      namespace: argocd
+    spec:
+      project: homelab
+      source:
+        repoURL: https://github.com/IamVanshKhanna/homelab-prod.git
+        targetRevision: HEAD
+        path: '{{path}}'
+        helm:
+          valueFiles:
+            - ../../helmfile/values/defaults.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{metadata.annotations.argocd.argoproj.io/name}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m

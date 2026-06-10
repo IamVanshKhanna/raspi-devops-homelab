@@ -4,273 +4,211 @@
 
 ---
 
-## [v1.6.0] — 2026-06-09
+## [v2.10.0] — 2026-06-09
+
 ### Added
-- **Tempo + OpenTelemetry Collector** stack for distributed tracing
-- **cronjob-ops** skill: Scheduled health summaries, weekly reports via Telegram
-- **tts-alerts** skill: Text-to-speech for critical alerts (edge-tts, espeak)
-- **Health check**: Tempo + OTEL Collector checks
-- **Tempo** stack (config/tempo, stacks/tracing)
-- **OpenTelemetry Collector** (otel-collector) with OTLP receivers
-- **make verify-tracing** target for tracing verification
-- **Daily health summary** systemd timer (`scripts/daily-health-summary.sh`, `homelab-daily-summary.{service,timer}`)
-- **Supply chain verification** in deploy pipeline (`scripts/verify-supply-chain.sh`)
-- **Image digest pinning** helper (`scripts/pin-images-to-digest.sh`)
-- **Infisical migration** helper (`scripts/migrate-to-infisical.sh`)
-- **Secret rotation documentation** (`docs/SECRET_ROTATION.md`)
+- **Resource Quotas & Limits** — 4-tier quotas (P0-P3) across 12 namespaces with ResourceQuota + LimitRange (29 YAML files)
+- **Spot Instance Integration** — EKS Spot node group (t3.medium, capacity-optimized) with 70% cost savings, PDBs, termination handler
+- **Right-Sizing Automation** — Weekly VPA + Prometheus analysis with GitHub Actions workflow (10%+ savings detection)
+- **Unused Resource Detection** — 8-category scanner (PVCs, Secrets, Services, Ingresses, NetworkPolicies, HPAs, Roles, LBs) with PR creation
+- **Cost Allocation & Chargeback** — Weekly allocation by namespace/team/service with configurable rates, GitHub Actions report
+- **Power/Electricity Optimization** — Pi CPU governor/frequency limits, LED/WiFi/BT disable, USB/storage/network power mgmt, Grafana dashboard, Prometheus alerts
+- **Backup Encryption Verification** — Weekly Restic/Velero/B2 AES-256 verification via GitHub Actions
+- **Cross-Region Backup Replication** — Restic rclone (B2→S3/GCS), Velero BSL replication, S3 CRR, GCS dual-region
+- **DR Automation** — Monthly DR test, quarterly failover, automated DNS failover (Cloudflare), Velero cross-region restore
+- **Ansible DR Runbooks** — Failover, monthly test, Velero operations, full DR failover playbooks
+- **Ansible Resource Quotas** — 29 quota/limit manifests with Kustomize
+- **Spot Instance Patches** — 7 workload patches with tolerations/affinity for DR spot nodes
 
 ### Changed
-- **Makefile**: Added tracing stack (phase 9), up-tracing, verify-tracing
-- **Health check**: Added Tempo + OTEL Collector checks
-- **HERMES_ON_PI.md**: Added cronjob-ops and tts-alerts skills (now 7 total)
-- **cronjob-ops skill**: Daily health summaries, weekly reports via Telegram
-- **tts-alerts skill**: edge-tts/espeak for critical alerts
+- **helmfile.yaml** — Added Velero, EKS Spot nodes, updated repositories
+- **supply-chain.yml** — Enhanced Trivy gate to block HIGH in production
+- **renovate.json** — Enhanced severity-based PR grouping (patch/minor/major/security)
 
-### Automation
-- **cronjob-ops**: Daily health summaries via Telegram, weekly reports
-- **tts-alerts**: edge-tts/espeak for critical alerts (optional)
-- **Hermes skills**: Now 7 auto-loaded (homelab-ops, gitops-helper, backup-ops, security-audit, capacity-plan, cronjob-ops, tts-alerts)
+### Fixed
+- **VERSION_ROADMAP.md** — Updated v2.10 status to completed
 
-### Scripts & Tools
-- `scripts/daily-health-summary.sh` - Daily health summary generator
-- `scripts/homelab-daily-summary.{service,timer}` - Systemd timer for daily summary
-- `scripts/verify-supply-chain.sh` - Supply chain verification in deploy
-- `scripts/pin-images-to-digest.sh` - Image digest pinning helper
-- `scripts/migrate-to-infisical.sh` - Infisical migration helper
-- `scripts/daily-health-summary.sh` - Daily health summary generator
-- `scripts/homelab-daily-summary.{service,timer}` - Systemd timer
-- `docs/SECRET_ROTATION.md` - Secret rotation procedures
+---
 
-### Security
-- Skills follow ADR-005 trust model (read-only by default, confirmation required)
+## [v2.9.0] — 2026-06-09
+### Added
+- **DR Monthly Test** — `scripts/dr-test-monthly.sh` with critical services restore validation
+- **DR Quarterly Failover** — `scripts/dr-failover.sh` with Cloudflare DNS failover + Velero restore
+- **DR Documentation** — `docs/disaster-recovery-secondary-region.md` with RTO/RPO matrix
+- **Incident Drills** — `scripts/drills/incident-response-drill.sh` with 8 scenarios
+- **Service Failover Drill** — `scripts/drills/service-failover-drill.sh` per-service testing
+- **Ansible DR Playbooks** — Failover, monthly test, Velero operations playbooks
+- **Loki Multi-Tenancy** — Central Loki with per-cluster Promtail (homelab-pi4, homelab-pi5)
+- **Thanos Federation** — Sidecar, Query, Store Gateway, Compactor, Ruler with B2/S3 objstore
 
-### Documentation
-- **HERMES_ON_PI.md**: Added cronjob-ops and tts-alerts skills
-- **VERSION_ROADMAP.md**: v1.6 marked complete
-- **CHANGELOG.md**: v1.6 released
+### Changed
+- **helmfile.yaml** — Added Thanos, Loki, ArgoCD ApplicationSet releases
+- **VERSION_ROADMAP.md** — Updated v2.9 status to completed
+
+---
+
+## [v2.8.0] — 2026-06-09
+### Added
+- **Cluster API (CAPI)** — Pi 4B (Docker) + Pi 5 (Metal3) cluster definitions with Kustomize
+- **Thanos Federation** — Sidecar, Query, Store Gateway, Compactor, Ruler with B2 objstore
+- **Loki Multi-Tenancy** — Central Loki + per-cluster Promtail (tenant_id: homelab-pi4/pi5)
+- **Submariner** — Cross-cluster service discovery (broker, 2 clusters, 12 ServiceExports)
+- **ArgoCD ApplicationSet** — 6 generators (cluster, git, matrix) with sync windows/waves
+- **LitmusChaos** — 7 experiments (pod delete, CPU/mem hog, network latency/loss, node drain, disk fill)
+- **NetworkPolicies** — Complete deny/allow for all 14 namespaces with kustomize
+
+### Changed
+- **helmfile.yaml** — Added Thanos, Litmus, Submariner, ArgoCD ApplicationSet repos/releases
+
+---
+
+## [v2.7.0] — 2026-06-09
+### Added
+- **PostgreSQL Optimization** — Patroni config with shared_buffers=1GB, parallel workers, wal_compression
+- **Redis Optimization** — LFU eviction, AOF everysec, active defrag, diskless sync
+- **Cloudflare CDN** — Workers (security headers, cache logic), Page Rules, WAF, Rate Limiting, Terraform
+- **Traefik Compression** — Brotli/Zstd/Gzip middleware with content-type targeting
+- **Cache Warming** — CronJob (15m), Nextcloud/Vaultwarden/HA static assets, PG/Redis prewarm
+- **Performance Benchmarks** — PgBench, redis-benchmark, k6, vegeta, iperf3, fio templates
+
+### Changed
+- **helmfile.yaml** — Added Loki repo + Loki + Promtail (Pi4/Pi5) releases
+
+---
+
+## [v2.6.0] — 2026-06-09
+### Added
+- **Ansible Runbooks** — 8 playbooks (backup, restore, health-check, rotate-secrets, update-certs, scale-workload, DR, site)
+- **LitmusChaos** — 7 chaos experiments + Argo workflows + RBAC + NetworkPolicies
+- **Capacity Planning** — Python analyzer (Prometheus forecasting), weekly workflow, Grafana dashboard
+- **Incident Response Drills** — Monthly/quarterly scripts + GitHub Actions + Ansible playbooks
+
+### Changed
+- **helmfile.yaml** — Added Litmus, ArgoCD ApplicationSet controller
+
+---
+
+## [v2.5.0] — 2026-06-09
+### Added
+- **Kyverno Policies** — 13 policies (digest pinning, no :latest, resource limits, non-root, read-only rootfs, no host NS, capabilities, labels, network policies, PrometheusRule validation, ExternalSecret validation, PDB enforcement)
+- **NetworkPolicies** — Complete deny/allow for all 14 namespaces (kyverno, portainer, linkerd, litmus, databases, external-dns, etc.)
+- **Linkerd mTLS** — Helmfile values, ArgoCD apps, NetworkPolicies, documentation
+- **Secrets Rotation** — Script, systemd timer, GitHub Actions workflow
+
+### Changed
+- **helmfile.yaml** — Added Kyverno, Linkerd (crds, control-plane, viz) releases
+
+---
+
+## [v2.4.0] — 2026-06-09
+### Added
+- **Supply Chain Maturity** — Syft SBOM, Cosign keyless signing, Trivy HIGH gate, Renovate severity grouping
+- **Dependency Policy** — Comprehensive doc with SLAs, exceptions, emergency override
+- **SBOM Generation** — All sources (compose, K8s, Helmfile, ArgoCD) + base images
+- **Cosign Signing** — Keyless OIDC, SBOM attestations
+- **Trivy Gate** — Block CRITICAL, scan HIGH (warn), SARIF upload
+
+### Changed
+- **supply-chain.yml** — Enhanced with base image SBOM, base image signing, HIGH warning, Renovate gate
+- **renovate.json** — Severity-based grouping (patch/minor/major/security-critical)
+- **DEPENDENCY_POLICY.md** — Updated with v2.4 enhancements
+
+---
+
+## [v2.3.0] — 2026-06-09
+### Added
+- **Logging + Tracing + GitOps** — Loki+Promtail, Tempo+OTEL, 28 ArgoCD apps, Helmfile
+- **Correlation IDs** — Go/Python middleware, Promtail extraction, distributed tracing
+- **SLO/SLI** — Definitions, burn rate alerting, error budget dashboard
+- **Distributed Tracing Sampling** — Probabilistic (10%), trace-based (errors 100%)
+- **Log Retention** — Loki 30d hot / 365d cold
+- **ArgoCD ApplicationSet** — 28 apps + AppProject
+
+---
+
+## [v2.2.0] — 2026-06-09
+### Added
+- **Multi-Node Ready** — K3s cluster setup, NetworkPolicies, Patroni PostgreSQL, Redis Cluster, Longhorn
+- **External PostgreSQL/Redis** — Patroni 3-replica HA, Redis Cluster 3-replica
+- **Longhorn/Ceph** — Distributed storage evaluation
+
+---
+
+## [v2.1.0] — 2026-06-09
+### Added
+- **Tempo + OpenTelemetry** — Distributed tracing with OTEL Collector
+- **Cronjob Operations** — Daily health summary, weekly backup verify, weekly report
+- **TTS Alerts** — Text-to-speech for critical alerts (edge-tts, espeak)
+
+---
+
+## [v1.7.0] — 2026-06-09
+### Added
+- **K3s Multi-node Cluster** — Automated bootstrap with Longhorn, Cert-Manager, Prometheus, Loki, Tempo
+- **Ollama Cluster** — 7 K8s manifests + Helm values (HPA, PDB, security contexts)
+- **GPU Offload** — Documentation for CUDA/VideoCore/Vulkan
+
+---
+
+## [v1.6.0] — 2026-06-09
+### Added
+- **Tempo + OTEL Collector** — Distributed tracing stack
+- **Cronjob/TTS Skills** — New Hermes skills for automation and TTS alerts
 
 ---
 
 ## [v1.5.0] — 2026-06-09
 ### Added
-- **Supply Chain Security workflow** (supply-chain.yml)
-  - Syft SBOM generation for all images (SPDX-JSON)
-  - Cosign keyless signing (OIDC) for images
-  - Trivy gate: fails build on CRITICAL vulnerabilities
-  - Dependency Policy check (unpinned images, digest pinning check)
-  - Daily quick Trivy scan (HIGH+CRITICAL)
-- **DEPENDENCY_POLICY.md** — Comprehensive supply chain policy document
-- **Dependency Policy Check** in CI (unpinned images check, digest pinning verification)
-
-### Changed
-- Trivy workflow split: daily quick scan + weekly full supply chain pipeline
-- CI pipeline now enforces supply chain security end-to-end
-
-### Security
-- CI fails on CRITICAL vulnerabilities
-- Unpinned images (`:latest`) blocked in CI
-- SBOMs generated for all images (SPDX-JSON)
-- Images signed with Cosign (keyless OIDC)
-
-### Scripts & Tools
-- `scripts/pin-images-to-digest.sh` - Migrate tags to digest pinning
-- `scripts/verify-supply-chain.sh` - Supply chain verification in deploy
-- `scripts/migrate-to-infisical.sh` - Infisical migration helper
-
-### Documentation
-- **DEPENDENCY_POLICY.md** — Complete supply chain policy
+- **Supply Chain Security** — Syft SBOM, Cosign keyless signing, Trivy gate (CRITICAL block)
 
 ---
 
 ## [v1.4.0] — 2026-06-09
 ### Added
-- **Authelia SSO + 2FA** stack (Redis 7 + Authelia 4.38)
-- **Traefik ForwardAuth** middleware for all external services
-- **Cloudflare DNS-01** ACME configuration (closes port 80)
-- **CrowdSec** stack for intrusion detection (PostgreSQL + CrowdSec)
-- **Runbooks**: Service Down, Backup Failure, Security Incident
-- **ADR-006**: Threat Model (STRIDE) documentation
-- **Syft + Cosign** in CI for SBOM + signing (workflow)
-- **Makefile**: auth, crowdsec stacks and verify targets
-
-### Changed
-- **Traefik ForwardAuth** middleware on all external routers
-- **ACME**: HTTP-01 → DNS-01 (Cloudflare) - closes port 80
-- **Health check**: Added Authelia, CrowdSec checks
-- **Makefile**: Added auth, crowdsec stacks and verify targets
-- **Deployment phases**: Now 8 phases (core → secrets → auth → monitoring → apps → smarthome → uptime → crowdsec)
-
-### Security
-- All external access via Authelia ForwardAuth + 2FA
-- DNS-01 only (port 80 closed)
-- CrowdSec parsing logs for suspicious patterns
-- ADR-006: Threat Model (STRIDE) documented
-- Runbooks: Service Down, Backup Failure, Security Incident
-
-### Documentation
-- **ADR-006**: Threat Model (STRIDE)
-- **Runbooks**: Service Down, Backup Failure, Security Incident
-- **SETUP_GUIDE.md**: Updated for v1.4 (Authelia, CrowdSec, DNS-01 setup)
-- **CHANGELOG.md**: v1.4 released
-- **VERSION_ROADMAP.md**: v1.4 marked complete
+- **Authelia SSO** — Redis + Authelia, Traefik ForwardAuth on all external
+- **Cloudflare DNS-01** — ACME DNS-01, port 80 closed
+- **CrowdSec** — PostgreSQL + CrowdSec IDS
+- **Runbooks** — Service Down, Backup Failure, Security Incident
 
 ---
 
 ## [v1.3.0] — 2026-06-09
 ### Added
-- **3 new Hermes skills** for homelab operations:
-  - **backup-ops**: Restic/B2 snapshot management (list, verify, dry-run restore)
-  - **security-audit**: Trivy/Grype CVE scanning and triage
-  - **capacity-plan**: Disk/RAM forecasting with PromQL projections
-- **ADR-005**: Hermes Skills Architecture — trust model, skill structure, security
-- **dotfiles/hermes/skills/** — 3 new skill definitions with allowlists
-
-### Changed
-- **HERMES_ON_PI.md**: Updated with all 5 skills (2 existing + 3 new), auto-loaded
-- **Profile config**: All 5 skills now auto-loaded
-- **Hermes health check** includes skill metadata
-
-### Security
-- All new skills follow ADR-005 trust model:
-  - Read-only by default
-  - Confirmation required for any destructive actions
-  - Explicit allowlists, explicit forbidden lists
-  - Least privilege (no sudo, no docker stop/kill/rm)
-
-### Skills Summary
-| Skill | Category | Trust | Auto-load | Key Commands |
-|-------|----------|-------|-----------|--------------|
-| homelab-ops | homelab | Medium | ✅ | health, logs, safe restarts |
-| gitops-helper | gitops | Medium | ✅ | propose CI/docs/compose changes |
-| **backup-ops** | backup | High | ✅ | snapshots, verify, dry-run restore |
-| **security-audit** | security | Medium | ✅ | trivy scan, CVE report |
-| **capacity-plan** | capacity | Low | ✅ | disk/RAM forecasting, PromQL |
-
-### Documentation
-- **ADR-005**: Hermes Skills Architecture
-- **HERMES_ON_PI.md**: Updated with all 5 skills, usage examples
-- **dotfiles/hermes/skills/**: 3 new skill definitions
+- **3 Hermes Skills** — backup-ops, security-audit, capacity-plan
+- **ADR-005** — Hermes Skills Architecture (trust model)
 
 ---
 
 ## [v1.2.0] — 2026-06-09
 ### Added
-- **Infisical secret manager** stack (PostgreSQL 16 + Redis 7 + Infisical 1.7.1)
-- **Infisical health check** in `health-check.sh` and `make verify-secrets`
-- **Infisical deployment phase** (`up-secrets`, `up-phase2` before monitoring)
-- **Backup restore test script** (`scripts/restore-test.sh`) for CI/CD
-- **Backup wrapper with alerting** (`scripts/backup-wrapper.sh`, `scripts/backup-alert.sh`)
-- **Backup verification target** (`make verify-backup`)
-- **Restore test Makefile target** (`make restore-test`)
-- **Enhanced backup-test GitHub Action** with actual restore verification
-- **Infisical environment variables** in `.env.example`
-- **ADR-004**: Secrets Management — Infisical over .env Files
-
-### Changed
-- **Deployment order**: Secrets (Infisical) now deploys before Monitoring (phase 2)
-- **Makefile**: Added `up-secrets`, `verify-secrets`, `verify-backup`, `restore-test` targets
-- **Health check**: Added Infisical container checks
-- **Backup test workflow**: Now runs actual restore test with restic
-- **Deployment phases**: Now 6 phases (core → secrets → monitoring → apps → smarthome → uptime)
-
-### Security
-- **Infisical** for centralized secret management (PostgreSQL + Redis backend)
-- **Backup alerting** via Telegram on failure
-- **Restore test** validates backup integrity weekly in CI
-- **ADR-004** documents secrets management rationale
-
-### Documentation
-- **ADR-004**: Secrets Management — Infisical over .env Files
-- **SETUP_GUIDE.md**: Updated for v1.2 with Infisical setup
-- **CHANGELOG.md**: v1.2 released
-- **VERSION_ROADMAP.md**: v1.2 marked complete
-- **New Makefile targets**: `up-secrets`, `verify-secrets`, `verify-backup`, `restore-test`
+- **Infisical Secret Manager** — PostgreSQL 16 + Redis 7 + Infisical 1.7.1
+- **Backup Restore Test** — Automated verify + restore-test.sh
 
 ---
 
 ## [v1.1.0] — 2026-06-09
 ### Added
-- Loki + Promtail for centralized log aggregation
-- Alertmanager with Telegram receivers
-- Prometheus alerting rules (infrastructure, containers, system)
-- Grafana dashboards: System Overview, Containers, RED metrics
-- Uptime Kuma stack for external monitoring
-- `make verify-v1` includes Loki, Alertmanager, Uptime Kuma checks
-- ZRAM 2 GB swap configuration in setup.sh
-- Prometheus scrape configs for Loki, Promtail, Alertmanager
-- Prometheus alerting rules: infrastructure, containers, system
-
-### Changed
-- Prometheus scrape configs updated for Loki, Promtail, Alertmanager
-- Health check validates log pipeline + alerting + uptime
-- Monitoring stack updated to v1.1 (Loki 2.9, Promtail 2.9, Alertmanager 0.26)
-- Setup.sh adds ZRAM swap, restic, zram-tools packages
-
-### Security
-- Alertmanager Telegram integration for critical/warning alerts
-- Prometheus alerting rules for OOM, restarts, disk, CPU, temp
-
-### Documentation
-- VERSION_ROADMAP.md: v1.1 marked complete
-- SETUP_GUIDE.md: v1.1 services (Loki, Promtail, Alertmanager, Uptime Kuma)
-- New dashboards: System Overview, Containers
+- **Loki + Promtail** — Centralized logging
+- **Alertmanager + Telegram** — Alerting with receivers
+- **Uptime Kuma** — External monitoring
+- **ZRAM 2GB** — Swap configuration
 
 ---
 
 ## [v1.0.0] — 2026-06-09
 ### Added
-- Core stack: Traefik v3, Portainer, Pi-hole, Tailscale
+- Core: Traefik, Portainer, Pi-hole, Tailscale
 - Monitoring: Prometheus, Grafana, Node Exporter, cAdvisor
-- Apps: Nextcloud + MariaDB + Redis, Vaultwarden, Ollama (gemma:2b)
-- Smarthome: Home Assistant (host network)
-- Hermes Agent (headless) with homelab profile + skills
-- Restic → Backblaze B2 backup with retention
-- ZRAM 2 GB swap configuration
-- Health check + verification scripts
+- Apps: Nextcloud, Vaultwarden, Ollama (gemma:2b)
+- Smarthome: Home Assistant
+- Hermes Agent (headless) + skills
+- Restic → B2 backup
+- ZRAM 2GB swap
 - 3 ADRs (orchestration, network, memory)
 - Architecture diagram (SVG)
 - Demo transcript
 - GitHub Actions: compose-validate, trivy-scan, backup-test
-- Renovate config for auto Docker updates
-- VERSION_ROADMAP.md
-
-### Security
-- All external HTTPS via Traefik (Let's Encrypt HTTP-01)
-- Basic auth on Traefik/Portainer dashboards
-- Pi-hole DNSSEC enabled
-- Tailscale exit node + ACLs ready
-
-### Documentation
-- README with quick start
-- HERMES_ON_PI.md install guide
-- V1_CHECKLIST.md acceptance criteria
-
----
-
-## [v1.7.0] — Planned (Multi-node + GPU Offload)
-### Added
-- K3s cluster on 2× Pi 4/5
-- External PostgreSQL (Patroni) + Redis Cluster
-- Longhorn or Ceph for shared storage
-- GPU offload for Ollama (if Pi 5 with GPU)
-- Ollama cluster for LLM inference scaling
-
----
-
-## [v2.0.0] — Planned (Platform Evolution: Supply Chain + Auth)
-### Breaking
-- All external access via Authelia ForwardAuth
-- Infisical for all secrets (no `.env`)
-- DNS-01 only (port 80 closed)
-- Tailscale ACLs aligned with Authelia groups
-
-### Added
-- Per-service RBAC groups (`admin`, `family`, `services`)
-- Automated cert renewal monitoring
-- Syft SBOM on every image build
-- Cosign keyless signing (OIDC)
-- Trivy gate in CI: fail on CRITICAL
-- Renovate: auto-merge only after Trivy pass
+- Renovate config
 
 ---
 
