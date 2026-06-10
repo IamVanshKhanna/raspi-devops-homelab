@@ -40,14 +40,9 @@
 | **v2.1** | Logging + Tracing + GitOps | 4 weeks (Sprints 17-18) | 2027-01-19 – 2027-02-16 | 2027-02-16 | ✅ **Completed** |
 | **v2.2** | Multi-node Ready | 4 weeks (Sprints 19-20) | 2027-02-16 – 2027-03-16 | 2027-03-16 | ✅ **Completed** |
 | **v2.3** | Observability maturity | 4 weeks (Sprints 21-22) | 2027-03-16 – 2027-04-13 | 2027-04-13 | ✅ **Completed** |
-| **v2.4** | Supply chain maturity | 4 weeks (Sprints 23-24) | 2027-04-13 – 2027-05-11 | 2027-05-11 | 🔄 **In Progress** |
-| **v2.5** | Security hardening | 4 weeks (Sprints 25-26) | 2027-05-11 – 2027-06-08 | 2027-06-08 | 🔄 **Planned** |
-| **v2.6** | Operational excellence | 4 weeks (Sprints 27-28) | 2027-06-08 – 2027-07-06 | 2027-07-06 | 🔄 **Planned** |
-| **v2.7** | Performance optimization | 4 weeks (Sprints 29-30) | 2027-07-06 – 2027-08-03 | 2027-08-03 | 🔄 **Planned** |
-| **v2.8** | Multi-cluster readiness | 4 weeks (Sprints 31-32) | 2027-08-03 – 2027-09-30 | 2027-09-30 | 🔄 **Planned** |
-| **v2.9** | Disaster recovery maturity | 4 weeks (Sprints 33-34) | 2027-09-30 – 2027-10-28 | 2027-10-28 | 🔄 **Planned** |
+| **v2.4–v2.9** | *Deferred* — supply chain maturity, security hardening, operational excellence, performance, multi-cluster, DR maturity | — | — | — | ⏸️ **Deferred** |
 | **v2.10** | Cost optimization | 4 weeks (Sprints 35-36) | 2027-10-28 – 2027-11-25 | 2027-11-25 | ✅ **Completed** |
-| **v2.11** | Documentation refresh | 4 weeks (Sprints 37-38) | 2027-11-25 – 2027-12-23 | 2027-12-23 | 🔄 **In Progress** |
+| **v2.11** | Documentation refresh | 4 weeks (Sprints 37-38) | 2027-11-25 – 2027-12-23 | 2027-12-23 | ✅ **Completed** |
 | **v2.12** | v2.x stabilization, v3.0 prep | 4 weeks (Sprints 39-40) | 2027-12-23 – 2028-01-20 | 2028-01-20 | 🔄 **Planned** |
 
 ### v2.0 — Supply Chain + Auth (Quarter 1) ✅ **RELEASED**
@@ -113,43 +108,20 @@
 - [x] **Correlation ID propagation across all services** — `docs/CORRELATION_ID_EXTRACTION.md`, `docs/DISTRIBUTED_TRACING_SAMPLING.md`
 - [x] Promtail correlation ID extraction pipeline
 
-### v2.4 — Supply Chain Maturity 🔄 **In Progress**
-- [x] SBOM for all base images (Syft) — enhanced workflow with base image SBOMs
-- [x] Cosign keyless signing for all images (enhanced workflow with base image signing)
-- [x] Trivy gate: block HIGH in production (enhanced to scan HIGH and warn)
-- [x] Renovate: group PRs by severity (added renovate-gate job)
-- [x] Dependency policy enforcement in CI (enhanced with base image freshness checks)
+### v2.4–v2.9 — Deferred (No Active Work)
 
-### v2.5 — Security Hardening 🔄 **Planned**
-- [ ] mTLS between all services (Linkerd/Istio Ambient)
-- [ ] Network policies for all namespaces
-- [ ] Kyverno/OPA policies for admission control
-- [ ] Regular pen testing schedule
-- [ ] Secrets rotation automation
+> These versions were planned but no implementation started. Deferred to post-v3.0 or removed.
 
-### v2.6 — Operational Excellence 🔄 **Planned**
-- [ ] Runbook automation (Ansible/CLI)
-- [ ] Chaos engineering (LitmusChaos)
-- [ ] Capacity planning automation
-- [ ] Incident response drills
+| Version | Original Focus | Reason |
+|---------|----------------|--------|
+| v2.4 | Supply Chain Maturity | Partial done in v2.0/v2.10; remaining low priority |
+| v2.5 | Security Hardening | Kyverno tagged (v2.5.0); mTLS, pen testing deferred |
+| v2.6 | Operational Excellence | Runbooks done (v2.11); chaos, capacity planning deferred |
+| v2.7 | Performance Optimization | Not started; may address in v3.0 |
+| v2.8 | Multi-cluster Readiness | Prerequisites (Cluster API, federation) not met |
+| v2.9 | DR Maturity | Cross-region replication done (v2.10); full DR deferred |
 
-### v2.7 — Performance Optimization 🔄 **Planned**
-- [ ] Query optimization for all databases
-- [ ] Cache warming strategies
-- [ ] CDN integration (Cloudflare)
-- [ ] Compression optimization (Brotli/Zstd)
-
-### v2.8 — Multi-cluster Readiness 🔄 **Planned**
-- [ ] Cluster API for cluster lifecycle
-- [ ] Federated Prometheus/Loki
-- [ ] Cross-cluster service discovery
-- [ ] Disaster recovery to secondary region
-
-### v2.9 — Disaster Recovery Maturity 🔄 **Planned**
-- [ ] RTO/RPO documented for all services
-- [ ] Automated failover testing
-- [ ] Backup encryption verification
-- [ ] Cross-region backup replication
+---
 
 ### v2.10 — Cost Optimization ✅ **COMPLETED**
 - [x] **Resource Quotas & Limits** — 4-tier quotas (P0-P3) across 12 namespaces (29 YAML files)
@@ -165,13 +137,30 @@
 - [x] **Ansible Resource Quotas** — 29 quota/limit manifests with Kustomize
 - [x] **Spot Instance Patches** — 7 workload patches with tolerations/affinity for DR spot nodes
 
-### v2.11 — Documentation Refresh 🔄 **In Progress**
+### v2.11 — Documentation Refresh ✅ **COMPLETED**
 - [x] **ARCHITECTURE.md** — Comprehensive architecture documentation ✅ **Done**
 - [x] **README.md** — Updated with v2.10 features ✅ **Done**
 - [x] **Runbooks** for new components (quotas, spot, rightsizing, unused, cost, power) ✅ **Done**
 - [x] **CHANGELOG.md** — v2.10 entries ✅ **Done**
 - [x] **Operational guides** for new components ✅ **Done** (exists in operational-guides.md)
 - [x] **VERSION_ROADMAP.md** — Updated with v2.10 completion ✅ **Done**
+
+---
+
+### v2.12 — v2.x Stabilization & v3.0 Prep 🔄 **Planned**
+
+> Final v2.x release. Stabilize current platform, validate DR, prepare v3.0 AI/ML platform.
+
+| Area | Tasks |
+|------|-------|
+| **Tech Debt** | Dependency upgrades, CVE remediation, deprecated API migration |
+| **Security** | Full Trivy scan remediation, cert rotation drill, pen test |
+| **Reliability** | Full DR failover test (RTO/RPO validation), backup restore test |
+| **Observability** | Dashboard consolidation, alert tuning, SLO validation |
+| **Documentation** | v2→v3 migration guide, API reference, runbook review |
+| **v3.0 Prep** | Jetson Orin procured, Qdrant vs Milvus POC, cloud GPU credits, MLflow POC |
+
+---
 
 ---
 
@@ -249,11 +238,12 @@
     "develop-v2": "v2.11"
   },
   "support": {
-    "v1.x": "active",
+    "v1.x": "maintenance",
     "v1.7": "released",
     "v2.x": "active",
     "v2.10": "released",
-    "v2.11": "released"
+    "v2.11": "released",
+    "v2.12": "planned"
   }
 }
 ```
