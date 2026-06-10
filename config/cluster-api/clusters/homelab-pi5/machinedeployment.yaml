@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1
 kind: MachineDeployment
 metadata:
   name: homelab-pi5-md-0
@@ -16,9 +16,9 @@ spec:
       bootstrap:
         configRef:
           kind: KubeadmConfigTemplate
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiVersion: bootstrap.cluster.x-k8s.io/v1
           name: homelab-pi5-md-0
       infrastructureRef:
         kind: Metal3MachineTemplate
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1
         name: homelab-pi5-md-0

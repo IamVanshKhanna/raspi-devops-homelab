@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1
 kind: Cluster
 metadata:
   name: homelab-pi4
@@ -18,14 +18,14 @@ spec:
     serviceDomain: cluster.local
   controlPlaneRef:
     kind: KubeadmControlPlane
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    apiVersion: controlplane.cluster.x-k8s.io/v1
     name: homelab-pi4-cp
   infrastructureRef:
     kind: DockerCluster
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1
     name: homelab-pi4
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1
 kind: KubeadmControlPlane
 metadata:
   name: homelab-pi4-cp
@@ -36,7 +36,7 @@ spec:
   machineTemplate:
     infrastructureRef:
       kind: DockerMachineTemplate
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1
       name: homelab-pi4-cp
   kubeadmConfigSpec:
     clusterConfiguration:
@@ -58,13 +58,13 @@ spec:
           max-pods: "110"
           eviction-hard: "memory.available<500Mi,nodefs.available<10%"
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1
 kind: DockerCluster
 metadata:
   name: homelab-pi4
   namespace: homelab-clusters
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1
 kind: DockerMachineTemplate
 metadata:
   name: homelab-pi4-cp
@@ -76,7 +76,7 @@ spec:
         - containerPath: /var/run/docker.sock
           hostPath: /var/run/docker.sock
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1
 kind: MachineDeployment
 metadata:
   name: homelab-pi4-md-0
@@ -94,14 +94,14 @@ spec:
       bootstrap:
         configRef:
           kind: KubeadmConfigTemplate
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiVersion: bootstrap.cluster.x-k8s.io/v1
           name: homelab-pi4-md-0
       infrastructureRef:
         kind: DockerMachineTemplate
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1
         name: homelab-pi4-md-0
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1
 kind: KubeadmConfigTemplate
 metadata:
   name: homelab-pi4-md-0
@@ -121,7 +121,7 @@ spec:
             net.ipv4.ip_forward = 1
             vm.max_map_count = 262144
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1
 kind: DockerMachineTemplate
 metadata:
   name: homelab-pi4-md-0
