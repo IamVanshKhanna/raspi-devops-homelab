@@ -1,0 +1,14 @@
+# PDB Template: Critical Control Plane
+# Usage: Apply per namespace with matching labels
+# sed 's/NAMESPACE/<namespace>/g; s/APP_LABEL/<app-label>/g' | kubectl apply -f -
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-critical-controlplane
+  namespace: NAMESPACE
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: control-plane

@@ -1,0 +1,13 @@
+# PDB Template: Stateful Workloads (1 replica minimum)
+# Usage: sed 's/NAMESPACE/<namespace>/g; s/APP_LABEL/<app-label>/g' | kubectl apply -f -
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-stateful-workload
+  namespace: NAMESPACE
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: stateful
