@@ -4,6 +4,37 @@
 
 ---
 
+## [v2.12.0] — 2026-06-10
+
+### Added
+- **Observability Consolidation** — 7 dashboards → 4 (System Overview, SLO & Error Budgets, Tracing & Correlation, Pi Power & Capacity)
+- **Infrastructure Alerts** — Consolidated `homelab.yml` + `k8s-cluster.yaml` → `infrastructure-alerts.yaml` with runbook URLs
+- **Trace Sampling (OTEL)** — Tail-based sampling: 100% errors/5xx, 100% slow traces (>5s), 100% correlation IDs, 10% probabilistic
+- **SLO Violation Runbook** — Burn rate response procedures (`docs/runbooks/slo-violation.md`)
+- **Error Budget Exhausted Runbook** — Budget exhaustion response (`docs/runbooks/error-budget-exhausted.md`)
+- **PDB Validation Runbook** — PodDisruptionBudget diagnosis & templates (`docs/runbooks/pdb-validation.md`)
+- **Cert-Rotation Runbook** — Certificate expiry response (`docs/runbooks/cert-rotation.md`)
+- **Cluster API Migration** — CAPI v1beta1 → v1 for K8s 1.29+ compatibility (15 files)
+- **Kyverno PDB Enforcement** — `require-pod-disruption-budget` changed from Audit → Enforce
+- **Egress NetworkPolicy Templates** — Default-deny + DNS/Monitoring/ExternalSecrets allows
+- **Cosign Verification Policy** — Kyverno policy for image signature validation
+- **Cert-Expiry Prometheus Alerts** — 4 alerts: 30d warning, 7d critical, NotReady, RequestFailed
+- **Renovate Improvements** — Helm & GitHub Actions datasources, dependency dashboard, patch auto-merge
+- **Lint Workflow Enhancements** — Kustomize validate, Helmfile template, workflow validation, branch triggers updated
+
+### Changed
+- **Prometheus Rules** — Deduplicated SLO burn alerts (moved to `burn-rate-alerts.yaml` canonical)
+- **Loki Retention** — Verified 7-90 day retention by stream
+- **Dashboards** — Removed `containers.json`, `slo-error-budget.json`, `correlation-id-debugging.json`
+- **Kyverno PDB Policy** — `validationFailureAction: Audit` → `Enforce`
+- **Lint Workflow** — Branch triggers: `main` → `main-v2, develop-v2`
+
+### Fixed
+- **CAPI API Versions** — All Cluster API resources migrated to v1
+- **VERSION_ROADMAP.md** — v2.4-v2.9 collapsed as Deferred, v2.11 marked Complete, v2.12 scoped
+
+---
+
 ## [v2.10.0] — 2026-06-09
 
 ### Added
