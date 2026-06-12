@@ -46,7 +46,8 @@ http:
     # Basic auth middleware (for Traefik dashboard fallback)
     basic-auth:
       basicAuth:
-        usersFile: /auth/.htpasswd
+        users:
+          - "admin:$$apr1$$8PnY58HI$$3oMDQ2pl4NA1928u2QZ/Z/"
 
     # Rate limiting middleware
     rate-limit:
