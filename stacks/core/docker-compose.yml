@@ -38,8 +38,7 @@ services:
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.middlewares=auth@file,secure-headers@file"
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_USER}:${TRAEFIK_DASHBOARD_PASS}"
+      - "traefik.http.routers.traefik.middlewares=basic-auth@file,secure-headers@file"
 
   portainer:
     # Pin to specific version - update manually after testing
