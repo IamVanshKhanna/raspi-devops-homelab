@@ -1,5 +1,0 @@
----
-# Main DR Playbook - Includes all DR operations
-- import_playbook: dr-failover.yml
-- import_playbook: dr-test-monthly.yml
-- import_playbook: velero-operations.yml

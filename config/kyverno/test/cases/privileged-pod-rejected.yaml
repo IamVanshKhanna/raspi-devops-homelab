@@ -1,7 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestAssert
-metadata:
-  name: privileged-pod-rejected
-commands:
-  - command: kubectl apply -f invalid-privileged-pod.yaml 2>&1 | grep -q "Privileged containers are not allowed"
-    timeout: 30

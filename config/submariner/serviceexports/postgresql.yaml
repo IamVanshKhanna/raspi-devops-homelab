@@ -1,5 +1,0 @@
-apiVersion: submariner.io/v1alpha1
-kind: ServiceExport
-metadata:
-  name: postgresql
-  namespace: databases

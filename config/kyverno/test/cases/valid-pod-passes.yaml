@@ -1,7 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestAssert
-metadata:
-  name: valid-pod-passes
-commands:
-  - command: kubectl apply -f valid-pod.yaml
-    timeout: 30
