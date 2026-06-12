@@ -10,9 +10,8 @@ volumes:
 services:
 
   homeassistant:
-    # Use stable tag - HA releases frequently, :stable is safer than pinning
-    # Check releases: https://github.com/home-assistant/core/releases
-    image: homeassistant/home-assistant:stable
+    # Check latest: https://github.com/home-assistant/core/releases
+    image: homeassistant/home-assistant:2025.12.0
     container_name: homeassistant
     restart: unless-stopped
     network_mode: host

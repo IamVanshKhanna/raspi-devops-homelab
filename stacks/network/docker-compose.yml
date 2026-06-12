@@ -35,9 +35,27 @@ services:
     mem_limit: 256m
     cpus: 0.25
 
+  pihole-exporter:
+    # Check latest: https://github.com/eko/pihole-exporter/releases
+    # Uses proxy network + host-gateway to reach Pi-hole (which runs in host mode)
+    image: ekofr/pihole-exporter:v1.0.1
+    container_name: pihole-exporter
+    restart: unless-stopped
+    networks:
+      - proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PIHOLE_HOSTNAME=host.docker.internal
+      - PIHOLE_PASSWORD=${PIHOLE_WEBPASSWORD}
+      - PIHOLE_PORT=8053
+      - PORT=9617
+    mem_limit: 32m
+    cpus: 0.05
+
   wireguard:
     # Check latest: https://github.com/linuxserver/docker-wireguard/releases
-    image: linuxserver/wireguard:1.0.20210914
+    image: linuxserver/wireguard:1.0.20250514
     container_name: wireguard
     restart: unless-stopped
     networks:

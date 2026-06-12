@@ -4,6 +4,40 @@
 
 ---
 
+## [v2.12.1] — 2026-06-13
+
+### Added
+- **Pi-hole Prometheus exporter** (`ekofr/pihole-exporter:v1.0.1`) with proxy network + host-gateway for Prometheus metrics collection
+- **test-deploy.sh** — Post-deployment smoke test script covering 23 containers, 9 HTTP endpoints, 5 direct ports, and Prometheus target validation
+- Pre/post-update health-checks and backup trigger in `scripts/update.sh`
+
+### Changed
+- **Nextcloud**: Pinned from `:stable` to `nextcloud:30.0.5` (version policy compliance)
+- **Home Assistant**: Pinned from `:stable` to `homeassistant/home-assistant:2025.12.0` (version policy compliance)
+- **WireGuard**: Updated from `linuxserver/wireguard:1.0.20210914` (Sep 2021) to `linuxserver/wireguard:1.0.20250514` (May 2025)
+- `update.sh`: Added 4 missing stacks (auth, crowdsec, tracing, uptime-kuma) + pre/post-update safety checks
+
+### Fixed
+- **Prometheus**: Pi-hole scrape target now points to `pihole-exporter:9617` with working exporter service
+- **ARCHITECTURE.md**: Data persistence path corrected from `/opt/homelab/data/` to `/mnt/data/` (matching .env.example)
+- **CONTRIBUTING.md**: Clone URL fixed from `VK7160/pi4b-homelab` to `IamVanshKhanna/homelab-prod`
+- **SETUP_GUIDE.md**: Tailscale hostname updated to `AutoBot` (matching Pi hostname)
+
+### Upgraded From v2.12
+| File | Change |
+|------|--------|
+| stacks/network/docker-compose.yml | Added pihole-exporter service, updated WireGuard tag |
+| stacks/apps/docker-compose.yml | Pinned Nextcloud to `nextcloud:30.0.5` |
+| stacks/smarthome/docker-compose.yml | Pinned HA to `homeassistant/home-assistant:2025.12.0` |
+| config/prometheus/prometheus.yml | Added pihole-exporter scrape job |
+| scripts/update.sh | Added 4 stacks, pre/post-update safety |
+| scripts/test-deploy.sh | New: 23-container smoke test |
+| docs/ARCHITECTURE.md | Fixed data path |
+| docs/SETUP_GUIDE.md | Fixed hostname reference |
+| CONTRIBUTING.md | Fixed clone URL |
+
+---
+
 ## [v2.10.0] — 2026-06-09
 
 ### Added
