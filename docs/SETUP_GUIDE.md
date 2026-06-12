@@ -167,12 +167,12 @@ make up-phase6
 
 ```bash
 # Run on Pi (after setup.sh, which installs Tailscale)
-sudo tailscale up --ssh --advertise-exit-node --hostname=pi4b-homelab
+sudo tailscale up --ssh --advertise-exit-node --hostname=AutoBot
 # Visit the auth URL, login to Tailscale
 
 # On your laptop/phone:
 # Install Tailscale app, login to same tailnet
-# ssh vansh@pi4b-homelab  # Works via MagicDNS!
+# ssh vansh@AutoBot  # Works via MagicDNS!
 ```
 
 ---

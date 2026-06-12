@@ -46,8 +46,8 @@ This is primarily a personal homelab project, but improvements, fixes, and sugge
 
 ```bash
 # Clone the repo
-git clone https://github.com/VK7160/pi4b-homelab.git
-cd pi4b-homelab
+git clone https://github.com/IamVanshKhanna/homelab-prod.git
+cd homelab-prod
 
 # Copy env example
 cp .env.example .env

@@ -75,23 +75,22 @@ Docker Networks:
 
 ## Data Persistence
 
-All persistent data is stored under `/opt/homelab/data/`:
+All persistent data is stored under `${DATA_DIR}` (default: `/mnt/data/`):
 
 ```
-/opt/homelab/
-  data/
-    traefik/
-      certs/     # Let's Encrypt certificates
-      auth/      # .htpasswd for basic auth
-    prometheus/  # TSDB metrics storage
-    grafana/     # Dashboards, users, plugins
-    nextcloud/   # Files, database
-    vaultwarden/ # Vault database + attachments
-    homeassistant/ # HA config, automations
-    pihole/      # DNS lists, config
-    wireguard/   # WireGuard keys + config
-    ollama/      # Downloaded models
-  backups/       # Automated backup archives
+/mnt/data/
+  traefik/
+    certs/     # Let's Encrypt certificates
+    auth/      # .htpasswd for basic auth
+  prometheus/  # TSDB metrics storage
+  grafana/     # Dashboards, users, plugins
+  nextcloud/   # Files, database
+  vaultwarden/ # Vault database + attachments
+  homeassistant/ # HA config, automations
+  pihole/      # DNS lists, config
+  wireguard/   # WireGuard keys + config
+  ollama/      # Downloaded models
+/mnt/backup/   # Automated backup archives
 ```
 
 ## Security Model
