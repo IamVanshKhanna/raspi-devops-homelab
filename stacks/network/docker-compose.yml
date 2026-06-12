@@ -55,7 +55,7 @@ services:
 
   wireguard:
     # Check latest: https://github.com/linuxserver/docker-wireguard/releases
-    image: linuxserver/wireguard:1.0.20250514
+    image: linuxserver/wireguard:1.0.20250521
     container_name: wireguard
     restart: unless-stopped
     networks:
