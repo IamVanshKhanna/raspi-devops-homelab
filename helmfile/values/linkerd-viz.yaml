@@ -1,0 +1,31 @@
+# Linkerd Viz values for homelab-prod
+
+# Visualization components
+tap:
+  enabled: true
+
+# Prometheus integration
+prometheus:
+  enabled: true
+  namespace: monitoring
+
+# Grafana dashboards
+grafana:
+  enabled: true
+  namespace: monitoring
+  dashboards:
+    enabled: true
+  datasources:
+    enabled: true
+
+# Web UI
+web:
+  enabled: true
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi

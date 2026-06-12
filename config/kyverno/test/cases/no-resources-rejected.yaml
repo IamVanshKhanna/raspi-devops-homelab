@@ -1,0 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+metadata:
+  name: no-resources-rejected
+commands:
+  - command: kubectl apply -f invalid-no-resources.yaml 2>&1 | grep -q "All containers must have CPU and memory limits"
+    timeout: 30

@@ -1,0 +1,18 @@
+apiVersion: metal3.io/v1alpha1
+kind: NetworkData
+metadata:
+  name: pi5-node-0-network
+  namespace: homelab-clusters
+spec:
+  interfaces:
+    - name: "eth0"
+      type: "ethernet"
+      macAddress: "aa:bb:cc:dd:ee:02"
+      ipv4:
+        address: "192.168.1.51/24"
+        gateway: "192.168.1.1"
+      ipv6: {}
+      bond: {}
+  dns:
+    - "1.1.1.1"
+    - "8.8.8.8"

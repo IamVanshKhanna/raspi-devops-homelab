@@ -1,0 +1,5 @@
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: grafana
+  namespace: monitoring

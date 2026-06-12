@@ -1,0 +1,303 @@
+# homelab-prod v2.0 – Helmfile (Minimal)
+
+# Note: This is a simplified helmfile stub.
+# Full helmfile with all values moved to separate values files for maintainability.
+# See: helmfile/ directory structure for production use.
+
+repositories:
+  - name: longhorn
+    url: https://charts.longhorn.io
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
+  - name: jetstack
+    url: https://charts.jetstack.io
+  - name: external-dns
+    url: https://kubernetes-sigs.github.io/external-dns/
+  - name: zalando
+    url: https://charts.zalando.io
+  - name: authelia
+    url: https://charts.authelia.com
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+  - name: nextcloud
+    url: https://nextcloud.github.io/helm/
+  - name: vaultwarden
+    url: https://charts.vaultwarden.io
+  - name: crowdsec
+    url: https://charts.crowdsec.net
+  - name: kyverno
+    url: https://kyverno.github.io/kyverno/
+  - name: linkerd
+    url: https://helm.linkerd.io/stable
+  - name: litmus
+    url: https://litmuschaos.github.io/litmus-helm/
+  - name: thanos
+    url: https://charts.thanos.io
+  - name: loki
+    url: https://grafana.github.io/helm-charts
+  - name: argocd
+    url: https://argoproj.github.io/argo-helm
+  - name: velero
+    url: https://vmware-tanzu.github.io/helm-charts
+  - name: nextcloud
+    url: https://nextcloud.github.io/helm/
+  - name: vaultwarden
+    url: https://charts.vaultwarden.io
+  - name: crowdsec
+    url: https://charts.crowdsec.net
+
+releases:
+  # Core
+  - name: traefik
+    namespace: traefik
+    chart: traefik/traefik
+    version: "3.0.4"
+    createNamespace: true
+
+  - name: portainer
+    namespace: portainer
+    chart: portainer/portainer
+    version: "2.21.5"
+    createNamespace: true
+
+  # Secrets
+  - name: infisical
+    namespace: secrets
+    chart: infisical/infisical
+    version: "1.7.1"
+    createNamespace: true
+
+  # Auth
+  - name: authelia
+    namespace: auth
+    chart: authelia/authelia
+    version: "4.38.0"
+    createNamespace: true
+
+  - name: authelia-db
+    namespace: auth
+    chart: bitnami/postgresql
+    version: "15.5.0"
+
+  - name: authelia-redis
+    namespace: auth
+    chart: bitnami/redis
+    version: "19.0.0"
+
+  # Monitoring
+  - name: monitoring
+    namespace: monitoring
+    chart: prometheus-community/kube-prometheus-stack
+    version: "58.0.0"
+    createNamespace: true
+
+  - name: loki
+    namespace: logging
+    chart: grafana/loki-stack
+    version: "5.0.0"
+    createNamespace: true
+
+  - name: tempo
+    namespace: tracing
+    chart: grafana/tempo
+    version: "1.6.0"
+    createNamespace: true
+
+  # Security
+  - name: crowdsec
+    namespace: security
+    chart: crowdsec/crowdsec
+    version: "1.6.0"
+    createNamespace: true
+
+  # Applications
+  - name: nextcloud
+    namespace: apps
+    chart: nextcloud/nextcloud
+    version: "8.0.0"
+    createNamespace: true
+
+  - name: vaultwarden
+    namespace: apps
+    chart: vaultwarden/vaultwarden
+    version: "1.32.6"
+
+  - name: ollama
+    namespace: ai
+    chart: ollama/ollama
+    version: "0.3.14"
+    createNamespace: true
+
+  - name: homeassistant
+    namespace: smarthome
+    chart: homeassistant/homeassistant
+    version: "2024.7.3"
+    createNamespace: true
+
+  - name: uptime-kuma
+    namespace: uptime
+    chart: louislam/uptime-kuma
+    version: "1.23.9"
+    createNamespace: true
+
+  # Security
+  - name: crowdsec
+    namespace: security
+    chart: crowdsec/crowdsec
+    version: "1.6.0"
+    createNamespace: true
+
+  # Storage
+  - name: longhorn
+    namespace: longhorn-system
+    chart: longhorn/longhorn
+    version: "1.6.0"
+    createNamespace: true
+
+  # Certificates
+  - name: cert-manager
+    namespace: cert-manager
+    chart: jetstack/cert-manager
+    version: "1.13.0"
+    createNamespace: true
+
+  # Databases
+  - name: postgres-operator
+    namespace: postgres-system
+    chart: zalando/postgres-operator
+    version: "1.13.0"
+    createNamespace: true
+
+  # Policy Engine
+  - name: kyverno
+    namespace: kyverno
+    chart: kyverno/kyverno
+    version: "3.2.0"
+    createNamespace: true
+    values:
+      - helmfile/values/kyverno.yaml
+
+  # Service Mesh
+  - name: linkerd-crds
+    namespace: linkerd
+    chart: linkerd/linkerd-crds
+    version: "1.10.0"
+    createNamespace: true
+
+  - name: linkerd-control-plane
+    namespace: linkerd
+    chart: linkerd/linkerd-control-plane
+    version: "1.16.0"
+    createNamespace: true
+    values:
+      - helmfile/values/linkerd.yaml
+
+  - name: linkerd-viz
+    namespace: linkerd-viz
+    chart: linkerd/linkerd-viz
+    version: "31.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/linkerd-viz.yaml
+
+  # Chaos Engineering
+  - name: litmus
+    namespace: litmus
+    chart: litmus/litmus
+    version: "3.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/litmus.yaml
+
+  # Thanos (Global Observability)
+  - name: thanos-sidecar
+    namespace: monitoring
+    chart: thanos/thanos-sidecar
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-sidecar.yaml
+
+  - name: thanos-query
+    namespace: monitoring
+    chart: thanos/thanos-query
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-query.yaml
+
+  - name: thanos-store-gateway
+    namespace: monitoring
+    chart: thanos/thanos-store-gateway
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-store-gateway.yaml
+
+  - name: thanos-compactor
+    namespace: monitoring
+    chart: thanos/thanos-compactor
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-compactor.yaml
+
+  - name: thanos-ruler
+    namespace: monitoring
+    chart: thanos/thanos-ruler
+    version: "1.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/thanos-ruler.yaml
+
+  # Loki Multi-Tenancy (Federated Logging)
+  - name: loki
+    namespace: logging
+    chart: loki/loki-stack
+    version: "5.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/loki.yaml
+
+  - name: promtail-pi4
+    namespace: logging
+    chart: loki/promtail
+    version: "6.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/promtail-pi4.yaml
+
+  - name: promtail-pi5
+    namespace: logging
+    chart: loki/promtail
+    version: "6.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/promtail-pi5.yaml
+
+  # ArgoCD Multi-Cluster ApplicationSet
+  - name: argocd-applicationset
+    namespace: argocd
+    chart: argocd/applicationset
+    version: "0.7.0"
+    createNamespace: true
+
+  # Velero DR with Cross-Region Replication
+  - name: velero
+    namespace: velero
+    chart: velero/velero
+    version: "5.0.0"
+    createNamespace: true
+    values:
+      - helmfile/values/velero-dr.yaml
+
+  # Spot Node Group for DR Cluster (EKS)
+  - name: eks-spot-nodes
+    namespace: kube-system
+    chart: eksctl/eks-spot-nodes
+    version: "1.0.0"
+    createNamespace: false
+    values:
+      - helmfile/values/eks-spot-nodes.yaml
