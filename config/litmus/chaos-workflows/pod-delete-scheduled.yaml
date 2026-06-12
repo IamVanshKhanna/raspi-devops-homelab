@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: litmus-pod-delete-scheduled
+  namespace: litmus
+spec:
+  templates:
+    - name: pod-delete-chaos
+      container:
+        image: litmuschaos/litmus-checker:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            kubectl apply -f /experiments/pod-delete.yaml
+            sleep 5
+            kubectl wait --for=condition=Completed chaosengine/pod-delete -n litmus --timeout=300s
+    - name: cleanup
+      container:
+        image: bitnami/kubectl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - kubectl delete chaosengine pod-delete -n litmus --ignore-not-found=true
+  entrypoint: pod-delete-chaos
+  arguments:
+    parameters:
+      - name: experiment
+        value: pod-delete.yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: pod-delete-weekly
+  namespace: litmus
+spec:
+  schedule: "0 2 * * 1"  # Weekly on Monday at 2 AM
+  concurrencyPolicy: "Forbid"
+  startingDeadlineSeconds: 300
+  workflowSpec:
+    workflowTemplateRef:
+      name: litmus-pod-delete-scheduled

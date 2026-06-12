@@ -1,0 +1,36 @@
+name: Compose Validate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stacks/**'
+      - '.github/workflows/compose-validate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/**'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Compose Files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+
+      - name: Validate all compose files
+        run: |
+          for f in stacks/**/docker-compose.yml; do
+            echo "Validating $f..."
+            docker compose -f "$f" config >/dev/null
+          done
+          echo "All compose files valid"

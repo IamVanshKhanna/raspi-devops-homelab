@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-sidecar
+  namespace: monitoring
+  labels:
+    app: thanos-sidecar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-sidecar
+  template:
+    metadata:
+      labels:
+        app: thanos-sidecar
+    spec:
+      containers:
+      - name: thanos
+        image: quay.io/thanos/thanos:v0.34.0
+        args:
+        - sidecar
+        - --prometheus.url=http://prometheus.monitoring:9090
+        - --tsdb.path=/var/prometheus
+        - --objstore.config-file=/etc/thanos/objstore.yml
+        - --http-address=0.0.0.0:10902
+        - --grpc-address=0.0.0.0:10901
+        - --reloader.config-file=/etc/prometheus/prometheus.yml
+        - --reloader.rule-dir=/etc/prometheus/rules
+        ports:
+        - containerPort: 10901
+          name: grpc
+        - containerPort: 10902
+          name: http
+        volumeMounts:
+        - name: prometheus-data
+          mountPath: /var/prometheus
+        - name: thanos-config
+          mountPath: /etc/thanos
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      volumes:
+      - name: prometheus-data
+        emptyDir: {}
+      - name: thanos-config
+        secret:
+          secretName: thanos-objstore-config
+      - name: prometheus-config
+        configMap:
+          name: prometheus-config

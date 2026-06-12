@@ -1,0 +1,47 @@
+---
+# Main site playbook - runs all common tasks
+- name: Configure homelab cluster
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - role: common
+      tags: [common, always]
+    - role: k3s
+      tags: [k3s, cluster]
+    - role: storage
+      tags: [storage, longhorn]
+      when: inventory_hostname in groups['storage_nodes']
+    - role: monitoring
+      tags: [monitoring, observability]
+      when: inventory_hostname in groups['monitoring_stack']
+
+- name: Deploy Traefik ingress
+  hosts: traefik_nodes
+  become: true
+  roles:
+    - role: networking
+      tags: [networking, traefik, ingress]
+
+- name: Verify cluster health
+  hosts: control_plane[0]
+  become: true
+  tasks:
+    - name: Check all nodes ready
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get nodes -o json | jq -r '.items[] | select(.status.conditions[] | select(.type=="Ready" and .status=="True")) | .metadata.name'
+      register: ready_nodes
+      changed_when: false
+
+    - name: Check all pods running
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded --no-headers | wc -l
+      register: non_running_pods
+      changed_when: false
+
+    - name: Assert cluster healthy
+      assert:
+        that:
+          - ready_nodes.stdout_lines | length == groups['k3s_cluster'] | length
+          - non_running_pods.stdout | int == 0
+        fail_msg: "Cluster health check failed"
+        success_msg: "Cluster is healthy - all nodes ready, all pods running"

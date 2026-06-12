@@ -1,0 +1,7 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: Metal3Cluster
+metadata:
+  name: homelab-pi5
+  namespace: homelab-clusters
+spec:
+  # Metal3 cluster configuration

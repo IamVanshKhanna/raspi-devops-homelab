@@ -1,0 +1,19 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: homelab-pi5-md-0
+  namespace: homelab-clusters
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            max-pods: "250"
+            eviction-hard: "memory.available<1Gi,nodefs.available<5%"
+      files:
+        - path: /etc/sysctl.d/99-kubernetes.conf
+          content: |
+            net.bridge.bridge-nf-call-iptables = 1
+            net.ipv4.ip_forward = 1
+            vm.max_map_count = 262144
