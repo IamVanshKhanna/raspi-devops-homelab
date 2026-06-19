@@ -1,7 +1,7 @@
 # Homelab Makefile
 # Usage: make <target>
 
-.PHONY: help up-core up-network up-secrets up-auth up-monitoring up-apps up-smarthome up-uptime up-crowdsec up-tracing up-all down-core down-network down-secrets down-auth down-monitoring down-apps down-smarthome down-uptime down-crowdsec down-tracing down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec verify-tracing verify-backup backup restore restore-test config
+.PHONY: help up-core up-network up-auth up-monitoring up-apps up-smarthome up-uptime up-crowdsec up-tracing up-all down-core down-network down-auth down-monitoring down-apps down-smarthome down-uptime down-crowdsec down-tracing down-all ps logs verify-v1 verify-health verify-loki verify-alertmanager verify-uptime verify-auth verify-crowdsec verify-tracing verify-backup backup restore restore-test config
 
 # Core stack dependencies
 up-core:
@@ -9,9 +9,6 @@ up-core:
 
 up-network:
 	docker compose -f stacks/network/docker-compose.yml up -d
-
-up-secrets:
-	docker compose -f stacks/secrets/docker-compose.yml up -d
 
 up-auth:
 	docker compose -f stacks/auth/docker-compose.yml up -d
@@ -38,31 +35,28 @@ up-tracing:
 up-phase1: up-core up-network
 	@echo "Phase 1 done: core + network"
 
-up-phase2: up-secrets
-	@echo "Phase 2 done: secrets (Infisical)"
+up-phase2: up-auth
+	@echo "Phase 2 done: auth (Authelia)"
 
-up-phase3: up-auth
-	@echo "Phase 3 done: auth (Authelia)"
+up-phase3: up-monitoring
+	@echo "Phase 3 done: monitoring"
 
-up-phase4: up-monitoring
-	@echo "Phase 4 done: monitoring"
+up-phase4: up-apps
+	@echo "Phase 4 done: apps"
 
-up-phase5: up-apps
-	@echo "Phase 5 done: apps"
+up-phase5: up-smarthome
+	@echo "Phase 5 done: smarthome"
 
-up-phase6: up-smarthome
-	@echo "Phase 6 done: smarthome"
+up-phase6: up-uptime
+	@echo "Phase 6 done: uptime-kuma"
 
-up-phase7: up-uptime
-	@echo "Phase 7 done: uptime-kuma"
+up-phase7: up-crowdsec
+	@echo "Phase 7 done: crowdsec"
 
-up-phase8: up-crowdsec
-	@echo "Phase 8 done: crowdsec"
+up-phase8: up-tracing
+	@echo "Phase 8 done: tracing (Tempo + OTEL)"
 
-up-phase9: up-tracing
-	@echo "Phase 9 done: tracing (Tempo + OTEL)"
-
-up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5 up-phase6 up-phase7 up-phase8 up-phase9
+up-all: up-phase1 up-phase2 up-phase3 up-phase4 up-phase5 up-phase6 up-phase7 up-phase8
 	@echo "All stacks deployed"
 
 # Down commands
@@ -71,9 +65,6 @@ down-core:
 
 down-network:
 	docker compose -f stacks/network/docker-compose.yml down
-
-down-secrets:
-	docker compose -f stacks/secrets/docker-compose.yml down
 
 down-auth:
 	docker compose -f stacks/auth/docker-compose.yml down
@@ -96,7 +87,7 @@ down-crowdsec:
 down-tracing:
 	docker compose -f stacks/tracing/docker-compose.yml down
 
-down-all: down-tracing down-crowdsec down-uptime down-smarthome down-apps down-auth down-monitoring down-secrets down-network down-core
+down-all: down-tracing down-crowdsec down-uptime down-smarthome down-apps down-auth down-monitoring down-network down-core
 
 # Status & logs
 ps:
@@ -111,7 +102,7 @@ logs:
 		logs -f --tail=100
 
 # Verification (v1.6)
-verify-v1: verify-health verify-loki verify-alertmanager verify-uptime verify-secrets verify-auth verify-crowdsec verify-tracing verify-backup
+verify-v1: verify-health verify-loki verify-alertmanager verify-uptime verify-auth verify-crowdsec verify-tracing verify-backup
 	@echo "All v1.6 verification checks passed"
 
 verify-health:
@@ -130,11 +121,6 @@ verify-alertmanager:
 verify-uptime:
 	@echo "Checking Uptime Kuma..."
 	@curl -sf http://localhost:3001 >/dev/null || (echo "Uptime Kuma not responsive"; exit 1)
-
-verify-secrets:
-	@echo "Checking Infisical secret manager..."
-	@curl -sf http://localhost:8080/api/status >/dev/null 2>&1 || (echo "Infisical not ready"; exit 1)
-	@echo "Infisical reachable"
 
 verify-auth:
 	@echo "Checking Authelia..."
@@ -175,7 +161,6 @@ restore-test:
 config:
 	docker compose -f stacks/core/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/network/docker-compose.yml config >/dev/null && \
-	docker compose -f stacks/secrets/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/auth/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/monitoring/docker-compose.yml config >/dev/null && \
 	docker compose -f stacks/apps/docker-compose.yml config >/dev/null && \
