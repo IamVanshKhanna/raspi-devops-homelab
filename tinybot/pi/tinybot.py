@@ -31,52 +31,10 @@ if os.path.exists(ENV_PATH):
 if not BOT_TOKEN:
     BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 
-OLLAMA_URL = "http://localhost:11434/api/chat"
-OLLAMA_MODEL = "qwen2.5:0.5b"
-MODEL_TEMP = 0.5
-
-SYSTEM_PROMPT = "You are TinyBot, a helpful AI assistant on a Raspberry Pi 4B (qwen2.5:0.5b). Be concise and friendly."
-
-MAX_HISTORY = 8
-MESSAGES_BEFORE_RESET = 8
-OLLAMA_TIMEOUT = 180
-MAX_RESPONSE_TOKENS = 512
-OLLAMA_CTX_SIZE = 2048
-
 LOGS_DIR = os.path.join(TINYBOT_ROOT, "logs", "conversations")
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 chat_data = {}
-
-def call_ollama(messages):
-    payload = json.dumps({
-        "model": OLLAMA_MODEL,
-        "messages": messages,
-        "stream": False,
-        "options": {
-            "temperature": MODEL_TEMP,
-            "num_predict": MAX_RESPONSE_TOKENS,
-            "num_ctx": OLLAMA_CTX_SIZE
-        }
-    }).encode()
-    req = urllib.request.Request(
-        OLLAMA_URL, data=payload,
-        headers={"Content-Type": "application/json"}
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=OLLAMA_TIMEOUT) as resp:
-            result = json.loads(resp.read())
-            return result.get("message", {}).get("content", "No response from model.")
-    except urllib.error.HTTPError as e:
-        body = e.read().decode()
-        return f"Ollama error: {e.code} - {body}"
-    except urllib.error.URLError as e:
-        if "timed out" in str(e).lower():
-            return f"The Pi took too long to respond (>{OLLAMA_TIMEOUT}s). Try a simpler question or /clear to reset."
-        return f"Network error: {str(e)}"
-    except Exception as e:
-        return f"Error: {str(e)}"
-
 
 def search_web(query, max_results=4):
     try:
@@ -113,10 +71,7 @@ def search_web(query, max_results=4):
 
 def get_chat(chat_id):
     if chat_id not in chat_data:
-        chat_data[chat_id] = {
-            "messages": [{"role": "system", "content": SYSTEM_PROMPT}],
-            "user_count": 0
-        }
+        chat_data[chat_id] = {"messages": [], "user_count": 0}
     return chat_data[chat_id]
 
 
@@ -125,14 +80,6 @@ def add_message(chat_id, role, content):
     chat["messages"].append({"role": role, "content": content})
     if role == "user":
         chat["user_count"] += 1
-    non_system = [m for m in chat["messages"] if m["role"] != "system"]
-    if len(non_system) > MAX_HISTORY:
-        excess = len(non_system) - MAX_HISTORY
-        for _ in range(excess):
-            for i, m in enumerate(chat["messages"]):
-                if m["role"] != "system":
-                    del chat["messages"][i]
-                    break
 
 
 def archive_chat(chat_id):
@@ -149,20 +96,19 @@ def archive_chat(chat_id):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Hey! I'm TinyBot on a Pi 4B with Ollama (qwen2.5:0.5b).\n"
-        "Send me a message. /help for commands."
+        "Hey! I'm TinyBot on a Raspberry Pi 4B.\n"
+        "Commands: /health, /search, /status, /clear, /help"
     )
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "/help    — This message\n"
-        "/health  — Pi CPU, RAM, temp\n"
-        "/status  — Bot config\n"
-        "/search  — Web search\n"
+        "/health  — Pi CPU, RAM, temp, disk\n"
+        "/status  — Bot status\n"
+        "/search  — Web search (DuckDuckGo)\n"
         "/clear   — Reset conversation\n"
-        "/start   — Greeting\n\n"
-        "Context auto-resets after 8 messages (archived to disk)."
+        "/start   — Greeting"
     )
 
 
@@ -192,12 +138,10 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active = len(chat_data)
     total = sum(len(c["messages"]) for c in chat_data.values())
     await update.message.reply_text(
-        f"Model: {OLLAMA_MODEL}\n"
-        f"Context: {OLLAMA_CTX_SIZE} tokens\n"
-        f"Max response: {MAX_RESPONSE_TOKENS} tokens\n"
-        f"History: {MAX_HISTORY} msgs, resets every {MESSAGES_BEFORE_RESET}\n"
+        f"TinyBot status\n"
         f"Active chats: {active}\n"
-        f"Total msgs cached: {total}"
+        f"Total msgs cached: {total}\n"
+        f"No LLM — web search only"
     )
 
 
@@ -226,58 +170,21 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("No results found for that query.")
         return
 
-    context_text = (
-        f"Web search results for \"{query}\":\n\n{search_results}\n\n"
-        f"Answer the user's question based on the search results above."
-    )
-
-    chat = get_chat(update.message.chat_id)
-    temp_msgs = chat["messages"] + [{"role": "user", "content": context_text}]
-
-    try:
-        await context.bot.send_chat_action(chat_id=update.message.chat_id, action="typing")
-    except Exception:
-        pass
-
-    reply = await loop.run_in_executor(None, call_ollama, temp_msgs)
-
-    if reply.startswith("Error") or reply.startswith("Ollama error"):
-        await update.message.reply_text(reply)
-        return
-
-    add_message(update.message.chat_id, "user", f"[Web search] {query}")
-    add_message(update.message.chat_id, "assistant", reply)
-    await update.message.reply_text(reply)
+    await update.message.reply_text(f"Web search results for \"{query}\":\n\n{search_results}")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
     text = update.message.text
 
-    try:
-        await context.bot.send_chat_action(chat_id=chat_id, action="typing")
-    except Exception:
-        pass
-
     chat = get_chat(chat_id)
-
-    if chat["user_count"] >= MESSAGES_BEFORE_RESET:
-        archive_chat(chat_id)
-        chat["messages"] = [{"role": "system", "content": SYSTEM_PROMPT}]
-        chat["user_count"] = 0
-        logger.info(f"Chat {chat_id} session reset after {MESSAGES_BEFORE_RESET} messages")
-
     add_message(chat_id, "user", text)
 
-    loop = asyncio.get_event_loop()
-    reply = await loop.run_in_executor(None, call_ollama, chat["messages"])
-
-    if reply.startswith("Error") or reply.startswith("Ollama error"):
-        await update.message.reply_text(reply)
-        return
-
-    add_message(chat_id, "assistant", reply)
-    await update.message.reply_text(reply)
+    await update.message.reply_text(
+        "I'm a simple bot — no LLM running on this Pi.\n"
+        "Use /search <query> for web search, or /health for system status."
+    )
+    add_message(chat_id, "assistant", "No LLM response")
 
 
 def main():
@@ -285,6 +192,7 @@ def main():
         logger.error("TELEGRAM_BOT_TOKEN not set.")
         sys.exit(1)
 
+    import telegram
     app = ApplicationBuilder().token(BOT_TOKEN).post_init(register_commands).connect_timeout(30).read_timeout(30).write_timeout(30).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -295,17 +203,15 @@ def main():
     app.add_handler(CommandHandler("clear", clear_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    logger.info("Ollama chat bot starting...")
+    logger.info("TinyBot starting (no LLM)...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
-
-import telegram
 
 async def register_commands(app):
     cmds = [
         ("help", "Show commands"),
         ("health", "Pi system status"),
-        ("status", "Bot config"),
+        ("status", "Bot status"),
         ("search", "Search the web"),
         ("clear", "Reset conversation"),
         ("start", "Greeting"),

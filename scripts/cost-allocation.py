@@ -44,7 +44,7 @@ class CostAllocationAnalyzer:
             "load_balancer_per_month": 22.0, # $22 per LB/month (AWS NLB)
         }
         
-        # Team mapping by namespace
+        # Team mapping by namespace (Docker Compose on single Pi)
         self.namespace_teams = {
             "apps": "platform",
             "databases": "data",
@@ -56,35 +56,24 @@ class CostAllocationAnalyzer:
             "security": "security",
             "smarthome": "iot",
             "uptime": "platform",
-            "ai": "ml",
             "traefik": "platform",
-            "cert-manager": "platform",
-            "external-dns": "platform",
-            "submariner-operator": "platform",
-            "linkerd": "platform",
-            "linkerd-viz": "platform",
-            "kyverno": "security",
-            "litmus": "platform",
-            "velero": "platform",
-            "argocd": "platform",
+            "network": "platform",
         }
         
-        # Service mapping by namespace
+        # Service mapping by namespace (Docker Compose on single Pi)
         self.namespace_services = {
-            "apps": ["nextcloud", "vaultwarden", "homeassistant", "ollama"],
-            "databases": ["postgresql", "redis"],
+            "apps": ["nextcloud", "vaultwarden"],
+            "databases": ["mariadb", "redis"],
             "secrets": ["infisical"],
             "auth": ["authelia"],
             "monitoring": ["prometheus", "grafana", "alertmanager"],
             "logging": ["loki", "promtail"],
             "tracing": ["tempo", "otel-collector"],
-            "security": ["crowdsec", "kyverno"],
+            "security": ["crowdsec"],
             "smarthome": ["homeassistant"],
             "uptime": ["uptime-kuma"],
-            "ai": ["ollama"],
             "traefik": ["traefik"],
-            "cert-manager": ["cert-manager"],
-            "external-dns": ["external-dns"],
+            "network": ["pihole", "wireguard"],
         }
     
     def run_kubectl(self, args: List[str]) -> Dict:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Loki Query Helper for homelab-prod
-Usage: python3 loki_query.py --query '{job="ollama"}' --since 1h
+Usage: python3 loki_query.py --query '{job="nextcloud"}' --since 1h
 """
 
 import argparse
