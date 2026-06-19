@@ -4,7 +4,6 @@
 networks:
   proxy:
     external: true
-  # Internal network - DB/cache not exposed to Traefik proxy network
   apps_internal:
     internal: true
 
@@ -18,7 +17,6 @@ volumes:
 services:
 
   mariadb:
-    # Check latest: https://hub.docker.com/_/mariadb
     image: mariadb:11.4
     container_name: mariadb
     restart: unless-stopped
@@ -42,7 +40,6 @@ services:
       retries: 5
 
   redis:
-    # Check latest: https://hub.docker.com/_/redis
     image: redis:7.2-alpine
     container_name: redis
     restart: unless-stopped
@@ -60,10 +57,11 @@ services:
       retries: 5
 
   nextcloud:
-    # Check latest: https://hub.docker.com/_/nextcloud
     image: nextcloud:30.0.5
     container_name: nextcloud
     restart: unless-stopped
+    ports:
+      - "8080:80"
     networks:
       - proxy
       - apps_internal
@@ -95,16 +93,18 @@ services:
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
 
   vaultwarden:
-    # Check latest: https://github.com/dani-garcia/vaultwarden/releases
     image: vaultwarden/server:1.32.0
     container_name: vaultwarden
     restart: unless-stopped
+    ports:
+      - "8081:80"
     networks:
       - proxy
     volumes:
       - vaultwarden_data:/data
     environment:
       - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+      - DOMAIN=http://192.168.68.59:8081
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=false
       - TZ=${TZ}
@@ -118,22 +118,16 @@ services:
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
 
   ollama:
-    # Check latest: https://hub.docker.com/r/ollama/ollama/tags
     image: ollama/ollama:0.3.14
     container_name: ollama
     restart: unless-stopped
     networks:
       - proxy
-    # Bind to localhost only - access via Traefik or SSH tunnel
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     environment:
       - TZ=${TZ}
-    # LLM inference is RAM-heavy - cap to protect other services
     mem_limit: 2g
     cpus: 2.0
-    # Pull models after deploy:
-    # docker exec ollama ollama pull gemma:2b
-    # docker exec ollama ollama pull llama3:8b
