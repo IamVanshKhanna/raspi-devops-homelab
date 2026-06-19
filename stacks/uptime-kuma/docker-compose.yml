@@ -1,8 +1,4 @@
 # STACK: UPTIME-KUMA
-# External uptime monitoring with status page
-# Access via Traefik at uptime.DOMAIN
-
-version: "3.8"
 
 networks:
   proxy:
@@ -13,10 +9,11 @@ volumes:
 
 services:
   uptime-kuma:
-    # Check latest: https://github.com/louislam/uptime-kuma/releases
     image: louislam/uptime-kuma:1.23.9
     container_name: uptime-kuma
     restart: unless-stopped
+    ports:
+      - "8082:3001"
     networks:
       - proxy
     volumes:

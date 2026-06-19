@@ -13,6 +13,8 @@ services:
     image: authelia/authelia:4.38.0
     container_name: authelia
     restart: unless-stopped
+    ports:
+      - "9091:9091"
     networks:
       - proxy
     volumes:

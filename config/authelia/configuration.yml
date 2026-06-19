@@ -1,30 +1,13 @@
 jwt_secret: "${AUTHELIA_JWT_SECRET}"
 
-default_redirection_url: https://home.homelab.local
-
 server:
-  host: 0.0.0.0
-  port: 9091
-  path: ""
-  buffers:
-    read: 4096
-    write: 4096
-  endpoints:
-    enable_pprof: false
-    enable_expvars: false
+  address: "tcp://0.0.0.0:9091/auth"
 
 log:
   level: info
-  format: json
-  file_path: /data/authelia.log
-  keep_stdout: true
 
 totp:
   issuer: homelab-prod
-  algorithm: sha1
-  digits: 6
-  period: 30
-  skew: 1
 
 authentication_backend:
   file:
@@ -35,30 +18,19 @@ authentication_backend:
       salt_length: 16
       parallelism: 4
       memory: 64
-    watch: true
 
 access_control:
   default_policy: deny
   rules:
-    - domain: "auth.homelab.local"
-      policy: bypass
-    - domain:
-        - "traefik.homelab.local"
-        - "portainer.homelab.local"
-        - "grafana.homelab.local"
-        - "cloud.homelab.local"
-        - "vault.homelab.local"
-        - "uptime.homelab.local"
-      policy: two_factor
-    - domain: "*.homelab.local"
-      policy: two_factor
+    - domain: "192.168.68.59"
+      policy: one_factor
 
 session:
   name: authelia_session
   secret: "${AUTHELIA_SESSION_SECRET}"
   expiration: 3600
   inactivity: 1800
-  domain: homelab.local
+  domain: "192.168.68.59"
   same_site: lax
   remember_me: 2592000s
 

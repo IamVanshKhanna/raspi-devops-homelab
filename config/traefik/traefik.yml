@@ -1,13 +1,10 @@
-# Traefik Static Configuration
-# https://doc.traefik.io/traefik/getting-started/configuration-overview/
-
 global:
   checkNewVersion: false
   sendAnonymousUsage: false
 
 api:
   dashboard: true
-  insecure: false  # Dashboard served via router with auth
+  insecure: false
 
 log:
   level: INFO
@@ -20,12 +17,6 @@ accessLog:
 entryPoints:
   web:
     address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true
   websecure:
     address: ":443"
   metrics:
@@ -34,18 +25,8 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      # Set ACME_EMAIL in your .env file
       email: "${ACME_EMAIL}"
       storage: /certs/acme.json
-      # DNS-01 challenge with Cloudflare (v1.4+)
-      # Uncomment and configure for DNS-01 (closes port 80):
-      # dnsChallenge:
-      #   provider: cloudflare
-      #   delayBeforeCheck: 30
-      #   resolvers:
-      #     - "1.1.1.1:53"
-      #     - "8.8.8.8:53"
-      # Fallback to HTTP-01 (requires port 80 open):
       httpChallenge:
         entryPoint: web
 
