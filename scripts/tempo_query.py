@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Tempo Trace Query Helper
-Usage: python3 tempo_query.py --service ollama --operation generate --since 1h
+Usage: python3 tempo_query.py --service nextcloud --operation GET --since 1h
 """
 
 import argparse

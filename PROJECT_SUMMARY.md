@@ -42,17 +42,16 @@ A production-grade, constraint-driven homelab on a **single Raspberry Pi 4B (4GB
 
 ---
 
-## 🤖 TinyBot (Telegram Agent on Pi)
+## 🤖 TinyBot (Telegram Agent on Pi — No LLM)
 
 | Skill | Category | Trust | Key Commands |
 |-------|----------|-------|--------------|
 | health | system | Medium | Pi CPU, RAM, temp, disk |
 | search | web | Medium | DuckDuckGo web search |
-| chat | ai | Low | Local LLM via Ollama (optional) |
-| status | bot | Low | Config, model, context info |
+| status | bot | Low | Bot status, cached messages |
 | clear | bot | Medium | Archive & reset conversation |
 
-All skills run locally on Pi — no external dependencies beyond Telegram API.
+Runs locally on Pi — no Ollama, no external AI dependencies. Telegram API only.
 
 ---
 

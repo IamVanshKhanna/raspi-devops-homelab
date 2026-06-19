@@ -22,7 +22,6 @@ EXPECTED_RELEASES = {
     "crowdsec": {"namespace": "security", "expected_version": "1.6.0"},
     "nextcloud": {"namespace": "apps", "expected_version": "8.0.0"},
     "vaultwarden": {"namespace": "apps", "expected_version": "1.32.6"},
-    "ollama": {"namespace": "ai", "expected_version": "0.3.14"},
     "homeassistant": {"namespace": "smarthome", "expected_version": "2024.7.3"},
     "uptime-kuma": {"namespace": "uptime", "expected_version": "1.23.9"},
     "longhorn": {"namespace": "longhorn-system", "expected_version": "1.6.0"},
