@@ -1,0 +1,10 @@
+config/traefik/certs/
+config/traefik/dashboard.crt
+config/traefik/dashboard.key
+.env*
+tinybot/venv/
+tinybot/logs/
+tinybot/state/
+tinybot/queue/
+__pycache__/
+*.pyc

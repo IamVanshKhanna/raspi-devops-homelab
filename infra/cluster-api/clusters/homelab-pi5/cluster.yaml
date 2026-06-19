@@ -1,0 +1,26 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: homelab-pi5
+  namespace: homelab-clusters
+  labels:
+    homelab.io/environment: production
+    homelab.io/hardware: pi5
+    homelab.io/region: local
+spec:
+  clusterNetwork:
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    serviceDomain: cluster.local
+  controlPlaneRef:
+    kind: KubeadmControlPlane
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    name: homelab-pi5-cp
+  infrastructureRef:
+    kind: Metal3Cluster
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    name: homelab-pi5

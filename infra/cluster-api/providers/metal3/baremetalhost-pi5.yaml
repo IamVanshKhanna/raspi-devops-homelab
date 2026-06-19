@@ -1,0 +1,22 @@
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: pi5-node-0
+  namespace: homelab-clusters
+  labels:
+    homelab.io/hardware: pi5
+    homelab.io/role: control-plane
+spec:
+  online: true
+  bootMACAddress: "aa:bb:cc:dd:ee:02"
+  bootMode: "uefi"
+  hardwareProfile: "pi5"
+  externallyProvisioned: false
+  bmc:
+    address: redfish-virtualmedia://192.168.1.102/redfish/v1/Systems/1
+    credentialsName: pi5-node-0-bmc-secret
+    disableCertificateVerification: true
+  rootDeviceHints:
+    deviceName: "/dev/nvme0n1"
+    minSizeGigabytes: 200
+  preprovisioningNetworkDataName: "pi5-node-0-network"

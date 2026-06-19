@@ -1,0 +1,36 @@
+# Thanos Ruler values for management cluster
+
+replicaCount: 2
+
+ruleFiles:
+  - /etc/thanos/rules/*.yaml
+
+objstore:
+  config:
+    type: S3
+    config:
+      bucket: homelab-thanos
+      endpoint: s3.us-east-005.backblazeb2.com
+      access_key: ${B2_KEY_ID}
+      secret_key: ${B2_APP_KEY}
+
+alertmanagers:
+  - http://alertmanager.monitoring:9093
+
+query:
+  endpoint: http://thanos-query.monitoring:10902
+
+httpAddress: 0.0.0.0:10902
+grpcAddress: 0.0.0.0:10901
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+serviceMonitor:
+  enabled: true
+  namespace: monitoring

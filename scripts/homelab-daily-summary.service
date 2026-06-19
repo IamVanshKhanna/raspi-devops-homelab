@@ -1,0 +1,15 @@
+[Unit]
+Description=Daily Homelab Health Summary
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=vansh
+Environment=HOME=/home/vansh
+WorkingDirectory=/home/vansh/homelab-prod
+ExecStart=/home/vansh/homelab-prod/scripts/daily-health-summary.sh
+EnvironmentFile=/home/vansh/homelab-prod/.env
+
+[Install]
+WantedBy=multi-user.target

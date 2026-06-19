@@ -1,0 +1,7 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+metadata:
+  name: check-clusterpolicies
+commands:
+  - command: kubectl get clusterpolicies
+    timeout: 30

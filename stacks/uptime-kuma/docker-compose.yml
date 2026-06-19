@@ -1,0 +1,28 @@
+# STACK: UPTIME-KUMA
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  uptime_kuma_data:
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.9
+    container_name: uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "8082:3001"
+    networks:
+      - proxy
+    volumes:
+      - uptime_kuma_data:/app/data
+    mem_limit: 128m
+    cpus: 0.25
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.${DOMAIN}`)"
+      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
+      - "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"

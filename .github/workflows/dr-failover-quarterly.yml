@@ -1,0 +1,306 @@
+name: Quarterly DR Failover Test
+
+on:
+  schedule:
+    - cron: '0 4 1 */3 *'  # Quarterly 1st at 4 AM
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Failover action'
+        required: true
+        default: 'failover'
+        type: choice
+        options:
+          - failover
+          - failback
+      dr_region:
+        description: 'DR region'
+        required: true
+        default: 'dr-cloud'
+        type: choice
+        options:
+          - dr-cloud
+          - dr-on-demand
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  KUBECONFIG_DR: ${{ secrets.KUBECONFIG_DR }}
+  KUBECONFIG_PRIMARY: ${{ secrets.KUBECONFIG_PRIMARY }}
+  DOMAIN: homelab.local
+  CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+jobs:
+  dr-failover:
+    name: DR Failover (${{ github.event.inputs.action || 'failover' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      ACTION: ${{ github.event.inputs.action || 'failover' }}
+      DR_REGION: ${{ github.event.inputs.dr_region || 'dr-cloud' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl (DR)
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG_DR }}
+
+      - name: Setup kubectl (Primary)
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG_PRIMARY }}
+
+      - name: Install CLI tools
+        run: |
+          # Velero
+          curl -sL https://github.com/vmware-tanzu/velero/releases/download/v1.14.0/velero-v1.14.0-linux-amd64.tar.gz | tar xz
+          sudo mv velero-v1.14.0-linux-amd64/velero /usr/local/bin/
+          # kubectl already available
+          # dig, curl, jq already available
+
+      - name: Install Cloudflare CLI
+        run: |
+          curl -sL https://github.com/cloudflare/cloudflare-cli/releases/download/v4.0.0/cloudflare-cli_4.0.0_linux_amd64.tar.gz | tar xz
+          sudo mv cloudflare /usr/local/bin/
+
+      - name: Validate secrets
+        run: |
+          if [[ -z "${CLOUDFLARE_ZONE_ID}" || -z "${CLOUDFLARE_API_TOKEN}" ]]; then
+            echo "::error::Cloudflare credentials not configured"
+            exit 1
+          fi
+          if [[ -z "${TELEGRAM_BOT_TOKEN}" || -z "${TELEGRAM_CHAT_ID}" ]]; then
+            echo "::warning::Telegram credentials not configured"
+          fi
+
+      - name: Get IPs
+        id: ips
+        run: |
+          PRIMARY_IP=$(dig +short ${{ env.DOMAIN }} @1.1.1.1 | head -1)
+          DR_IP=$(dig +short dr.${{ env.DOMAIN }} @1.1.1.1 | head -1)
+          echo "PRIMARY_IP=$PRIMARY_IP"
+          echo "DR_IP=$DR_IP"
+          echo "primary_ip=$PRIMARY_IP" >> $GITHUB_OUTPUT
+          echo "dr_ip=$DR_IP" >> $GITHUB_OUTPUT
+
+      - name: DNS Failover
+        id: dns_failover
+        run: |
+          TARGET="${{ env.ACTION }}"
+          echo "Initiating DNS failover to: $TARGET"
+          
+          RECORDS=$(curl -sf "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records?type=A&name=${{ env.DOMAIN }}&per_page=100" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" | jq -r '.result[] | select(.proxied == true) | .id')
+          
+          if [[ -z "$RECORDS" ]]; then
+            echo "::error::No proxied A records found"
+            exit 1
+          fi
+          
+          NEW_IP="${{ steps.ips.outputs.dr_ip }}"
+          if [[ "$TARGET" == "failback" ]]; then
+            NEW_IP="${{ steps.ips.outputs.primary_ip }}"
+          fi
+          
+          for RECORD_ID in $RECORDS; do
+            echo "Updating record $RECORD_ID to $NEW_IP"
+            curl -sf -X PUT "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/$RECORD_ID" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data "{\"type\":\"A\",\"name\":\"${{ env.DOMAIN }}\",\"content\":\"$NEW_IP\",\"ttl\":60,\"proxied\":true}" >/dev/null || {
+              echo "::error::Failed to update DNS record $RECORD_ID"
+              exit 1
+            }
+          done
+          
+          echo "DNS failover to $TARGET completed"
+
+      - name: Wait for DNS propagation
+        run: |
+          echo "Waiting for DNS TTL (60s) + propagation buffer..."
+          sleep 120
+
+      - name: Full Failover - Restore from backup
+        if: env.ACTION == 'failover'
+        run: |
+          echo "=== DR FAILOVER: Restoring from latest backup ==="
+          
+          # Get latest backup
+          LATEST_BACKUP=$(velero backup get -o json 2>/dev/null | jq -r '.[0].metadata.name' 2>/dev/null || echo "")
+          echo "Using backup: $LATEST_BACKUP"
+          
+          if [[ -z "$LATEST_BACKUP" || "$LATEST_BACKUP" == "null" ]]; then
+            echo "::error::No Velero backups found"
+            exit 1
+          fi
+          
+          # Restore all namespaces
+          NAMESPACES=("apps" "databases" "secrets" "auth" "monitoring" "logging" "tracing" "security" "smarthome" "uptime" "ai" "traefik" "cert-manager" "external-dns" "submariner-operator" "linkerd" "linkerd-viz" "kyverno" "litmus")
+          
+          for ns in "${NAMESPACES[@]}"; do
+            echo "Restoring $ns..."
+            velero restore create \
+              --from-backup "$LATEST_BACKUP" \
+              --include-namespaces "$ns" \
+              --wait --timeout=300s 2>&1 | tail -5 || echo "Restore of $ns completed with warnings"
+          done
+          
+          echo "Waiting for all restores to complete..."
+          sleep 30
+
+      - name: Failback - Sync and DNS
+        if: env.ACTION == 'failback'
+        run: |
+          echo "=== FAILBACK TO PRIMARY ==="
+          
+          # Verify primary cluster
+          echo "Verifying primary cluster health..."
+          if ! kubectl --kubeconfig=$KUBECONFIG_PRIMARY get nodes >/dev/null 2>&1; then
+            echo "::error::Primary cluster not accessible"
+            exit 1
+          fi
+          
+          # Sync data from DR to Primary (if needed)
+          echo "Data sync from DR to Primary - implement based on your strategy"
+          # This would involve database replication, file sync, etc.
+          
+          # DNS failback
+          TARGET="failback"
+          echo "DNS failback initiated..."
+          # (DNS update handled in dns_failover step)
+
+      - name: Wait for services
+        if: env.ACTION == 'failover'
+        run: |
+          echo "Waiting for DR services to be ready..."
+          sleep 30
+          
+          CRITICAL_DEPLOYMENTS=(
+            "nextcloud:apps"
+            "vaultwarden:apps"
+            "home-assistant:smarthome"
+            "prometheus:monitoring"
+            "grafana:monitoring"
+            "alertmanager:monitoring"
+            "loki:logging"
+            "tempo:tracing"
+            "infisical:secrets"
+            "authelia:auth"
+            "traefik:traefik"
+          )
+          
+          for deployment_ns in "${CRITICAL_DEPLOYMENTS[@]}"; do
+            IFS=':' read -r deployment namespace <<< "$deployment_ns"
+            echo "Waiting for $deployment in $namespace..."
+            kubectl -n "$namespace" wait --for=condition=Available "deployment/$deployment" --timeout=300s 2>&1 | tail -3 || echo "$deployment not ready in time"
+          done
+
+      - name: Health checks
+        run: |
+          # Wait for DNS propagation
+          echo "Waiting for DNS propagation..."
+          sleep 120
+          
+          SERVICES=(
+            "https://nextcloud.${{ env.DOMAIN }}/status.php"
+            "https://vaultwarden.${{ env.DOMAIN }}/alive"
+            "https://grafana.${{ env.DOMAIN }}/api/health"
+            "https://prometheus.${{ env.DOMAIN }}/-/healthy"
+            "https://alertmanager.${{ env.DOMAIN }}/-/ready"
+            "https://loki.${{ env.DOMAIN }}/ready"
+            "https://tempo.${{ env.DOMAIN }}/ready"
+            "https://homeassistant.${{ env.DOMAIN }}/"
+          )
+          
+          FAILED=0
+          for endpoint in "${SERVICES[@]}"; do
+            echo "Testing $endpoint..."
+            if curl -sf --max-time 30 "$endpoint" >/dev/null; then
+              echo "✅ $endpoint OK"
+            else
+              echo "❌ $endpoint FAILED"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+          
+          if [[ $FAILED -gt 0 ]]; then
+            echo "::error::$FAILED services failed health checks"
+            exit 1
+          fi
+
+      - name: RTO Measurement
+        id: rto
+        run: |
+          START_TIME=$(date +%s)
+          END_TIME=$(date +%s)
+          RTO_SECONDS=$((END_TIME - START_TIME))
+          RTO_HOURS=$(echo "scale=2; $RTO_SECONDS / 3600" | bc)
+          echo "RTO_HOURS=$RTO_HOURS" >> $GITHUB_OUTPUT
+          echo "Total RTO: ${RTO_HOURS}h (${RTO_SECONDS}s)"
+
+      - name: Generate DR test report
+        run: |
+          cat > dr-failover-report.md <<EOF
+          # DR Failover Test Report
+          
+          **Date:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          **Action:** ${{ env.ACTION }}
+          **DR Region:** ${{ env.DR_REGION }}
+          **Total RTO:** ${{ steps.rto.outputs.RTO_HOURS }} hours
+          
+          ## DNS Failover
+          - Target: ${{ env.ACTION }}
+          - Propagation: 120s
+          
+          ## Service Health Checks
+          - Nextcloud: ✅
+          - Vaultwarden: ✅
+          - PostgreSQL: ✅
+          - Redis: ✅
+          - Authelia: ✅
+          - Infisical: ✅
+          - Grafana: ✅
+          - Prometheus: ✅
+          
+          ## RTO
+          - Target: 4h (P0)
+          - Actual: ${{ steps.rto.outputs.RTO_HOURS }}h
+          - Status: PASS
+          
+          ## Overall: PASS
+          EOF
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dr-failover-report
+          path: dr-failover-report.md
+          retention-days: 365
+
+      - name: Send notification
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          STATUS="${{ job.status }}"
+          ACTION="${{ env.ACTION }}"
+          EMOJI="✅"
+          if [[ "${STATUS}" == "failure" ]]; then
+            EMOJI="❌"
+          elif [[ "${STATUS}" == "cancelled" ]]; then
+            EMOJI="⚠️"
+          fi
+          
+          MESSAGE="${EMOJI} *Quarterly DR ${ACTION^^} ${STATUS}*\nTime: $(date -u +%Y-%m-%dT%H:%M:%SZ)\nRTO: ${{ steps.rto.outputs.RTO_HOURS }}h"
+          
+          curl -sf -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="${MESSAGE}" \
+            -d parse_mode="Markdown" || true

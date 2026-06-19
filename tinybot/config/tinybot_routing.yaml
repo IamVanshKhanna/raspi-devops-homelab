@@ -1,0 +1,22 @@
+routing:
+  default_target: windows
+  fallback_target: mac
+
+  role_targets:
+    dev: windows
+    research: windows
+    content: mac
+    admin: pi
+    approval: pi
+
+device_preferences:
+  windows:
+    priority: 1
+    online_hours:
+      start: "08:00"
+      end: "23:00"
+  mac:
+    priority: 2
+    online_hours:
+      start: "07:00"
+      end: "23:00"
