@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# backup.sh - Restic backup to Backblaze B2
+# backup.sh - Restic backup to Backblaze B2 with Telegram notifications
 # Schedule: 0 3 * * * /home/vansh/homelab-prod/scripts/backup.sh >> /var/log/homelab-backup.log 2>&1
-# Requires: RESTIC_REPOSITORY, RESTIC_PASSWORD, B2_ACCOUNT_ID, B2_ACCOUNT_KEY in .env
+# Requires: RESTIC_REPOSITORY, RESTIC_PASSWORD, B2_ACCOUNT_ID, B2_ACCOUNT_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID in .env
 
 set -euo pipefail
 
@@ -32,6 +32,10 @@ RESTIC_KEEP_DAILY="${RESTIC_KEEP_DAILY:-7}"
 RESTIC_KEEP_WEEKLY="${RESTIC_KEEP_WEEKLY:-4}"
 RESTIC_KEEP_MONTHLY="${RESTIC_KEEP_MONTHLY:-6}"
 
+# Telegram (optional)
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
+
 # Log file
 LOG_DIR="${BACKUP_DIR}/logs"
 mkdir -p "$LOG_DIR"
@@ -40,9 +44,22 @@ LOG_FILE="${LOG_DIR}/backup-${TIMESTAMP}.log"
 
 exec > >(tee -a "$LOG_FILE") 2>&1
 
+# Telegram notification function
+send_telegram() {
+  local message="$1"
+  if [[ -n "$TELEGRAM_BOT_TOKEN" && -n "$TELEGRAM_CHAT_ID" ]]; then
+    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+      -d chat_id="${TELEGRAM_CHAT_ID}" \
+      -d text="${message}" \
+      -d parse_mode="HTML" >/dev/null 2>&1 || true
+  fi
+}
+
 echo "=== Backup started: $(date -Is) ==="
 echo "Repository: $RESTIC_REPOSITORY"
 echo "Cache dir:  $RESTIC_CACHE_DIR"
+
+send_telegram "📦 <b>Backup started</b> on $(hostname) at $(date '+%Y-%m-%d %H:%M:%S')"
 
 # Export for restic
 export RESTIC_REPOSITORY
@@ -61,7 +78,6 @@ fi
 BACKUP_PATHS=(
   "${DATA_DIR}/nextcloud/userdata"
   "${DATA_DIR}/vaultwarden"
-  "${DATA_DIR}/ollama"
   "${DATA_DIR}/homeassistant"
   "${DATA_DIR}/pihole"
   "${DATA_DIR}/grafana"
@@ -106,8 +122,10 @@ BACKUP_EXIT=$?
 
 if [[ $BACKUP_EXIT -eq 0 ]]; then
   echo "Backup completed successfully"
+  send_telegram "✅ <b>Backup completed successfully</b> on $(hostname) at $(date '+%Y-%m-%d %H:%M:%S')"
 else
   echo "Backup failed with exit code $BACKUP_EXIT" >&2
+  send_telegram "❌ <b>Backup FAILED</b> on $(hostname) at $(date '+%Y-%m-%d %H:%M:%S') - Exit code: $BACKUP_EXIT"
   exit $BACKUP_EXIT
 fi
 
@@ -125,3 +143,4 @@ echo "Verifying repository (5% sample)..."
 restic check --read-data-subset=5%
 
 echo "=== Backup finished: $(date -Is) ==="
+send_telegram "📦 <b>Backup finished</b> on $(hostname) at $(date '+%Y-%m-%d %H:%M:%S')"
