@@ -1,5 +1,5 @@
 # STACK: APPS
-# Services: Nextcloud + MariaDB + Redis + Vaultwarden + Ollama
+# Services: Nextcloud + MariaDB + Redis + Vaultwarden
 
 networks:
   proxy:
@@ -12,7 +12,6 @@ volumes:
   mariadb_data:
   redis_data:
   vaultwarden_data:
-  ollama_data:
 
 services:
 
@@ -116,18 +115,3 @@ services:
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
-
-  ollama:
-    image: ollama/ollama:0.3.14
-    container_name: ollama
-    restart: unless-stopped
-    networks:
-      - proxy
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      - TZ=${TZ}
-    mem_limit: 2g
-    cpus: 2.0

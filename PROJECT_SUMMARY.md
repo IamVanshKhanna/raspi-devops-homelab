@@ -1,17 +1,18 @@
 # homelab-prod — Complete Project Summary
 
 ## 🎯 Project Vision
-A production-grade, constraint-driven homelab on Raspberry Pi 4B (4GB RAM, 2TB SSD, DeskPi 3B Pro) demonstrating:
+A production-grade, constraint-driven homelab on a **single Raspberry Pi 4B (4GB RAM, 2TB SSD, DeskPi 3B Pro)** demonstrating:
 - **Constraint-driven engineering** (4GB RAM, 7W power, ARM64, headless)
-- **Full SDLC** with GitOps, CI/CD, ADRs, runbooks
+- **Full SDLC** with Docker Compose, CI/CD, ADRs, runbooks
 - **Security-first** architecture (STRIDE model, SSO, secrets, IDS)
 - **Full observability** (metrics, logs, traces, alerts)
-- **AI integration** (Hermes Agent with 7 skills)
+- **Automation** (TinyBot Telegram agent with skills)
 - **Supply chain security** (SBOM, signing, vulnerability gates)
+- **Local NAS** (Nextcloud + Samba/NFS for file storage)
 
 ---
 
-## 📦 Final Architecture (v1.6)
+## 📦 Final Architecture (v1.7 — Single Pi, Docker Compose)
 
 ### Hardware
 | Component | Spec |
@@ -22,7 +23,7 @@ A production-grade, constraint-driven homelab on Raspberry Pi 4B (4GB RAM, 2TB S
 | Network | Gigabit Ethernet + Tailscale mesh |
 | Power | ~7W idle |
 
-### Services (v1.6 — 17 containers / 9 stacks)
+### Services (v1.7 — 16 containers / 9 stacks)
 
 | Phase | Stack | Services | Memory Limit |
 |-------|-------|----------|--------------|
@@ -31,29 +32,27 @@ A production-grade, constraint-driven homelab on Raspberry Pi 4B (4GB RAM, 2TB S
 | 2 | Secrets | Infisical, PostgreSQL, Redis | 896 MB |
 | 3 | Auth | Authelia, Redis | 320 MB |
 | 4 | Monitoring | Prometheus, Grafana, Loki, Promtail, Alertmanager, Node Exporter, cAdvisor | 1.2 GB |
-| 5 | Apps | Nextcloud, MariaDB, Redis, Vaultwarden, Ollama (gemma:2b) | 3.8 GB |
+| 5 | Apps | Nextcloud, MariaDB, Redis, Vaultwarden | ~2 GB |
 | 6 | Smarthome | Home Assistant (host net) | 512 MB |
 | 7 | Uptime | Uptime Kuma | 128 MB |
 | 8 | Security | CrowdSec, PostgreSQL | 384 MB |
 | 9 | Tracing | Tempo, OpenTelemetry Collector | 768 MB |
 
-**Total RAM Budget**: ~3.6 GB / 4 GB (with 2GB ZRAM swap buffer)
+**Total RAM Budget**: ~2.5 GB / 4 GB (with 2GB ZRAM swap buffer) — healthy headroom
 
 ---
 
-## 🧩 Hermes Agent (v1.6 — 7 Skills)
+## 🤖 TinyBot (Telegram Agent on Pi)
 
 | Skill | Category | Trust | Key Commands |
 |-------|----------|-------|--------------|
-| homelab-ops | homelab | Medium | health, logs, safe restarts |
-| gitops-helper | gitops | Medium | propose CI/docs/compose |
-| backup-ops | backup | High | snapshots, verify, dry-run restore |
-| security-audit | security | Medium | trivy scan, CVE report |
-| capacity-plan | capacity | Low | disk/RAM forecasting, PromQL |
-| **cronjob-ops** | homelab | Medium | daily summary, weekly report |
-| **tts-alerts** | homelab | Medium | speak alert, read summary |
+| health | system | Medium | Pi CPU, RAM, temp, disk |
+| search | web | Medium | DuckDuckGo web search |
+| chat | ai | Low | Local LLM via Ollama (optional) |
+| status | bot | Low | Config, model, context info |
+| clear | bot | Medium | Archive & reset conversation |
 
-All skills follow **ADR-005 trust model**: read-only by default, confirmation required for destructive actions, explicit allowlists.
+All skills run locally on Pi — no external dependencies beyond Telegram API.
 
 ---
 
@@ -137,24 +136,25 @@ make restore-test    # Test restore
 | v1.0 | 2026-06-09 | Production baseline | 14 |
 | v1.1 | 2026-06-09 | Observability | 18 |
 | v1.2 | 2026-06-09 | Secrets + Backup | 20 |
-| v1.3 | 2026-06-09 | Hermes Skills (5) | 20 |
+| v1.3 | 2026-06-09 | TinyBot skills | 20 |
 | v1.4 | 2026-06-09 | Security (Authelia, CrowdSec) | 22 |
 | v1.5 | 2026-06-09 | Supply Chain | 22 |
-| **v1.6** | **2026-06-09** | **Tracing + Automation (7 skills)** | **23** |
+| v1.6 | 2026-06-09 | Tracing + Automation | 23 |
+| **v1.7** | **2026-06-19** | **Single Pi, no Ollama, NAS, Telegram** | **16** |
 
 ---
 
-## 🔮 Roadmap (v1.7 → v3.2)
+## 🔮 Roadmap (v1.8+)
 
 | Version | Target | Focus |
 |---------|--------|-------|
-| v1.7 | 14 weeks | K3s cluster, GPU offload |
-| v2.0 | Quarter 1 | Supply Chain + Auth (Breaking) |
-| v2.1 | Quarter 2 | Tempo + OpenTelemetry |
-| v2.2 | Quarter 3 | Multi-node (K3s, Patroni, Longhorn) |
-| v3.0 | 6+ months | AI/ML Platform (Ollama cluster, RAG) |
-| v3.1 | 6+ months | Edge/OT (Matter, Thread, Zigbee) |
-| v3.2 | 6+ months | Developer Platform (Gitea, CI) |
+| v1.8 | 2 weeks | Telegram alerts everywhere (Alertmanager, CrowdSec, backup, TinyBot) |
+| v1.9 | 2 weeks | Local NAS: Samba/NFS + Nextcloud external storage |
+| v1.10 | 2 weeks | Backup automation + restore drills |
+| v1.11 | 2 weeks | Documentation cleanup, runbooks |
+| v1.12 | 2 weeks | Hardening, testing, stabilization |
+
+**No K3s, no multi-node, no cloud, no AI/ML platform** — this project stays on a single Pi 4B.
 
 ---
 
