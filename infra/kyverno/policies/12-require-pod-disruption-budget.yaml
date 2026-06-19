@@ -1,0 +1,42 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-pod-disruption-budget
+  labels:
+    app.kubernetes.io/name: kyverno
+    policy-type: operational
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-pdb
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+      validate:
+        message: "Workload must have a PodDisruptionBudget for HA guarantees"
+        deny:
+          conditions:
+            - key: "{{ pdbCount }}"
+              operator: LessThan
+              value: 1
+      context:
+        - name: pdbCount
+          apiCall:
+            urlPath: /apis/policy/v1/namespaces/{{ request.object.metadata.namespace }}/poddisruptionbudgets
+            jmesPath: "items[?spec.selector.matchLabels.@ == `{{ request.object.spec.selector.matchLabels }}`] | length(@)"
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - cert-manager
+                - argocd
+                - longhorn-system
+                - monitoring
+                - logging
+                - tracing

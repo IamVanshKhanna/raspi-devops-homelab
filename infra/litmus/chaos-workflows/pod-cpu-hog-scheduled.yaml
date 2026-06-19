@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: litmus-pod-cpu-hog-scheduled
+  namespace: litmus
+spec:
+  templates:
+    - name: pod-cpu-hog-chaos
+      container:
+        image: litmuschaos/litmus-checker:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            kubectl apply -f /experiments/pod-cpu-hog.yaml
+            sleep 5
+            kubectl wait --for=condition=Completed chaosengine/pod-cpu-hog -n litmus --timeout=300s
+    - name: cleanup
+      container:
+        image: bitnami/kubectl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - kubectl delete chaosengine pod-cpu-hog -n litmus --ignore-not-found=true
+  entrypoint: pod-cpu-hog-chaos
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: pod-cpu-hog-weekly
+  namespace: litmus
+spec:
+  schedule: "0 3 * * 2"  # Weekly on Tuesday at 3 AM
+  concurrencyPolicy: "Forbid"
+  startingDeadlineSeconds: 300
+  workflowSpec:
+    workflowTemplateRef:
+      name: litmus-pod-cpu-hog-scheduled

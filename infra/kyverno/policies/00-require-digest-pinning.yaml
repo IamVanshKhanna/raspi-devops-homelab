@@ -1,0 +1,40 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-digest-pinning
+  labels:
+    app.kubernetes.io/name: kyverno
+    policy-type: supply-chain
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-image-digest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+                - ReplicaSet
+      validate:
+        message: "Container image must be pinned with @sha256: digest"
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                - key: "{{ element.image }}"
+                  operator: NotMatches
+                  value: ".*@sha256:.*"
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - cert-manager
+                - argocd

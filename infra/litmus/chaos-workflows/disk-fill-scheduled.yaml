@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: litmus-disk-fill-scheduled
+  namespace: litmus
+spec:
+  templates:
+    - name: disk-fill-chaos
+      container:
+        image: litmuschaos/litmus-checker:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            kubectl apply -f /experiments/disk-fill.yaml
+            sleep 5
+            kubectl wait --for=condition=Completed chaosengine/disk-fill -n litmus --timeout=300s
+    - name: cleanup
+      container:
+        image: bitnami/kubectl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - kubectl delete chaosengine disk-fill -n litmus --ignore-not-found=true
+  entrypoint: disk-fill-chaos
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: disk-fill-weekly
+  namespace: litmus
+spec:
+  schedule: "0 3 * * 5"  # Weekly on Friday at 3 AM
+  concurrencyPolicy: "Forbid"
+  startingDeadlineSeconds: 300
+  workflowSpec:
+    workflowTemplateRef:
+      name: litmus-disk-fill-scheduled

@@ -1,0 +1,40 @@
+risk_levels:
+  low:
+    default_action: auto_approve
+    examples:
+      - "create feature branch"
+      - "write code"
+      - "read file"
+      - "web search"
+  medium:
+    default_action: auto_approve
+    notify: true
+    examples:
+      - "push to non-main branch"
+      - "install new pip package"
+      - "create PR"
+  high:
+    default_action: require_approval
+    timeout_minutes: 60
+    escalation_minutes: 30
+    examples:
+      - "push to main branch"
+      - "force push"
+      - "production deploy"
+      - "docker privileged"
+      - "modify secrets"
+      - "external communication"
+
+action_patterns:
+  - pattern: "git push origin main"
+    risk: "high"
+  - pattern: "git push --force"
+    risk: "high"
+  - pattern: "docker run --privileged"
+    risk: "high"
+  - pattern: "rm -rf"
+    risk: "high"
+  - pattern: "git push origin feature"
+    risk: "low"
+  - pattern: "git commit"
+    risk: "low"

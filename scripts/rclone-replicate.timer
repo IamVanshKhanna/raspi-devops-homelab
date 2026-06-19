@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily Restic Cross-Region Replication Timer
+Requires=rclone-replicate.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30m
+AccuracySec=1h
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,31 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-prometheus-rules
+  labels:
+    app.kubernetes.io/name: kyverno
+    policy-type: operational
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: validate-prometheus-rule-spec
+      match:
+        any:
+          - resources:
+              kinds:
+                - PrometheusRule
+      validate:
+        message: "PrometheusRule must have valid spec with groups and rules"
+        pattern:
+          spec:
+            groups:
+              - name: "*"
+                rules:
+                  - alert: "*"
+                    expr: "*"
+                    for: "*"
+                    labels:
+                      severity: "*"
+                    annotations:
+                      summary: "*"

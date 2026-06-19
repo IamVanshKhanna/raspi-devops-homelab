@@ -1,0 +1,70 @@
+# STACK: NAS — Samba + NFS file sharing
+# Local network file storage for the homelab
+# Access via SMB (\\pi-homelab\data) or NFS (pi-homelab:/mnt/data)
+
+version: "3.8"
+
+networks:
+  proxy:
+    external: true
+  nas_internal:
+    internal: true
+
+volumes:
+  samba_config:
+  nfs_exports:
+
+services:
+  samba:
+    # Check latest: https://hub.docker.com/r/dperson/samba
+    image: dperson/samba:latest
+    container_name: samba
+    restart: unless-stopped
+    networks:
+      - proxy
+      - nas_internal
+    ports:
+      - "139:139"   # NetBIOS
+      - "445:445"   # SMB
+    volumes:
+      - ${DATA_DIR}:/mnt/data:rw
+      - samba_config:/etc/samba
+    environment:
+      - TZ=${TZ}
+      - WORKGROUP=HOMELAB
+      - USERID=${PUID}
+      - GROUPID=${PGID}
+      - USER=vansh
+      - PASS=${SAMBA_PASSWORD:-changeme}
+      - SHARE=data;/mnt/data;yes;no;yes;all;vansh
+      - WIDE_LINKS=1
+    mem_limit: 256m
+    cpus: 0.5
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - DAC_OVERRIDE
+    labels:
+      - "traefik.enable=false"
+
+  nfs:
+    # Check latest: https://github.com/erezhorev/docker-nfs-server
+    image: erezhorev/nfs-server:latest
+    container_name: nfs
+    restart: unless-stopped
+    networks:
+      - nas_internal
+    privileged: true
+    ports:
+      - "2049:2049"
+      - "111:111"
+      - "111:111/udp"
+      - "20048:20048"
+      - "20048:20048/udp"
+    volumes:
+      - ${DATA_DIR}:/mnt/data:rw
+      - nfs_exports:/etc/exports.d
+    environment:
+      - NFS_EXPORT_0=/mnt/data *(rw,sync,no_subtree_check,no_root_squash,insecure)
+    mem_limit: 128m
+    cpus: 0.25
