@@ -1,0 +1,80 @@
+---
+# K3s role tasks
+- name: Check if K3s already installed
+  stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: Install K3s on control plane
+  shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.28.5+k3s1" sh -s - server \
+      --cluster-init \
+      --tls-san "{{ cluster_domain }}" \
+      --tls-san "{{ ansible_host }}" \
+      --cluster-cidr "10.42.0.0/16" \
+      --service-cidr "10.43.0.0/16" \
+      --disable traefik \
+      --disable servicelb \
+      --disable local-storage \
+      --write-kubeconfig-mode 644 \
+      --kubelet-arg="max-pods=110" \
+      --kubelet-arg="eviction-hard=memory.available<500Mi,nodefs.available<10%"
+      {% if k3s_token is defined %} --token "{{ k3s_token }}" {% endif %}
+  when: k3s_server and not k3s_binary.stat.exists
+
+- name: Get K3s token from control plane
+  shell: |
+    cat /var/lib/rancher/k3s/server/node-token
+  register: k3s_token_result
+  changed_when: false
+  when: k3s_server
+  run_once: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+
+- name: Install K3s on workers
+  shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.28.5+k3s1" K3S_URL="https://{{ hostvars[groups['control_plane'][0]].ansible_host }}:6443" K3S_TOKEN="{{ hostvars[groups['control_plane'][0]].k3s_token_result.stdout }}" sh -s - agent \
+      --kubelet-arg="max-pods=110" \
+      --kubelet-arg="eviction-hard=memory.available<500Mi,nodefs.available<10%"
+  when: not k3s_server and not k3s_binary.stat.exists
+
+- name: Copy kubeconfig for vansh user
+  become: true
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /home/vansh/.kube/config
+    remote_src: true
+    owner: vansh
+    group: vansh
+    mode: '0600'
+  when: k3s_server
+
+- name: Fix kubeconfig server address
+  replace:
+    path: /home/vansh/.kube/config
+    regexp: '127.0.0.1'
+    replace: "{{ ansible_host }}"
+  when: k3s_server
+
+- name: Install Helm
+  shell: |
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm
+  when: k3s_server
+
+- name: Add Helm repositories
+  shell: |
+    helm repo add longhorn https://charts.longhorn.io
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+    helm repo add zalando https://charts.zalando.io
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm repo add kyverno https://kyverno.github.io/kyverno/
+    helm repo add linkerd https://helm.linkerd.io/stable
+    helm repo update
+  when: k3s_server
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml

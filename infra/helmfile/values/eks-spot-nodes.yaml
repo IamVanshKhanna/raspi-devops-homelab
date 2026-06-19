@@ -1,0 +1,42 @@
+# Spot Node Group values for DR cluster (EKS)
+
+# Managed node group for spot instances
+managedNodeGroups:
+  - name: spot-workers
+    instanceType: t3.medium
+    desiredCapacity: 3
+    minSize: 1
+    maxSize: 10
+    volumeSize: 50
+    volumeType: gp3
+    volumeEncrypted: true
+    spot: true
+    instancesDistribution:
+      instanceTypes:
+        - t3.medium
+        - t3.large
+        - t2.medium
+        - t2.large
+        - t3a.medium
+        - t3a.large
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotAllocationStrategy: "capacity-optimized"
+    labels:
+      lifecycle: spot
+      workload: spot-tolerant
+    taints:
+      - key: dedicated
+        value: spot
+        effect: NoSchedule
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+    updateConfig:
+      maxUnavailable: 1
+      maxUnavailablePercentage: 25
+    # Enable detailed monitoring
+    enableDetailedMonitoring: true

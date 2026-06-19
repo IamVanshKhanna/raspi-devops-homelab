@@ -1,0 +1,29 @@
+# Spot Toleration Patch
+# Apply to deployments that can run on spot nodes
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+  namespace: apps
+spec:
+  template:
+    spec:
+      nodeSelector:
+        lifecycle: spot
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "spot"
+        effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: lifecycle
+                operator: In
+                values:
+                - spot

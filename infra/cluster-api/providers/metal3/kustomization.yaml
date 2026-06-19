@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - baremetalhost-pi4.yaml
+  - bmc-secret-pi4.yaml
+  - networkdata-pi4.yaml
+  - baremetalhost-pi5.yaml
+  - bmc-secret-pi5.yaml
+  - networkdata-pi5.yaml
+  - provisioning.yaml
+  - image-pi-os.yaml
+commonLabels:
+  homelab.io/managed-by: metal3
+  homelab.io/provider: baremetal

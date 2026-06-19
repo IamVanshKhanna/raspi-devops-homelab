@@ -1,0 +1,53 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels
+  labels:
+    app.kubernetes.io/name: kyverno
+    policy-type: operational
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-standard-labels
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+                - Service
+                - Ingress
+                - ConfigMap
+                - Secret
+                - PersistentVolumeClaim
+      validate:
+        message: "Required labels missing: app.kubernetes.io/name, app.kubernetes.io/version, app.kubernetes.io/component"
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.metadata.labels['app.kubernetes.io/name'] }}"
+                operator: NotEquals
+                value: ""
+              - key: "{{ request.object.metadata.labels['app.kubernetes.io/version'] }}"
+                operator: NotEquals
+                value: ""
+              - key: "{{ request.object.metadata.labels['app.kubernetes.io/component'] }}"
+                operator: NotEquals
+                value: ""
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - cert-manager
+                - argocd
+                - longhorn-system
+                - monitoring
+                - logging
+                - tracing

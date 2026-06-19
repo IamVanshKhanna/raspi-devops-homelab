@@ -1,0 +1,94 @@
+---
+# Disaster Recovery playbook - full DR test
+- name: Disaster Recovery Test
+  hosts: control_plane[0]
+  become: true
+  vars:
+    kubeconfig_path: /etc/rancher/k3s/k3s.yaml
+    homelab_path: /home/vansh/homelab-prod
+    restic_repository: "{{ vault_restic_repository }}"
+    restic_password: "{{ vault_restic_password }}"
+    b2_account_id: "{{ vault_b2_account_id }}"
+    b2_account_key: "{{ vault_b2_account_key }}"
+    # DR test configuration
+    dr_namespace: "dr-test-{{ ansible_date_time.epoch }}"
+    dr_snapshot_id: "{{ dr_snapshot_id | default('latest') }}"
+    dr_target_path: "/mnt/dr-restore-test"
+    cleanup_after: "{{ cleanup_after | default(true) }}"
+    test_services:
+      - nextcloud
+      - vaultwarden
+      - homeassistant
+  tasks:
+    - name: Create DR test namespace
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} create namespace {{ dr_namespace }} --dry-run=client -o yaml | kubectl apply -f -
+      register: ns_create
+      changed_when: false
+
+    - name: Restore latest backup to DR namespace
+      shell: |
+        export RESTIC_REPOSITORY="{{ restic_repository }}"
+        export RESTIC_PASSWORD=*** restic_password }}"
+        export B2_ACCOUNT_ID="{{ b2_account_id }}"
+        export B2_ACCOUNT_KEY="{{ b2_account_key }}"
+        restic restore {{ dr_snapshot_id }} --target {{ dr_target_path }} --include "mnt/data/*"
+      register: restore_result
+      changed_when: "'restored' in restore_result.stdout"
+
+    - name: Verify restored data
+      shell: |
+        ls -la {{ dr_target_path }}/mnt/data/
+      register: restored_data
+      changed_when: false
+
+    - name: Deploy test services in DR namespace
+      include_tasks: deploy-dr-service.yml
+      loop: "{{ test_services }}"
+      loop_control:
+        loop_var: service
+        label: "{{ service }}"
+
+    - name: Wait for DR pods to be ready
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} wait --for=condition=Ready pod -l app.kubernetes.io/name={{ service }} -n {{ dr_namespace }} --timeout=5m
+      loop: "{{ test_services }}"
+      loop_control:
+        loop_var: service
+        label: "{{ service }}"
+      ignore_errors: true
+
+    - name: Run health checks on DR services
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} exec -n {{ dr_namespace }} deploy/{{ service }} -- sh -c "curl -sf http://localhost:80/health || curl -sf http://localhost:8080/health || curl -sf http://localhost:3000/health" 2>/dev/null || echo "Health endpoint not available for {{ service }}"
+      loop: "{{ test_services }}"
+      loop_control:
+        loop_var: service
+        label: "{{ service }}"
+      register: dr_health
+      changed_when: false
+      ignore_errors: true
+
+    - name: Report DR test results
+      debug:
+        msg: |
+          DR Test Results:
+          Namespace: {{ dr_namespace }}
+          Snapshot: {{ dr_snapshot_id }}
+          Restored path: {{ dr_target_path }}
+          Services tested: {{ test_services | join(', ') }}
+          {% for result in dr_health.results %}
+          {{ result.item }}: {{ result.stdout | default('No health endpoint') }}
+          {% endfor %}
+
+    - name: Cleanup DR test namespace
+      shell: |
+        kubectl --kubeconfig={{ kubeconfig_path }} delete namespace {{ dr_namespace }} --wait=false
+      when: cleanup_after
+      ignore_errors: true
+
+    - name: Cleanup restored data
+      file:
+        path: "{{ dr_target_path }}"
+        state: absent
+      when: cleanup_after
