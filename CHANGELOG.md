@@ -4,6 +4,30 @@
 
 ---
 
+## [v1.7.0] — 2026-06-19
+
+### Added
+- **Infisical secrets stack** — PostgreSQL + Redis + Infisical (replaces .env files)
+- **NAS foundation** — Nextcloud external storage mount point at `${DATA_DIR}/nextcloud/userdata`
+- **TinyBot Telegram agent** — Health, search, chat, status, clear commands
+- **Local-first architecture** — Removed K3s, ArgoCD, multi-cluster, AWS/GKE, Thanos, Linkerd
+
+### Changed
+- **Apps stack** — Removed Ollama (2GB RAM savings), kept Nextcloud, MariaDB, Redis, Vaultwarden
+- **Memory budget** — Reduced from ~3.6 GB to ~2.5 GB with healthy headroom on 4GB Pi
+- **PROJECT_SUMMARY.md** — Rewritten for single Pi, Docker Compose only
+- **Makefile** — Added `up-secrets`, `verify-secrets`, fixed health check endpoints
+
+### Removed
+- `stacks/ollama-cluster/` (K8s manifests)
+- `infra/argocd/`, `infra/cluster-api/`, `infra/thanos/`, `infra/submariner/`, `infra/litmus/`, `infra/kyverno/` (moved to infra/ but not used)
+- v2.x roadmap (K3s, multi-cluster, cloud DR, AI/ML platform)
+
+### Fixed
+- Health check endpoints (Uptime Kuma on 8082, CrowdSec internal, Authelia API)
+
+---
+
 ## [v2.12.1] — 2026-06-13
 
 ### Added
