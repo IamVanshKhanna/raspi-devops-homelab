@@ -1,0 +1,83 @@
+---
+# Restore playbook - restore from restic backup
+- name: Restore from restic backup
+  hosts: control_plane[0]
+  become: true
+  vars:
+    restic_repository: "{{ vault_restic_repository }}"
+    restic_password: "{{ vault_restic_password }}"
+    b2_account_id: "{{ vault_b2_account_id }}"
+    b2_account_key: "{{ vault_b2_account_key }}"
+    # Override via: ansible-playbook restore.yml -e "snapshot_id=latest target_path=/mnt/restore-test"
+    snapshot_id: "{{ snapshot_id | default('latest') }}"
+    target_path: "{{ target_path | default('/mnt/restore-test') }}"
+    dry_run: "{{ dry_run | default(true) }}"
+  tasks:
+    - name: List available snapshots
+      shell: |
+        export RESTIC_REPOSITORY="{{ restic_repository }}"
+        export RESTIC_PASSWORD=*** restic_password }}"
+        export B2_ACCOUNT_ID="{{ b2_account_id }}"
+        export B2_ACCOUNT_KEY="{{ b2_account_key }}"
+        restic snapshots --json
+      register: snapshots_list
+      changed_when: false
+
+    - name: Show available snapshots
+      debug:
+        msg: "Available snapshots: {{ snapshots_list.stdout }}"
+
+    - name: Validate snapshot exists
+      shell: |
+        export RESTIC_REPOSITORY="{{ restic_repository }}"
+        export RESTIC_PASSWORD=*** restic_password }}"
+        export B2_ACCOUNT_ID="{{ b2_account_id }}"
+        export B2_ACCOUNT_KEY="{{ b2_account_key }}"
+        restic snapshots {{ snapshot_id }} --json
+      register: snapshot_check
+      changed_when: false
+      failed_when: snapshot_check.rc != 0
+
+    - name: Create restore target directory
+      file:
+        path: "{{ target_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Restore snapshot (dry-run)
+      shell: |
+        export RESTIC_REPOSITORY="{{ restic_repository }}"
+        export RESTIC_PASSWORD=*** restic_password }}"
+        export B2_ACCOUNT_ID="{{ b2_account_id }}"
+        export B2_ACCOUNT_KEY="{{ b2_account_key }}"
+        restic restore {{ snapshot_id }} --target "{{ target_path }}" --dry-run
+      register: dry_run_result
+      changed_when: false
+      when: dry_run
+
+    - name: Restore snapshot (actual)
+      shell: |
+        export RESTIC_REPOSITORY="{{ restic_repository }}"
+        export RESTIC_PASSWORD=*** restic_password }}"
+        export B2_ACCOUNT_ID="{{ b2_account_id }}"
+        export B2_ACCOUNT_KEY="{{ b2_account_key }}"
+        restic restore {{ snapshot_id }} --target "{{ target_path }}"
+      register: restore_result
+      changed_when: "'restored' in restore_result.stdout"
+      when: not dry_run
+
+    - name: Verify restored data
+      shell: |
+        find "{{ target_path }}" -type f | head -20
+        du -sh "{{ target_path }}"
+      register: restore_verify
+      changed_when: false
+      when: not dry_run
+
+    - name: Output restore summary
+      debug:
+        msg: |
+          Restore {% if dry_run %}(dry-run){% else %}(actual){% endif %} completed.
+          Snapshot: {{ snapshot_id }}
+          Target: {{ target_path }}
+          {% if not dry_run %}Size: {{ restore_verify.stdout_lines[-1] }}{% endif %}

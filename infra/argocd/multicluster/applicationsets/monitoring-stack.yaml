@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+spec:
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            homelab.io/role: monitoring
+    - git:
+        repoURL: https://github.com/IamVanshKhanna/homelab-prod.git
+        revision: HEAD
+        directories:
+          - path: config/argocd/services/monitoring/*
+  template:
+    metadata:
+      name: 'monitoring-{{path.basename}}-{{name}}'
+    spec:
+      project: homelab
+      source:
+        repoURL: https://github.com/IamVanshKhanna/homelab-prod.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: '{{server}}'
+        namespace: '{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m

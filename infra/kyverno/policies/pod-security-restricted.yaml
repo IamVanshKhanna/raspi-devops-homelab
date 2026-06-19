@@ -1,0 +1,101 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: pod-security-restricted
+  annotations:
+    policies.kyverno.io/title: "Restricted Pod Security"
+    policies.kyverno.io/category: "Pod Security Standards"
+    policies.kyverno.io/severity: "high"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: restrict-privileged-containers
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Privileged containers are not allowed"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  privileged: "false"
+                  
+    - name: restrict-host-namespaces
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Host namespaces are not allowed"
+        pattern:
+          spec:
+            hostNetwork: "false"
+            hostPID: "false"
+            hostIPC: "false"
+            
+    - name: require-non-root-user
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Containers must run as non-root user"
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: "true"
+              runAsUser: "> 1000"
+            containers:
+              - securityContext:
+                  runAsNonRoot: "true"
+                  runAsUser: "> 1000"
+                  
+    - name: drop-all-capabilities
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "All capabilities must be dropped"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  capabilities:
+                    drop: ["ALL"]
+                    
+    - name: require-read-only-root-fs
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Root filesystem must be read-only"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  readOnlyRootFilesystem: "true"
+                  
+    - name: restrict-seccomp
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Seccomp profile must be RuntimeDefault or Localhost"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  seccompProfile:
+                    type: "RuntimeDefault|Localhost"

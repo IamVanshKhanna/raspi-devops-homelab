@@ -1,0 +1,10 @@
+# Default Deny Ingress - traefik
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: traefik
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

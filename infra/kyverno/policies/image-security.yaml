@@ -1,0 +1,83 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: image-security
+  annotations:
+    policies.kyverno.io/title: "Image Security Requirements"
+    policies.kyverno.io/category: "Supply Chain Security"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-digest-pinning
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+              - Deployment
+              - StatefulSet
+              - DaemonSet
+              - Job
+              - CronJob
+      validate:
+        message: "Images must be pinned by digest (@sha256:)"
+        pattern:
+          spec:
+            containers:
+              - image: "*@sha256:*"
+              
+    - name: disallow-latest-tag
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+              - Deployment
+              - StatefulSet
+              - DaemonSet
+              - Job
+              - CronJob
+      validate:
+        message: "Image tag 'latest' is not allowed"
+        deny:
+          conditions:
+            any:
+            - key: "{{ request.object.spec.containers[*].image }}"
+              operator: Matches
+              value: ".*:latest$"
+              
+    - name: require-trusted-registry
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Images must come from trusted registries"
+        deny:
+          conditions:
+            all:
+            - key: "{{ request.object.spec.containers[*].image }}"
+              operator: NotMatches
+              value: "^(registry\\.example\\.com|docker\\.io/library|ghcr\\.io/your-org)/.*"
+              
+    - name: verify-cosign-signature
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+              - Deployment
+              - StatefulSet
+              - DaemonSet
+      verifyImages:
+        - imageReferences:
+            - "*"
+          attesters:
+            - entries:
+              - keys:
+                  publicKeys: |-
+                    -----BEGIN PUBLIC KEY-----
+                    ...
+                    -----END PUBLIC KEY-----

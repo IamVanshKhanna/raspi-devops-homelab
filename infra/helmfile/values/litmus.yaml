@@ -1,0 +1,60 @@
+# LitmusChaos values for homelab-prod
+
+# Portal (UI) - disabled for homelab
+portal:
+  enabled: false
+
+# Frontend - disabled
+frontend:
+  enabled: false
+
+# Server configuration
+server:
+  enabled: true
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Chaos operator
+chaosOperator:
+  enabled: true
+  replicaCount: 1
+
+# Chaos exporter for Prometheus
+chaosExporter:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 30s
+
+# MongoDB for Litmus backend
+mongodb:
+  enabled: true
+  auth:
+    enabled: false
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 5Gi
+
+# Event tracker
+eventTracker:
+  enabled: true
+
+# Workflow controller for Argo integration
+workflowController:
+  enabled: true
+  config:
+    artifactRepository:
+      archiveLogs: true
+  replicaCount: 1
+
+# Network policies
+networkPolicy:
+  enabled: true
