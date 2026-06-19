@@ -27,13 +27,13 @@ services:
       - "139:139"   # NetBIOS
       - "445:445"   # SMB
     volumes:
-      - ${DATA_DIR}:/mnt/data:rw
+      - ${DATA_DIR:-/mnt/data}:/mnt/data:rw
       - samba_config:/etc/samba
     environment:
-      - TZ=${TZ}
+      - TZ=${TZ:-Australia/Melbourne}
       - WORKGROUP=HOMELAB
-      - USERID=${PUID}
-      - GROUPID=${PGID}
+      - USERID=${PUID:-1000}
+      - GROUPID=${PGID:-1000}
       - USER=vansh
       - PASS=${SAMBA_PASSWORD:-changeme}
       - SHARE=data;/mnt/data;yes;no;yes;all;vansh
@@ -62,7 +62,7 @@ services:
       - "20048:20048"
       - "20048:20048/udp"
     volumes:
-      - ${DATA_DIR}:/mnt/data:rw
+      - ${DATA_DIR:-/mnt/data}:/mnt/data:rw
       - nfs_exports:/etc/exports.d
     environment:
       - NFS_EXPORT_0=/mnt/data *(rw,sync,no_subtree_check,no_root_squash,insecure)
