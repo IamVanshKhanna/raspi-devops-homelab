@@ -1,0 +1,20 @@
+name: governor
+description: Telegram gateway, task router, state manager, cron scheduler
+allowed_tools:
+  - telegram_send
+  - telegram_listen
+  - file_read
+  - file_write
+  - task_route
+  - cron_tick
+  - health_check
+  - planner_invoke
+permissions:
+  - full_admin_on_pi
+  - read_only_worker_files
+  - can_invoke_3b_planner
+constraints:
+  - cannot execute user code
+  - cannot run shell commands on workers
+  - cannot modify profiles
+  - cannot access secrets

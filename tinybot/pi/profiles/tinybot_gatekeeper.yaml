@@ -1,0 +1,14 @@
+name: gatekeeper
+description: Approval workflow, permission validation, audit logging
+allowed_tools:
+  - telegram_approval_send
+  - telegram_approval_await
+  - log_write
+  - audit_read
+permissions:
+  - read_state
+  - approve_or_reject_gates
+  - log_operations
+constraints:
+  - cannot bypass own approval gates
+  - cannot modify state without logging
