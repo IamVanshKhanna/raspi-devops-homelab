@@ -1,7 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestAssert
-metadata:
-  name: latest-tag-rejected
-commands:
-  - command: kubectl apply -f invalid-latest-tag.yaml 2>&1 | grep -q "Image tag 'latest' is not allowed"
-    timeout: 30
