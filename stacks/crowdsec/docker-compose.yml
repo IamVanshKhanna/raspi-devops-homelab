@@ -24,6 +24,7 @@ services:
     volumes:
       - crowdsec_data:/var/lib/crowdsec/data
       - crowdsec_config:/etc/crowdsec
+      - ../../config/crowdsec/notifications:/etc/crowdsec/notifications
       - /var/log:/var/log/host:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:

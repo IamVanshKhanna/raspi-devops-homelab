@@ -21,7 +21,7 @@ log() { $QUIET || echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
 EXPECTED_CONTAINERS=(
   traefik portainer
   prometheus grafana node-exporter cadvisor alertmanager loki promtail
-  nextcloud mariadb redis vaultwarden ollama
+  nextcloud mariadb redis vaultwarden
   pihole wireguard
   homeassistant
   uptime-kuma
@@ -122,11 +122,11 @@ if $CHECK_AUTHELIA; then
   fi
 fi
 
-# Check CrowdSec
+# Check CrowdSec (internal only - no host port)
 if $CHECK_CROWDSEC; then
   log ""
   log "--- CrowdSec IDS Check ---"
-  if curl -sf http://localhost:8080/health >/dev/null 2>&1; then
+  if docker exec crowdsec wget -qO- http://localhost:8080/health >/dev/null 2>&1; then
     printf "${GREEN}CrowdSec reachable${NC}\n"
   else
     printf "${RED}CrowdSec not reachable${NC}\n"
@@ -172,7 +172,7 @@ fi
 # Check Uptime Kuma
 log ""
 log "--- Uptime Kuma Check ---"
-if curl -sf "http://localhost:3001" >/dev/null 2>&1; then
+if curl -sf "http://localhost:8082" >/dev/null 2>&1; then
   printf "${GREEN}Uptime Kuma responsive${NC}\n"
 else
   printf "${RED}Uptime Kuma not responsive${NC}\n"
