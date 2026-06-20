@@ -3,16 +3,20 @@ import subprocess
 import psutil
 import requests
 
+TINYBOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def load_token():
-    with open('/home/vansh/raspi-devops-homelab/tinybot/.env', 'r') as f:
+    path = os.path.join(TINYBOT_DIR, '.env')
+    with open(path, 'r') as f:
         for line in f:
             if line.startswith('TELEGRAM_BOT_TOKEN='):
-                return line.split('=')[1].strip()
+                return line.split('=')[1].strip().strip('"').strip("'")
     return None
 
 def load_chat_id():
+    path = os.path.join(TINYBOT_DIR, 'state', 'admin_chat.txt')
     try:
-        with open('/home/vansh/raspi-devops-homelab/tinybot/state/admin_chat.txt', 'r') as f:
+        with open(path, 'r') as f:
             return f.read().strip()
     except:
         return None
@@ -48,3 +52,4 @@ chat_id = load_chat_id()
 if token and chat_id:
     url = 'https://api.telegram.org/bot{}/sendMessage'.format(token)
     requests.post(url, json={'chat_id': chat_id, 'text': get_stats()})
+
