@@ -197,20 +197,32 @@ async def chatid_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Your chat ID: {cid}")
 
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "I'm a simple bot - no LLM running on this Pi.\n"
+        "Use /search <query> for web search, or /health for system status."
+    )
+
+
 async def docker_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import subprocess
     args = " ".join(context.args).strip().split(None, 1)
     action = args[0].lower() if args else "list"
+    logger.info(f"/docker called with action={action} args={args}")
 
     if action == "close" and len(args) > 1:
         name = args[1]
+        logger.info(f"Stopping container: {name}")
         out = subprocess.getoutput(f"docker stop {name} 2>&1")
+        logger.info(f"Stop result: {out[:100]}")
         await update.message.reply_text(f"Stopped: {name}\n{out}" if len(out) < 200 else f"Stopped: {name}")
         return
 
     if action == "restart" and len(args) > 1:
         name = args[1]
+        logger.info(f"Restarting container: {name}")
         out = subprocess.getoutput(f"docker restart {name} 2>&1")
+        logger.info(f"Restart result: {out[:100]}")
         await update.message.reply_text(f"Restarted: {name}\n{out}" if len(out) < 200 else f"Restarted: {name}")
         return
 
@@ -218,20 +230,34 @@ async def docker_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Usage:\n/docker              - list all containers\n/docker close <name> - stop a container\n/docker restart <name> - restart a container")
         return
 
-    raw = subprocess.getoutput("docker ps --format '{{.Names}}  {{.Ports}}' 2>&1")
+    logger.info("Listing containers")
+    raw = subprocess.getoutput("docker ps --format '{{.Names}}|{{.Status}}|{{.Ports}}' 2>&1")
+    logger.info(f"Raw output length: {len(raw)}")
     if not raw or raw.startswith("Cannot") or "error" in raw.lower():
+        logger.warning(f"Docker list failed: {raw[:200]}")
         await update.message.reply_text("No containers running or Docker error.")
         return
 
-    lines = raw.split("\n")
-    out = "Active Containers:\n"
-    for l in lines:
-        parts = l.strip().split(None, 1)
+    lines = raw.strip().split("\n")
+    out = f"Active Containers ({len(lines)})\n"
+    out += "=" * 24 + "\n"
+    for idx, l in enumerate(lines, 1):
+        parts = l.strip().split("|", 2)
         name = parts[0] if parts else "?"
-        ports = parts[1] if len(parts) > 1 else "-"
-        out += f"\n{name}"
-        if ports != "-":
-            out += f"\n  Ports: {ports}"
+        raw_ports = parts[2].strip() if len(parts) > 2 and parts[2].strip() else "-"
+        if raw_ports != "-":
+            seen = set()
+            short = []
+            for p in raw_ports.split(", "):
+                port = p.split("->")[0].rsplit(":", 1)[-1]
+                if port not in seen:
+                    short.append(port)
+                    seen.add(port)
+            line = f"{idx}. {name} ({', '.join(short)})" if short else f"{idx}. {name}"
+        else:
+            line = f"{idx}. {name}"
+        out += "\n" + line
+    logger.info(f"Response length: {len(out)}")
     await update.message.reply_text(out.strip())
 
 
