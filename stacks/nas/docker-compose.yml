@@ -1,70 +1,73 @@
-# STACK: NAS — Samba + NFS file sharing
+# STACK: NAS — Samba file sharing
 # Local network file storage for the homelab
-# Access via SMB (\\pi-homelab\data) or NFS (pi-homelab:/mnt/data)
+# Access via SMB (\\pi-homelab\data)
 
-version: "3.8"
 
 networks:
   proxy:
     external: true
-  nas_internal:
-    internal: true
 
 volumes:
   samba_config:
-  nfs_exports:
+  syncthing_data:
 
 services:
   samba:
-    # Check latest: https://hub.docker.com/r/dperson/samba
-    image: dperson/samba:latest
+    # Simple Samba on Alpine
+    image: alpine:latest
     container_name: samba
     restart: unless-stopped
     networks:
       - proxy
-      - nas_internal
     ports:
-      - "139:139"   # NetBIOS
-      - "445:445"   # SMB
+      - "139:139"
+      - "445:445"
     volumes:
       - ${DATA_DIR:-/mnt/data}:/mnt/data:rw
       - samba_config:/etc/samba
+    command: >
+      sh -c "
+        apk add --no-cache samba &&
+        echo -e '[global]\nworkgroup = HOMELAB\nsecurity = user\nmap to guest = bad user\n' > /etc/samba/smb.conf &&
+        echo -e '[data]\npath = /mnt/data\nbrowseable = yes\nread only = no\nguest ok = yes\nforce user = root\nforce group = root' >> /etc/samba/smb.conf &&
+        addgroup -g ${PGID:-1000} vansh &&
+        adduser -u ${PUID:-1000} -G vansh -D -H -s /bin/false vansh &&
+        echo -e '${SAMBA_PASSWORD:-changeme}\n${SAMBA_PASSWORD:-changeme}' | smbpasswd -a -s vansh &&
+        smbd -F -d 2
+      "
     environment:
       - TZ=${TZ:-Australia/Melbourne}
-      - WORKGROUP=HOMELAB
-      - USERID=${PUID:-1000}
-      - GROUPID=${PGID:-1000}
-      - USER=vansh
-      - PASS=${SAMBA_PASSWORD:-changeme}
-      - SHARE=data;/mnt/data;yes;no;yes;all;vansh
-      - WIDE_LINKS=1
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - SAMBA_PASSWORD=${SAMBA_PASSWORD:-changeme}
     mem_limit: 256m
     cpus: 0.5
-    cap_add:
-      - NET_ADMIN
-      - SYS_ADMIN
-      - DAC_OVERRIDE
     labels:
       - "traefik.enable=false"
 
-  nfs:
-    # Check latest: https://github.com/erezhorev/docker-nfs-server
-    image: erezhorev/nfs-server:latest
-    container_name: nfs
+
+  syncthing:
+    image: syncthing/syncthing:latest
+    container_name: syncthing
     restart: unless-stopped
     networks:
-      - nas_internal
-    privileged: true
+      - proxy
     ports:
-      - "2049:2049"
-      - "111:111"
-      - "111:111/udp"
-      - "20048:20048"
-      - "20048:20048/udp"
+      - "8384:8384"
+      - "22000:22000"
+      - "21027:21027/udp"
     volumes:
-      - ${DATA_DIR:-/mnt/data}:/mnt/data:rw
-      - nfs_exports:/etc/exports.d
+      - syncthing_data:/var/syncthing
+      - ${DATA_DIR:-/mnt/data}/sync:/data/sync:rw
     environment:
-      - NFS_EXPORT_0=/mnt/data *(rw,sync,no_subtree_check,no_root_squash,insecure)
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
     mem_limit: 128m
     cpus: 0.25
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.syncthing.rule=Host(`sync.${DOMAIN}`)"
+      - "traefik.http.routers.syncthing.entrypoints=websecure"
+      - "traefik.http.routers.syncthing.tls.certresolver=letsencrypt"
+      - "traefik.http.services.syncthing.loadbalancer.server.port=8384"

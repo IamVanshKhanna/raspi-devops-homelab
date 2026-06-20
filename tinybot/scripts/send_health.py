@@ -14,16 +14,37 @@ def load_chat_id():
     try:
         with open('/home/vansh/raspi-devops-homelab/tinybot/state/admin_chat.txt', 'r') as f:
             return f.read().strip()
-    except: return None
+    except:
+        return None
 
 def get_stats():
     ram = psutil.virtual_memory()
-    temp = subprocess.getoutput('vcgencmd measure_temp').replace('temp=', '')
-    fan = 'ON (DeskPi)' if subprocess.getoutput('systemctl is-active deskpi.service') == 'active' else 'OFF'
-    return f'⏰ Scheduled Health Report:\n🌡️ Temp: {temp}\n📊 RAM: {ram.used/(1024**3):.2f}GB / {ram.total/(1024**3):.2f}GB\n🌀 Fan: {fan}'
+    temp_raw = subprocess.getoutput('vcgencmd measure_temp').replace('temp=', '').strip()
+    gpio = subprocess.getoutput('pinctrl 12 2>/dev/null').strip()
+    deskpi = subprocess.getoutput('systemctl is-active deskpi.service 2>/dev/null').strip()
+    load = open('/proc/loadavg').read().split()[:3]
+    load_str = ' '.join(load)
+    if deskpi == 'active':
+        fan_status = 'ON (PWM auto)'
+    elif 'hi' in gpio.lower():
+        fan_status = 'ON (GPIO fixed)'
+    else:
+        fan_status = 'OFF'
+    try:
+        with open('/sys/class/thermal/thermal_zone0/temp') as f:
+            temp_c = '{:.1f}C'.format(int(f.read().strip()) / 1000)
+    except:
+        temp_c = temp_raw
+    msg = 'Scheduled Health Report:\n'
+    msg += 'Temp: {}\n'.format(temp_c)
+    msg += 'RAM: {:.2f}GB / {:.2f}GB\n'.format(ram.used / (1024**3), ram.total / (1024**3))
+    msg += 'Load: {}\n'.format(load_str)
+    msg += 'Fan: {}\n'.format(fan_status)
+    msg += 'GPIO12: {}'.format(gpio)
+    return msg
 
 token = load_token()
 chat_id = load_chat_id()
 if token and chat_id:
-    url = f'https://api.telegram.org/bot{token}/sendMessage'
+    url = 'https://api.telegram.org/bot{}/sendMessage'.format(token)
     requests.post(url, json={'chat_id': chat_id, 'text': get_stats()})

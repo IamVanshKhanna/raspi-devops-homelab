@@ -68,19 +68,16 @@ def search_web(query, max_results=4):
         logger.warning(f"Search failed: {e}")
         return None
 
-
 def get_chat(chat_id):
     if chat_id not in chat_data:
         chat_data[chat_id] = {"messages": [], "user_count": 0}
     return chat_data[chat_id]
-
 
 def add_message(chat_id, role, content):
     chat = get_chat(chat_id)
     chat["messages"].append({"role": role, "content": content})
     if role == "user":
         chat["user_count"] += 1
-
 
 def archive_chat(chat_id):
     chat = get_chat(chat_id)
@@ -93,22 +90,46 @@ def archive_chat(chat_id):
         json.dump(msgs, f, indent=2)
     logger.info(f"Archived {len(msgs)} messages for chat {chat_id} to {path}")
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Hey! I'm TinyBot on a Raspberry Pi 4B.\n"
         "Commands: /health, /search, /status, /clear, /help"
     )
 
-
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "/help    — This message\n"
         "/health  — Pi CPU, RAM, temp, disk\n"
+        "/fan     — Fan status (GPIO, DeskPi)\n"
         "/status  — Bot status\n"
         "/search  — Web search (DuckDuckGo)\n"
         "/clear   — Reset conversation\n"
         "/start   — Greeting"
+    )
+
+
+
+async def fan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import subprocess
+    temp = "N/A"
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp") as f:
+            val = int(f.read().strip())
+            temp = f"{val / 1000:.1f}C"
+    except:
+        pass
+    gpio = subprocess.getoutput("pinctrl 12 2>/dev/null").strip() or "N/A"
+    deskpi = subprocess.getoutput("systemctl is-active deskpi.service 2>/dev/null").strip()
+    load = open("/proc/loadavg").read().split()[:3]
+    load_str = " ".join(load)
+    fan_status = "RUNNING (PWM auto)" if deskpi == "active" else "MANUAL (GPIO fixed)"
+    await update.message.reply_text(
+        f"Fan Status:\n"
+        f"Temp: {temp}\n"
+        f"GPIO12: {gpio}\n"
+        f"DeskPi: {deskpi}\n"
+        f"Fan: {fan_status}\n"
+        f"Load: {load_str}"
     )
 
 
@@ -133,7 +154,6 @@ async def health_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg += f"Uptime: {os.popen('uptime -p 2>/dev/null').read().strip() or 'N/A'}"
     await update.message.reply_text(msg.strip())
 
-
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active = len(chat_data)
     total = sum(len(c["messages"]) for c in chat_data.values())
@@ -144,14 +164,12 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"No LLM — web search only"
     )
 
-
 async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
     if chat_id in chat_data:
         archive_chat(chat_id)
         del chat_data[chat_id]
     await update.message.reply_text("Conversation archived and reset.")
-
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = " ".join(context.args)
@@ -172,7 +190,6 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"Web search results for \"{query}\":\n\n{search_results}")
 
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
     text = update.message.text
@@ -186,7 +203,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     add_message(chat_id, "assistant", "No LLM response")
 
-
 def main():
     if not BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN not set.")
@@ -198,6 +214,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("health", health_command))
+    app.add_handler(CommandHandler("fan", fan_command))
     app.add_handler(CommandHandler("status", status_command))
     app.add_handler(CommandHandler("search", search_command))
     app.add_handler(CommandHandler("clear", clear_command))
@@ -206,11 +223,11 @@ def main():
     logger.info("TinyBot starting (no LLM)...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
-
 async def register_commands(app):
     cmds = [
         ("help", "Show commands"),
         ("health", "Pi system status"),
+        ("fan", "Fan & GPIO status"),
         ("status", "Bot status"),
         ("search", "Search the web"),
         ("clear", "Reset conversation"),
@@ -221,7 +238,6 @@ async def register_commands(app):
         logger.info("Registered bot commands with Telegram")
     except Exception as e:
         logger.warning(f"Could not register commands: {e}")
-
 
 if __name__ == '__main__':
     main()
