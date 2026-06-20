@@ -71,13 +71,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "/help      - This message\n"
-        "/health    - Pi CPU, RAM, temp, disk\n"
-        "/fan       - Show fan status\n"
-        "/fan 0-100 - Set fan speed (0=off)\n"
-        "/search    - Web search (DuckDuckGo)\n"
-        "/chatid    - Your Telegram chat ID\n"
-        "/start     - Greeting"
+        "/help          - This message\n"
+        "/health        - Pi CPU, RAM, temp, disk\n"
+        "/fan           - Show fan status\n"
+        "/fan 0-100     - Set fan speed (0=off)\n"
+        "/fan auto      - Auto (PWM DeskPi service)\n"
+        "/docker        - List active containers\n"
+        "/docker close  - Stop a container\n"
+        "/docker restart- Restart a container\n"
+        "/search        - Web search (DuckDuckGo)\n"
+        "/chatid        - Your Telegram chat ID\n"
+        "/start         - Greeting"
     )
 
 
@@ -86,15 +90,28 @@ async def fan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = " ".join(context.args).strip()
 
+    FAN_STATE = "/tmp/fan_speed_val"
+
+    if args == "auto":
+        subprocess.getoutput("sudo systemctl start deskpi.service 2>/dev/null")
+        try:
+            os.remove(FAN_STATE)
+        except Exception:
+            pass
+        await update.message.reply_text("Fan set to PWM auto (DeskPi service)")
+        return
+
     if args in ("100", "75", "50", "25", "0"):
         speed = args
         speeds = {"100": "pwm_100", "75": "pwm_075", "50": "pwm_050", "25": "pwm_025", "0": "pwm_000"}
-        subprocess.getoutput(f"sudo systemctl stop deskpi.service 2>/dev/null")
+        subprocess.getoutput("sudo systemctl stop deskpi.service 2>/dev/null")
         subprocess.getoutput(f"echo {speeds[speed]} | sudo tee /dev/ttyUSB0 2>/dev/null")
+        with open(FAN_STATE, "w") as f:
+            f.write(speed)
         await update.message.reply_text(f"Fan set to {speed}%")
         return
     elif args:
-        await update.message.reply_text("Usage: /fan [0|25|50|75|100]\n  No arg = show status")
+        await update.message.reply_text("Usage: /fan [0|25|50|75|100|auto]\n  No arg = show status")
         return
 
     temp = "N/A"
@@ -104,15 +121,28 @@ async def fan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             temp = f"{val / 1000:.1f}C"
     except Exception:
         pass
-    gpio = subprocess.getoutput("pinctrl 12 2>/dev/null").strip() or "N/A"
+    raw = subprocess.getoutput("pinctrl 12 2>/dev/null").strip()
+    if "hi" in raw:
+        gpio = "HIGH"
+    elif "lo" in raw:
+        gpio = "LOW"
+    else:
+        gpio = raw or "N/A"
     deskpi = subprocess.getoutput("systemctl is-active deskpi.service 2>/dev/null").strip()
     load = open("/proc/loadavg").read().split()[:3]
-    fan_status = "PWM auto (DeskPi service)" if deskpi == "active" else "MANUAL"
+    if deskpi == "active":
+        fan_status = "AUTO (DeskPi PWM)"
+    else:
+        try:
+            with open(FAN_STATE) as f:
+                manual = f.read().strip()
+            fan_status = f"MANUAL {manual}%"
+        except Exception:
+            fan_status = "MANUAL (unknown %)"
     await update.message.reply_text(
         f"Fan Status:\n"
         f"Temp:      {temp}\n"
         f"GPIO12:    {gpio}\n"
-        f"DeskPi:    {deskpi}\n"
         f"Fan:       {fan_status}\n"
         f"Load 1m:   {load[0]}\n"
         f"Load 5m:   {load[1]}\n"
@@ -167,11 +197,42 @@ async def chatid_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Your chat ID: {cid}")
 
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "I'm a simple bot - no LLM running on this Pi.\n"
-        "Use /search <query> for web search, or /health for system status."
-    )
+async def docker_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import subprocess
+    args = " ".join(context.args).strip().split(None, 1)
+    action = args[0].lower() if args else "list"
+
+    if action == "close" and len(args) > 1:
+        name = args[1]
+        out = subprocess.getoutput(f"docker stop {name} 2>&1")
+        await update.message.reply_text(f"Stopped: {name}\n{out}" if len(out) < 200 else f"Stopped: {name}")
+        return
+
+    if action == "restart" and len(args) > 1:
+        name = args[1]
+        out = subprocess.getoutput(f"docker restart {name} 2>&1")
+        await update.message.reply_text(f"Restarted: {name}\n{out}" if len(out) < 200 else f"Restarted: {name}")
+        return
+
+    if action not in ("list", "close", "restart"):
+        await update.message.reply_text("Usage:\n/docker              - list all containers\n/docker close <name> - stop a container\n/docker restart <name> - restart a container")
+        return
+
+    raw = subprocess.getoutput("docker ps --format '{{.Names}}  {{.Ports}}' 2>&1")
+    if not raw or raw.startswith("Cannot") or "error" in raw.lower():
+        await update.message.reply_text("No containers running or Docker error.")
+        return
+
+    lines = raw.split("\n")
+    out = "Active Containers:\n"
+    for l in lines:
+        parts = l.strip().split(None, 1)
+        name = parts[0] if parts else "?"
+        ports = parts[1] if len(parts) > 1 else "-"
+        out += f"\n{name}"
+        if ports != "-":
+            out += f"\n  Ports: {ports}"
+    await update.message.reply_text(out.strip())
 
 
 def main():
@@ -188,6 +249,7 @@ def main():
     app.add_handler(CommandHandler("fan", fan_command))
     app.add_handler(CommandHandler("search", search_command))
     app.add_handler(CommandHandler("chatid", chatid_command))
+    app.add_handler(CommandHandler("docker", docker_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     logger.info("TinyBot starting (no LLM)...")
@@ -199,6 +261,7 @@ async def register_commands(app):
         ("help", "Show commands"),
         ("health", "Pi system status"),
         ("fan", "Show/set fan speed (0-100)"),
+        ("docker", "List/manage containers"),
         ("search", "Search the web"),
         ("chatid", "Your Telegram chat ID"),
         ("start", "Greeting"),
