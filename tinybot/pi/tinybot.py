@@ -71,17 +71,32 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "/help    - This message\n"
-        "/health  - Pi CPU, RAM, temp, disk\n"
-        "/fan     - Fan & GPIO status\n"
-        "/search  - Web search (DuckDuckGo)\n"
-        "/chatid  - Your Telegram chat ID\n"
-        "/start   - Greeting"
+        "/help      - This message\n"
+        "/health    - Pi CPU, RAM, temp, disk\n"
+        "/fan       - Show fan status\n"
+        "/fan 0-100 - Set fan speed (0=off)\n"
+        "/search    - Web search (DuckDuckGo)\n"
+        "/chatid    - Your Telegram chat ID\n"
+        "/start     - Greeting"
     )
 
 
 async def fan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import subprocess
+
+    args = " ".join(context.args).strip()
+
+    if args in ("100", "75", "50", "25", "0"):
+        speed = args
+        speeds = {"100": "pwm_100", "75": "pwm_075", "50": "pwm_050", "25": "pwm_025", "0": "pwm_000"}
+        subprocess.getoutput(f"sudo systemctl stop deskpi.service 2>/dev/null")
+        subprocess.getoutput(f"echo {speeds[speed]} | sudo tee /dev/ttyUSB0 2>/dev/null")
+        await update.message.reply_text(f"Fan set to {speed}%")
+        return
+    elif args:
+        await update.message.reply_text("Usage: /fan [0|25|50|75|100]\n  No arg = show status")
+        return
+
     temp = "N/A"
     try:
         with open("/sys/class/thermal/thermal_zone0/temp") as f:
@@ -92,14 +107,16 @@ async def fan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gpio = subprocess.getoutput("pinctrl 12 2>/dev/null").strip() or "N/A"
     deskpi = subprocess.getoutput("systemctl is-active deskpi.service 2>/dev/null").strip()
     load = open("/proc/loadavg").read().split()[:3]
-    fan_status = "RUNNING (PWM auto)" if deskpi == "active" else "MANUAL (GPIO fixed)"
+    fan_status = "PWM auto (DeskPi service)" if deskpi == "active" else "MANUAL"
     await update.message.reply_text(
         f"Fan Status:\n"
-        f"Temp: {temp}\n"
-        f"GPIO12: {gpio}\n"
-        f"DeskPi: {deskpi}\n"
-        f"Fan: {fan_status}\n"
-        f"Load: {' '.join(load)}"
+        f"Temp:      {temp}\n"
+        f"GPIO12:    {gpio}\n"
+        f"DeskPi:    {deskpi}\n"
+        f"Fan:       {fan_status}\n"
+        f"Load 1m:   {load[0]}\n"
+        f"Load 5m:   {load[1]}\n"
+        f"Load 15m:  {load[2]}"
     )
 
 
@@ -181,7 +198,7 @@ async def register_commands(app):
     cmds = [
         ("help", "Show commands"),
         ("health", "Pi system status"),
-        ("fan", "Fan & GPIO status"),
+        ("fan", "Show/set fan speed (0-100)"),
         ("search", "Search the web"),
         ("chatid", "Your Telegram chat ID"),
         ("start", "Greeting"),
