@@ -1,0 +1,84 @@
+# STACK: NETWORK
+# Services: Pi-hole (DNS ad-blocking) + WireGuard (VPN)
+# IMPORTANT: Disable systemd-resolved first:
+#   sudo systemctl disable --now systemd-resolved
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  pihole_data:
+  pihole_dnsmasq:
+  wireguard_data:
+
+services:
+
+  pihole:
+    # Check latest: https://github.com/pi-hole/docker-pi-hole/releases
+    image: pihole/pihole:2024.07.0
+    container_name: pihole
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - pihole_data:/etc/pihole
+      - pihole_dnsmasq:/etc/dnsmasq.d
+      - ../../config/pihole/custom.list:/etc/pihole/custom.list:ro
+    environment:
+      - TZ=${TZ}
+      - WEBPASSWORD=${PIHOLE_WEBPASSWORD}
+      - PIHOLE_DNS_=${PIHOLE_DNS1};${PIHOLE_DNS2}
+      - DNSMASQ_LISTENING=all
+      - WEB_PORT=8053
+    cap_add:
+      - NET_ADMIN
+    mem_limit: 256m
+    cpus: 0.25
+
+  pihole-exporter:
+    # Check latest: https://github.com/eko/pihole-exporter/releases
+    # Uses proxy network + host-gateway to reach Pi-hole (which runs in host mode)
+    image: ekofr/pihole-exporter:v1.0.1
+    container_name: pihole-exporter
+    restart: unless-stopped
+    networks:
+      - proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PIHOLE_HOSTNAME=host.docker.internal
+      - PIHOLE_PASSWORD=${PIHOLE_WEBPASSWORD}
+      - PIHOLE_PORT=8053
+      - PORT=9617
+    mem_limit: 32m
+    cpus: 0.05
+
+  wireguard:
+    # Check latest: https://github.com/linuxserver/docker-wireguard/releases
+    image: linuxserver/wireguard:1.0.20250521
+    container_name: wireguard
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - wireguard_data:/config
+      - /lib/modules:/lib/modules:ro
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SERVERURL=${WG_HOST}
+      - SERVERPORT=51820
+      - PEERS=${WG_PEERS}
+      - PEERDNS=${WG_DEFAULT_DNS}
+      - ALLOWEDIPS=${WG_ALLOWED_IPS}
+      - LOG_CONFS=false
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    mem_limit: 64m
+    cpus: 0.25
