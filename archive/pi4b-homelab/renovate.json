@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "groupName": "docker-images",
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ],
+  "schedule": ["before 4am on monday"],
+  "timezone": "Australia/Melbourne",
+  "prHourlyLimit": 5
+}
