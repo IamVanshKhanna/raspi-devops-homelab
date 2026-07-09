@@ -2,6 +2,8 @@
 
 > 24/7 self-hosted homelab on Raspberry Pi 4B 4GB + DeskPi3 case + 2TB SSD.
 > Full Docker stack: reverse proxy, monitoring, private cloud, password manager, AI inference, VPN, DNS ad-blocking, and smart home — all on ~7 watts.
+>
+> **Evolution:** this is the live, canonical config. Earlier iterations (`pi4b-homelab`, `pi4homelab`, `homelab-prod`) are preserved with full history in [`archive/`](archive/) — see [`HISTORY.md`](HISTORY.md) for the version timeline.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%204B-red)](https://www.raspberrypi.com/)
