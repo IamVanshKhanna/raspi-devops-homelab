@@ -1,0 +1,65 @@
+# =============================================================
+# pi4b-homelab .gitignore
+# Docker / homelab / Linux / macOS / Windows specific
+# =============================================================
+
+# --- Secrets & environment -----------------------------------
+.env
+*.secret
+*_secret
+secrets/
+
+# --- TLS certificates & keys ---------------------------------
+config/traefik/certs/acme.json
+config/traefik/certs/*.pem
+config/traefik/certs/*.key
+config/wireguard/wg0.conf
+*.key
+*.pem
+*.p12
+*.pfx
+
+# --- Docker volumes / data dirs ------------------------------
+data/
+mnt/
+/mnt/data/
+/mnt/backup/
+
+# --- Logs ----------------------------------------------------
+*.log
+logs/
+
+# --- OS / editor cruft ---------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# --- IDE config (use global gitignore instead) ---------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Backup files --------------------------------------------
+*.bak
+*.orig
+*.tmp
+
+# --- Ansible / Terraform (if added later) --------------------
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.retry
+
+# --- SSH keys (never commit) ---------------------------------
+id_rsa
+id_ed25519
+*.pub
+authorized_keys
+known_hosts
