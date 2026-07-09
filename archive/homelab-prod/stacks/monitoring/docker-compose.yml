@@ -1,0 +1,150 @@
+# STACK: MONITORING v1.1
+# Services: Prometheus + Grafana + Node Exporter + cAdvisor + Loki + Promtail + Alertmanager
+# Gives full visibility into Pi hardware, containers, logs, and alerts.
+
+version: "3.8"
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  alertmanager_data:
+
+services:
+  prometheus:
+    # Check latest: https://hub.docker.com/r/prom/prometheus/tags
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    restart: unless-stopped
+    networks:
+      - proxy
+    # Bind to localhost only - access via Traefik
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ../../config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    mem_limit: 512m
+    cpus: 0.5
+
+  alertmanager:
+    # Check latest: https://hub.docker.com/r/prom/alertmanager/tags
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ../../config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    mem_limit: 64m
+    cpus: 0.1
+
+  loki:
+    # Check latest: https://hub.docker.com/r/grafana/loki/tags
+    image: grafana/loki:2.9.0
+    container_name: loki
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ../../config/loki/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command:
+      - '-config.file=/etc/loki/local-config.yaml'
+    mem_limit: 256m
+    cpus: 0.25
+
+  promtail:
+    # Check latest: https://hub.docker.com/r/grafana/promtail/tags
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../../config/promtail/promtail.yml:/etc/promtail/config.yml:ro
+    command:
+      - '-config.file=/etc/promtail/config.yml'
+    mem_limit: 64m
+    cpus: 0.1
+
+  grafana:
+    # Check latest: https://hub.docker.com/r/grafana/grafana/tags
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../../config/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - TZ=${TZ}
+    mem_limit: 256m
+    cpus: 0.5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  node-exporter:
+    # Check latest: https://hub.docker.com/r/prom/node-exporter/tags
+    image: prom/node-exporter:v1.8.1
+    container_name: node-exporter
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    mem_limit: 64m
+    cpus: 0.1
+
+  cadvisor:
+    # Check latest: https://github.com/google/cadvisor/releases
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    mem_limit: 128m
+    cpus: 0.25
