@@ -1,0 +1,14 @@
+config/traefik/certs/
+config/traefik/dashboard.crt
+config/traefik/dashboard.key
+.env
+.env.backup
+.env.local
+.env.prod
+.env.real
+tinybot/venv/
+tinybot/logs/
+tinybot/state/
+tinybot/queue/
+__pycache__/
+*.pyc

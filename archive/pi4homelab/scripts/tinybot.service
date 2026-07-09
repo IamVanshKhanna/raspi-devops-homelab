@@ -1,0 +1,18 @@
+[Unit]
+Description=TinyBot Telegram Assistant (no LLM)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vansh
+Group=vansh
+WorkingDirectory=/home/vansh/pi4homelab/tinybot/pi
+ExecStart=/home/vansh/pi4homelab/tinybot/.venv/bin/python3 tinybot.py
+Environment=HOME=/home/vansh
+EnvironmentFile=/home/vansh/pi4homelab/.env
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
