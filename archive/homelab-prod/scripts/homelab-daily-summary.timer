@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Homelab Health Summary Timer
+Requires=homelab-daily-summary.service
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target
