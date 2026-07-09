@@ -15,7 +15,7 @@ Open these in your browser (any device on same WiFi):
 | **Home Assistant** | http://192.168.68.59:8123 | Set on first visit | Set on first visit |
 | **Prometheus** | http://192.168.68.59:9090 | No auth | No auth |
 | **Grafana** | http://192.168.68.59:3000 | `admin` | `changeme_grafana` |
-| **Traefik** | https://192.168.68.59 | `admin` | `Homelab2026!` |
+| **Traefik** | https://192.168.68.59 | `admin` | `<CHANGE_ME_TRAEFIK_ADMIN_PASSWORD>` |
 | **Uptime Kuma** | http://192.168.68.59:3001 | Set on first visit | Set on first visit |
 
 > If any URL doesn't open: wait 30 seconds, refresh. Services need time to wake up.
@@ -393,7 +393,7 @@ INTERNET
 | 8 | Nextcloud | https://192.168.68.59 | Login admin/changeme_nextcloud |
 | 9 | Vaultwarden | https://192.168.68.59 | Create account via Bitwarden app |
 | 10 | WireGuard | SSH → get peer config | Scan QR in WireGuard app |
-| 11 | Traefik | https://192.168.68.59/dashboard/ | Login admin/Homelab2026! |
+| 11 | Traefik | https://192.168.68.59/dashboard/ | Login admin/<CHANGE_ME_TRAEFIK_ADMIN_PASSWORD> |
 | 12 | Alertmanager | http://192.168.68.59:9093 | View alerts |
 | 13 | Loki | Via Grafana Explore | Search logs |
 | 14 | SSH | `ssh vansh@192.168.68.59` | Run `docker ps` |

@@ -12,7 +12,7 @@ Services were freshly deployed with these defaults during rebuild.
 ### TRAEFIK DASHBOARD
 - URL: https://192.168.68.59 (via Traefik at traefik.homelab.local)
 - Username: `admin`
-- Password: `Homelab2026!`
+- Password: `<CHANGE_ME_TRAEFIK_ADMIN_PASSWORD>`
 - Status: ✅ FIXED (was corrupted, now has proper bcrypt hash)
 
 ### PORTAINER
