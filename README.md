@@ -1,3 +1,5 @@
+> **Archived.** Superseded by [pi-utility-server](https://github.com/IamVanshKhanna/pi-utility-server) — kept here for history only.
+
 # pi4b-homelab
 
 > 24/7 self-hosted homelab on Raspberry Pi 4B 4GB + DeskPi3 case + 2TB SSD.
