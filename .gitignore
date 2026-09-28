@@ -63,3 +63,6 @@ id_ed25519
 *.pub
 authorized_keys
 known_hosts
+.env
+*.env
+!.env.example
